@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+/* Custom Theme */
+@theme {
+  /* Primary - 따뜻한 주황 */
+  --color-primary-50: #FFF0EB;
+  --color-primary-100: #FFE1D6;
+  --color-primary-200: #FFC3AD;
+  --color-primary-300: #FFA585;
+  --color-primary-400: #FF875C;
+  --color-primary-500: #FF6B35;
+  --color-primary-600: #FC4700;
+  --color-primary-700: #C43700;
+  --color-primary-800: #8C2800;
+  --color-primary-900: #541800;
+  --color-primary: #FF6B35;
+
+  /* Secondary - 부드러운 파랑 */
+  --color-secondary-50: #EDF4FB;
+  --color-secondary-100: #DBE9F7;
+  --color-secondary-200: #B7D3EF;
+  --color-secondary-300: #93BDE7;
+  --color-secondary-400: #6FA7DF;
+  --color-secondary-500: #4A90D9;
+  --color-secondary-600: #2574C4;
+  --color-secondary-700: #1C5A97;
+  --color-secondary-800: #143F6A;
+  --color-secondary-900: #0B243D;
+  --color-secondary: #4A90D9;
+
+  /* Status Colors */
+  --color-success: #2ECC71;
+  --color-warning: #F39C12;
+  --color-error: #E74C3C;
+
+  /* Neutrals */
+  --color-background: #F8F9FA;
+  --color-foreground: #2D3436;
+}
+
+body {
+  color: var(--color-foreground);
+  background: var(--color-background);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}

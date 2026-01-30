@@ -1,0 +1,14 @@
+{
+  "name": "@time-pie/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "files": ["index.js", "next.js", "react.js"],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint-config-next": "^16.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0"
+  }
+}
