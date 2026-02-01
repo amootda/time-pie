@@ -1,15 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { Header, BottomNav } from '../components'
+import { Header, BottomNav, LoginButton } from '../components'
+import { useAuth } from '../providers'
 
 export default function SettingsPage() {
+  const { user, loading, signOut } = useAuth()
   const [notifications, setNotifications] = useState({
     events: true,
     todos: true,
     habits: true,
   })
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light')
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Sign out failed:', error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -18,18 +28,52 @@ export default function SettingsPage() {
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Profile Section */}
         <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="text-2xl">👤</span>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
-            <div className="flex-1">
-              <p className="font-semibold text-lg">게스트 사용자</p>
-              <p className="text-sm text-gray-500">로그인하여 데이터를 동기화하세요</p>
-            </div>
-          </div>
-          <button className="w-full mt-4 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-600 transition-colors">
-            로그인 / 회원가입
-          </button>
+          ) : user ? (
+            <>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                  {user.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="프로필"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl">👤</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-lg">
+                    {user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                로그아웃
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">👤</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-lg">게스트 사용자</p>
+                  <p className="text-sm text-gray-500">로그인하여 데이터를 동기화하세요</p>
+                </div>
+              </div>
+              <LoginButton />
+            </>
+          )}
         </div>
 
         {/* Notifications Section */}
