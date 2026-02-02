@@ -732,7 +732,7 @@ describe('angleToTime', () => {
 ```env
 # .env.local (예시)
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...  # 서버에서만 사용
 ```
 
