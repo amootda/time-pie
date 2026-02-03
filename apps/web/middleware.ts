@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = ['/login', '/auth/callback']
 
 // 정적 파일 및 Next.js 내부 경로
-const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/']
+const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/', '/assets/']
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -74,6 +74,6 @@ export const config = {
          * - _next/image (이미지 최적화)
          * - favicon.ico (파비콘)
          */
-        '/((?!_next/static|_next/image|favicon.ico).*)',
+        '/((?!_next/static|_next/image|favicon.ico|assets).*)',
     ],
 }

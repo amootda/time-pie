@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useTodoStore } from '@time-pie/core'
+import { useTodoStore, useUserData } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, TodoModal } from '../components'
-import type { Todo } from '@time-pie/supabase'
+import { useAuth } from '../providers'
+import type { Todo, TodoInsert } from '@time-pie/supabase'
 
 const PRIORITY_COLORS = {
   high: 'bg-error',
@@ -20,21 +21,22 @@ const PRIORITY_LABELS = {
 type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
 export default function TodosPage() {
-  const { todos, addTodo, toggleComplete, deleteTodo, filter, setFilter, filteredTodos } = useTodoStore()
+  const { user } = useAuth()
+  const { todos, filter, setFilter, filteredTodos } = useTodoStore()
+  const { createTodo, toggleTodoComplete, removeTodo } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
   const displayTodos = filteredTodos()
   const todayStr = new Date().toISOString().split('T')[0]
 
-  const handleAddTodo = (todo: Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addTodo({
-      ...todo,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
+    try {
+      await createTodo(todo)
+      setModalOpen(false)
+    } catch (error) {
+      console.error('Failed to create todo:', error)
+    }
   }
 
   const filters: { label: string; value: FilterType }[] = [
@@ -77,11 +79,10 @@ export default function TodosPage() {
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                filter === f.value
-                  ? 'bg-secondary text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === f.value
+                ? 'bg-secondary text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
             >
               {f.label}
             </button>
@@ -105,19 +106,17 @@ export default function TodosPage() {
             displayTodos.map((todo) => (
               <div
                 key={todo.id}
-                className={`bg-white p-4 rounded-xl shadow-sm transition-opacity ${
-                  todo.is_completed ? 'opacity-60' : ''
-                }`}
+                className={`bg-white p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
+                  }`}
               >
                 <div className="flex items-start gap-3">
                   {/* Checkbox */}
                   <button
-                    onClick={() => toggleComplete(todo.id)}
-                    className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${
-                      todo.is_completed
-                        ? 'bg-success border-success'
-                        : 'border-gray-300 hover:border-success'
-                    }`}
+                    onClick={() => toggleTodoComplete(todo.id)}
+                    className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
+                      ? 'bg-success border-success'
+                      : 'border-gray-300 hover:border-success'
+                      }`}
                   >
                     {todo.is_completed && (
                       <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
@@ -130,25 +129,22 @@ export default function TodosPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span
-                        className={`px-2 py-0.5 rounded text-xs text-white ${
-                          PRIORITY_COLORS[todo.priority]
-                        }`}
+                        className={`px-2 py-0.5 rounded text-xs text-white ${PRIORITY_COLORS[todo.priority]
+                          }`}
                       >
                         {PRIORITY_LABELS[todo.priority]}
                       </span>
                       {todo.due_date && (
-                        <span className={`text-xs ${
-                          todo.due_date < todayStr ? 'text-error' :
+                        <span className={`text-xs ${todo.due_date < todayStr ? 'text-error' :
                           todo.due_date === todayStr ? 'text-primary' : 'text-gray-500'
-                        }`}>
+                          }`}>
                           {todo.due_date === todayStr ? '오늘' : todo.due_date}
                         </span>
                       )}
                     </div>
                     <p
-                      className={`font-medium ${
-                        todo.is_completed ? 'line-through text-gray-400' : ''
-                      }`}
+                      className={`font-medium ${todo.is_completed ? 'line-through text-gray-400' : ''
+                        }`}
                     >
                       {todo.title}
                     </p>
@@ -159,7 +155,7 @@ export default function TodosPage() {
 
                   {/* Delete */}
                   <button
-                    onClick={() => deleteTodo(todo.id)}
+                    onClick={() => removeTodo(todo.id)}
                     className="p-1 hover:bg-gray-100 rounded transition-colors"
                   >
                     <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
