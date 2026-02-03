@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useHabitStore } from '@time-pie/core'
+import { useHabitStore, useUserData } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
-import type { Habit } from '@time-pie/supabase'
+import { useAuth } from '../providers'
+import type { HabitInsert } from '@time-pie/supabase'
 
 export default function HabitsPage() {
-  const { habits, addHabit, logs, logHabit, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+  const { user } = useAuth()
+  const { habits, logs, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+  const { createHabit, logHabit } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -22,18 +25,21 @@ export default function HabitsPage() {
 
   const dayLabels = ['일', '월', '화', '수', '목', '금', '토']
 
-  const handleAddHabit = (habit: Omit<Habit, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addHabit({
-      ...habit,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddHabit = async (habit: Omit<HabitInsert, 'user_id'>) => {
+    try {
+      await createHabit(habit)
+      setModalOpen(false)
+    } catch (error) {
+      console.error('Failed to create habit:', error)
+    }
   }
 
-  const handleToggleHabit = (habitId: string) => {
-    logHabit(habitId, todayStr)
+  const handleToggleHabit = async (habitId: string) => {
+    try {
+      await logHabit(habitId, todayStr)
+    } catch (error) {
+      console.error('Failed to log habit:', error)
+    }
   }
 
   const getHabitLogForDate = (habitId: string, date: string) => {
@@ -111,11 +117,10 @@ export default function HabitsPage() {
                     {/* Toggle Button */}
                     <button
                       onClick={() => handleToggleHabit(habit.id)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                        habit.todayCompleted
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${habit.todayCompleted
                           ? 'scale-110'
                           : 'border-2 hover:scale-105'
-                      }`}
+                        }`}
                       style={{
                         backgroundColor: habit.todayCompleted ? habit.color : 'transparent',
                         borderColor: habit.color,
@@ -157,13 +162,12 @@ export default function HabitsPage() {
                           {dayLabels[dayOfWeek]}
                         </span>
                         <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                            completed
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${completed
                               ? 'text-white'
                               : isToday
-                              ? 'border-2 border-dashed'
-                              : 'bg-gray-100'
-                          }`}
+                                ? 'border-2 border-dashed'
+                                : 'bg-gray-100'
+                            }`}
                           style={{
                             backgroundColor: completed ? habit.color : undefined,
                             borderColor: isToday && !completed ? habit.color : undefined,
