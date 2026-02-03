@@ -1,203 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { PieChart } from '@time-pie/ui'
-import { useEventStore, useTodoStore, useHabitStore, useCurrentTime } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal } from './components'
-import type { Event, Todo, Habit } from '@time-pie/supabase'
-
-// Demo data
-const DEMO_EVENTS: Event[] = [
-  {
-    id: '1',
-    user_id: 'demo',
-    title: '수면',
-    description: null,
-    start_at: `${new Date().toISOString().split('T')[0]}T00:00:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T06:30:00`,
-    is_all_day: false,
-    color: '#34495E',
-    category_id: null,
-    reminder_min: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    user_id: 'demo',
-    title: '출근 준비',
-    description: null,
-    start_at: `${new Date().toISOString().split('T')[0]}T06:30:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T08:00:00`,
-    is_all_day: false,
-    color: '#2ECC71',
-    category_id: null,
-    reminder_min: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    user_id: 'demo',
-    title: '업무',
-    description: null,
-    start_at: `${new Date().toISOString().split('T')[0]}T09:00:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T12:00:00`,
-    is_all_day: false,
-    color: '#4A90D9',
-    category_id: null,
-    reminder_min: 15,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    user_id: 'demo',
-    title: '점심',
-    description: null,
-    start_at: `${new Date().toISOString().split('T')[0]}T12:00:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T13:00:00`,
-    is_all_day: false,
-    color: '#F39C12',
-    category_id: null,
-    reminder_min: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    user_id: 'demo',
-    title: '팀 미팅',
-    description: '주간 회의',
-    start_at: `${new Date().toISOString().split('T')[0]}T14:00:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T15:30:00`,
-    is_all_day: false,
-    color: '#9B59B6',
-    category_id: null,
-    reminder_min: 15,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '6',
-    user_id: 'demo',
-    title: '업무',
-    description: null,
-    start_at: `${new Date().toISOString().split('T')[0]}T15:30:00`,
-    end_at: `${new Date().toISOString().split('T')[0]}T18:00:00`,
-    is_all_day: false,
-    color: '#4A90D9',
-    category_id: null,
-    reminder_min: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
-
-const DEMO_TODOS: Todo[] = [
-  {
-    id: '1',
-    user_id: 'demo',
-    title: '보고서 제출',
-    description: null,
-    due_date: new Date().toISOString().split('T')[0],
-    priority: 'high',
-    is_completed: false,
-    completed_at: null,
-    category_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    user_id: 'demo',
-    title: '이메일 확인',
-    description: null,
-    due_date: new Date().toISOString().split('T')[0],
-    priority: 'medium',
-    is_completed: true,
-    completed_at: new Date().toISOString(),
-    category_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    user_id: 'demo',
-    title: '프로젝트 계획서 작성',
-    description: null,
-    due_date: new Date().toISOString().split('T')[0],
-    priority: 'high',
-    is_completed: false,
-    completed_at: null,
-    category_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
-
-const DEMO_HABITS: Habit[] = [
-  {
-    id: '1',
-    user_id: 'demo',
-    title: '물 2L 마시기',
-    description: null,
-    frequency: 'daily',
-    frequency_config: {},
-    target_count: 1,
-    color: '#4A90D9',
-    reminder_time: '09:00',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    user_id: 'demo',
-    title: '30분 운동',
-    description: null,
-    frequency: 'daily',
-    frequency_config: {},
-    target_count: 1,
-    color: '#E74C3C',
-    reminder_time: '07:00',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    user_id: 'demo',
-    title: '독서 30분',
-    description: null,
-    frequency: 'daily',
-    frequency_config: {},
-    target_count: 1,
-    color: '#2ECC71',
-    reminder_time: '21:00',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
+import type { EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
+import { useAuth } from './providers'
 
 export default function HomePage() {
+  const { user, loading: authLoading } = useAuth()
   const currentTime = useCurrentTime()
-  const { events, setEvents, addEvent, selectedDate, setSelectedDate } = useEventStore()
-  const { todos, setTodos, addTodo, toggleComplete } = useTodoStore()
-  const { habits, setHabits, addHabit, logHabit, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+  const { events, selectedDate, setSelectedDate } = useEventStore()
+  const { todos, toggleComplete } = useTodoStore()
+  const { habits, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+
+  const {
+    isLoading,
+    createEvent,
+    createTodo,
+    createHabit,
+    logHabit,
+    toggleTodoComplete,
+  } = useUserData(user?.id)
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [todoModalOpen, setTodoModalOpen] = useState(false)
   const [habitModalOpen, setHabitModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'pie' | 'list'>('pie')
-
-  // Initialize with demo data
-  useEffect(() => {
-    if (events.length === 0) setEvents(DEMO_EVENTS)
-    if (todos.length === 0) setTodos(DEMO_TODOS)
-    if (habits.length === 0) setHabits(DEMO_HABITS)
-  }, [events.length, todos.length, habits.length, setEvents, setTodos, setHabits])
 
   const todayStr = selectedDate.toISOString().split('T')[0]
   const todayTodos = todos.filter((t) => t.due_date === todayStr || !t.due_date)
@@ -217,38 +46,58 @@ export default function HomePage() {
     color: e.color,
   }))
 
-  const handleAddEvent = (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addEvent({
-      ...event,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
+    try {
+      await createEvent(event)
+      setEventModalOpen(false)
+    } catch (error) {
+      console.error('Failed to create event:', error)
+    }
   }
 
-  const handleAddTodo = (todo: Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addTodo({
-      ...todo,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
+    try {
+      await createTodo(todo)
+      setTodoModalOpen(false)
+    } catch (error) {
+      console.error('Failed to create todo:', error)
+    }
   }
 
-  const handleAddHabit = (habit: Omit<Habit, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addHabit({
-      ...habit,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddHabit = async (habit: Omit<HabitInsert, 'user_id'>) => {
+    try {
+      await createHabit(habit)
+      setHabitModalOpen(false)
+    } catch (error) {
+      console.error('Failed to create habit:', error)
+    }
   }
 
-  const handleHabitToggle = (habitId: string) => {
-    logHabit(habitId, todayStr)
+  const handleTodoToggle = async (todoId: string) => {
+    try {
+      await toggleTodoComplete(todoId)
+    } catch (error) {
+      console.error('Failed to toggle todo:', error)
+      // Fallback to local toggle
+      toggleComplete(todoId)
+    }
+  }
+
+  const handleHabitToggle = async (habitId: string) => {
+    try {
+      await logHabit(habitId, todayStr)
+    } catch (error) {
+      console.error('Failed to log habit:', error)
+    }
+  }
+
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    )
   }
 
   return (
@@ -260,25 +109,30 @@ export default function HomePage() {
       />
 
       <main className="max-w-lg mx-auto px-4 py-4">
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="text-center text-sm text-gray-400 mb-4">
+            데이터 로딩 중...
+          </div>
+        )}
+
         {/* View Toggle */}
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setViewMode('pie')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              viewMode === 'pie'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'pie'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+              }`}
           >
             파이 차트
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              viewMode === 'list'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'list'
                 ? 'bg-primary text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+              }`}
           >
             리스트
           </button>
@@ -365,14 +219,13 @@ export default function HomePage() {
                 <div
                   key={todo.id}
                   className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => toggleComplete(todo.id)}
+                  onClick={() => handleTodoToggle(todo.id)}
                 >
                   <div
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      todo.is_completed
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${todo.is_completed
                         ? 'bg-success border-success'
                         : 'border-gray-300 hover:border-success'
-                    }`}
+                      }`}
                   >
                     {todo.is_completed && (
                       <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
@@ -381,9 +234,8 @@ export default function HomePage() {
                     )}
                   </div>
                   <span
-                    className={`text-sm flex-1 ${
-                      todo.is_completed ? 'text-gray-400 line-through' : ''
-                    }`}
+                    className={`text-sm flex-1 ${todo.is_completed ? 'text-gray-400 line-through' : ''
+                      }`}
                   >
                     {todo.title}
                   </span>
@@ -391,6 +243,9 @@ export default function HomePage() {
               ))}
               {todayTodos.length > 3 && (
                 <p className="text-xs text-gray-400">+{todayTodos.length - 3}개 더</p>
+              )}
+              {todayTodos.length === 0 && (
+                <p className="text-xs text-gray-400">투두가 없습니다</p>
               )}
             </div>
           </div>
@@ -433,6 +288,9 @@ export default function HomePage() {
                   )}
                 </div>
               ))}
+              {habitsWithStreak.length === 0 && (
+                <p className="text-xs text-gray-400">습관이 없습니다</p>
+              )}
             </div>
           </div>
         </div>
