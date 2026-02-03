@@ -15,6 +15,7 @@
     "generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/database.types.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.39.3"
   },
   "devDependencies": {

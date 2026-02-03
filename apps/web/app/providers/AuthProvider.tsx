@@ -26,19 +26,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Get initial user
-    getCurrentUser().then((user) => {
-      setUser(user)
-      setLoading(false)
-    })
+    const initAuth = async () => {
+      try {
+        const user = await getCurrentUser()
+        setUser(user)
+      } catch (error) {
+        console.error('Failed to get current user:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    initAuth()
 
     // Listen for auth changes
-    const { data: { subscription } } = onAuthStateChange((user) => {
-      setUser(user)
-      setLoading(false)
-    })
+    try {
+      const { data: { subscription } } = onAuthStateChange((user) => {
+        setUser(user)
+        setLoading(false)
+      })
 
-    return () => {
-      subscription.unsubscribe()
+      return () => {
+        subscription.unsubscribe()
+      }
+    } catch (error) {
+      console.error('Failed to set up auth listener:', error)
+      setLoading(false)
     }
   }, [])
 
