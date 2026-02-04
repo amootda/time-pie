@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AddModal } from './AddModal'
 import type { Todo } from '@time-pie/supabase'
 
@@ -9,6 +9,7 @@ interface TodoModalProps {
   onClose: () => void
   onSave: (todo: Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   initialData?: Partial<Todo>
+  mode?: 'create' | 'edit'
 }
 
 const PRIORITIES = [
@@ -17,11 +18,26 @@ const PRIORITIES = [
   { label: '낮음', value: 'low' as const, color: 'bg-gray-400 text-white' },
 ]
 
-export function TodoModal({ isOpen, onClose, onSave, initialData }: TodoModalProps) {
+export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create' }: TodoModalProps) {
   const [title, setTitle] = useState(initialData?.title || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [dueDate, setDueDate] = useState(initialData?.due_date || '')
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>(initialData?.priority || 'medium')
+
+  // Reset form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || '')
+      setDescription(initialData.description || '')
+      setDueDate(initialData.due_date || '')
+      setPriority(initialData.priority || 'medium')
+    } else {
+      setTitle('')
+      setDescription('')
+      setDueDate('')
+      setPriority('medium')
+    }
+  }, [initialData])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,21 +48,23 @@ export function TodoModal({ isOpen, onClose, onSave, initialData }: TodoModalPro
       description: description.trim() || null,
       due_date: dueDate || null,
       priority,
-      is_completed: false,
-      completed_at: null,
-      category_id: null,
+      is_completed: initialData?.is_completed ?? false,
+      completed_at: initialData?.completed_at ?? null,
+      category_id: initialData?.category_id ?? null,
     })
 
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setDueDate('')
-    setPriority('medium')
+    // Reset form only in create mode
+    if (mode === 'create') {
+      setTitle('')
+      setDescription('')
+      setDueDate('')
+      setPriority('medium')
+    }
     onClose()
   }
 
   return (
-    <AddModal isOpen={isOpen} onClose={onClose} title="할 일 추가">
+    <AddModal isOpen={isOpen} onClose={onClose} title={mode === 'edit' ? '할 일 수정' : '할 일 추가'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Title */}
         <div>
@@ -111,7 +129,7 @@ export function TodoModal({ isOpen, onClose, onSave, initialData }: TodoModalPro
           disabled={!title.trim()}
           className="w-full py-3 bg-secondary text-white rounded-xl font-medium hover:bg-secondary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          저장
+          {mode === 'edit' ? '수정' : '저장'}
         </button>
       </form>
     </AddModal>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { AuthProvider } from './providers'
+import { AuthProvider, ThemeProvider } from './providers'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -40,9 +40,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

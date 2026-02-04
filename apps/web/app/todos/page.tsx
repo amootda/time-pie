@@ -23,7 +23,7 @@ type FilterType = 'all' | 'today' | 'completed' | 'pending'
 export default function TodosPage() {
   const { user } = useAuth()
   const { todos, filter, setFilter, filteredTodos } = useTodoStore()
-  const { createTodo, toggleTodoComplete, removeTodo } = useUserData(user?.id)
+  const { createTodo, updateTodo, toggleTodoComplete, removeTodo } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
@@ -37,6 +37,22 @@ export default function TodosPage() {
     } catch (error) {
       console.error('Failed to create todo:', error)
     }
+  }
+
+  const handleEditTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
+    if (!editingTodo) return
+    try {
+      await updateTodo(editingTodo.id, todo)
+      setModalOpen(false)
+      setEditingTodo(null)
+    } catch (error) {
+      console.error('Failed to update todo:', error)
+    }
+  }
+
+  const openEditModal = (todo: Todo) => {
+    setEditingTodo(todo)
+    setModalOpen(true)
   }
 
   const filters: { label: string; value: FilterType }[] = [
@@ -125,8 +141,11 @@ export default function TodosPage() {
                     )}
                   </button>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
+                  {/* Content - Clickable for edit */}
+                  <button
+                    onClick={() => openEditModal(todo)}
+                    className="flex-1 min-w-0 text-left"
+                  >
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className={`px-2 py-0.5 rounded text-xs text-white ${PRIORITY_COLORS[todo.priority]
@@ -151,7 +170,7 @@ export default function TodosPage() {
                     {todo.description && (
                       <p className="text-sm text-gray-500 mt-1">{todo.description}</p>
                     )}
-                  </div>
+                  </button>
 
                   {/* Delete */}
                   <button
@@ -178,8 +197,9 @@ export default function TodosPage() {
           setModalOpen(false)
           setEditingTodo(null)
         }}
-        onSave={handleAddTodo}
+        onSave={editingTodo ? handleEditTodo : handleAddTodo}
         initialData={editingTodo || undefined}
+        mode={editingTodo ? 'edit' : 'create'}
       />
     </div>
   )
