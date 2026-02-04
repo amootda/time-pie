@@ -4,9 +4,17 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", ".expo/**"]
     },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:web": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:mobile": {
       "cache": false,
       "persistent": true
     },
@@ -17,6 +25,12 @@
       "dependsOn": ["^build"]
     },
     "clean": {
+      "cache": false
+    },
+    "android": {
+      "cache": false
+    },
+    "ios": {
       "cache": false
     }
   }

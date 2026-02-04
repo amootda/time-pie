@@ -1,6 +1,15 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from './providers'
 import './globals.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#FF6B35',
+}
 
 export const metadata: Metadata = {
   title: 'Time Pie - 시간을 파이처럼 관리하세요',
@@ -9,6 +18,17 @@ export const metadata: Metadata = {
   icons: {
     icon: '/assets/icon.png',
     apple: '/assets/apple-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Time Pie',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 }
 

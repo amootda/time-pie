@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
   signInWithKakao,
   signInWithGoogle,
@@ -28,8 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial user
     const initAuth = async () => {
       try {
-        const user = await getCurrentUser()
-        setUser(user)
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
       } catch (error) {
         console.error('Failed to get current user:', error)
       } finally {
@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     try {
-      const { data: { subscription } } = onAuthStateChange((user) => {
-        setUser(user)
+      const { data: { subscription } } = onAuthStateChange((authUser) => {
+        setUser(authUser)
         setLoading(false)
       })
 

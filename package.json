@@ -3,11 +3,16 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@time-pie/web",
+    "dev:mobile": "turbo dev --filter=@time-pie/mobile",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "clean": "turbo clean && rm -rf node_modules",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "mobile:android": "cd apps/mobile && expo run:android",
+    "mobile:ios": "cd apps/mobile && expo run:ios",
+    "mobile:start": "cd apps/mobile && expo start"
   },
   "devDependencies": {
     "@time-pie/eslint-config": "workspace:*",
@@ -17,6 +22,12 @@
     "turbo": "^2.0.0"
   },
   "packageManager": "pnpm@8.15.1",
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.3.0",
+      "@types/react-dom": "^18.3.0"
+    }
+  },
   "engines": {
     "node": ">=20"
   }
