@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { AuthProvider, ThemeProvider } from './providers'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -42,6 +43,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body>
+        <Analytics />
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
