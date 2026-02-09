@@ -58,31 +58,30 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">습관 이름</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">습관 이름</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="예: 물 2L 마시기"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success"
             autoFocus
           />
         </div>
 
         {/* Frequency */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">반복 주기</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">반복 주기</label>
           <div className="flex gap-2">
             {FREQUENCIES.map((f) => (
               <button
                 key={f.value}
                 type="button"
                 onClick={() => setFrequency(f.value)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
-                  frequency === f.value
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${frequency === f.value
                     ? 'bg-success text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
               >
                 {f.label}
               </button>
@@ -92,16 +91,16 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
 
         {/* Target Count */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">목표 횟수</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">목표 횟수</label>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setTargetCount(Math.max(1, targetCount - 1))}
-              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-xl font-medium"
+              className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center text-xl font-medium dark:text-white"
             >
               -
             </button>
-            <span className="text-2xl font-bold w-12 text-center">{targetCount}</span>
+            <span className="text-2xl font-bold w-12 text-center dark:text-white">{targetCount}</span>
             <button
               type="button"
               onClick={() => setTargetCount(targetCount + 1)}
@@ -109,22 +108,21 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
             >
               +
             </button>
-            <span className="text-gray-500 text-sm">회 / {frequency === 'daily' ? '일' : '주'}</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">회 / {frequency === 'daily' ? '일' : '주'}</span>
           </div>
         </div>
 
         {/* Color */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">색상</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">색상</label>
           <div className="flex gap-2">
             {COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
-                className={`w-10 h-10 rounded-full transition-all ${
-                  color === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
-                }`}
+                className={`w-10 h-10 rounded-full transition-all ${color === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
+                  }`}
                 style={{ backgroundColor: c }}
               />
             ))}
@@ -133,24 +131,24 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
 
         {/* Reminder */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">리마인더 시간 (선택)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">리마인더 시간 (선택)</label>
           <input
             type="time"
             value={reminderTime}
             onChange={(e) => setReminderTime(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">설명 (선택)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">설명 (선택)</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="습관에 대한 설명을 입력하세요"
             rows={2}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success resize-none"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success resize-none"
           />
         </div>
 

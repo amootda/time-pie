@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
+  console.log('=== AUTH CALLBACK HIT ===')
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const redirectTo = requestUrl.searchParams.get('redirectTo') || '/'
+  console.log('Code:', code ? 'exists' : 'null', 'RedirectTo:', redirectTo)
 
   if (code) {
     const cookieStore = await cookies()
@@ -31,7 +33,16 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('Auth callback error:', error)
+      // 에러 발생 시 로그인 페이지로 리다이렉트
+      return NextResponse.redirect(new URL('/login?error=auth_failed', requestUrl.origin))
+    }
+
+    // 세션 확인 로깅
+    const { data: { session } } = await supabase.auth.getSession()
+    console.log('Session after exchange:', session ? 'exists' : 'null', session?.user?.email)
   }
 
   // 리다이렉트 목적지로 이동

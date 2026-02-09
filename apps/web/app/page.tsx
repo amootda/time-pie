@@ -94,14 +94,14 @@ export default function HomePage() {
   // Loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-gray-500">로딩 중...</div>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-gray-500 dark:text-gray-400">로딩 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <Header
         showDate
         selectedDate={selectedDate}
@@ -111,7 +111,7 @@ export default function HomePage() {
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Loading indicator */}
         {isLoading && (
-          <div className="text-center text-sm text-gray-400 mb-4">
+          <div className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">
             데이터 로딩 중...
           </div>
         )}
@@ -121,8 +121,8 @@ export default function HomePage() {
           <button
             onClick={() => setViewMode('pie')}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'pie'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
             파이 차트
@@ -130,8 +130,8 @@ export default function HomePage() {
           <button
             onClick={() => setViewMode('list')}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'list'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
             리스트
@@ -165,7 +165,7 @@ export default function HomePage() {
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-xs text-gray-600">{event?.title}</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">{event?.title}</span>
                   </div>
                 )
               })}
@@ -174,24 +174,24 @@ export default function HomePage() {
         ) : (
           /* List View */
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-500 flex items-center gap-2">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
               <span>⏰</span> 오늘의 일정
             </h3>
             {todayEvents.length === 0 ? (
-              <p className="text-sm text-gray-400 py-4 text-center">일정이 없습니다</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">일정이 없습니다</p>
             ) : (
               todayEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm"
+                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
                 >
                   <div
                     className="w-1 h-12 rounded-full"
                     style={{ backgroundColor: event.color }}
                   />
                   <div className="flex-1">
-                    <p className="font-medium">{event.title}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium dark:text-white">{event.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {event.start_at.split('T')[1].slice(0, 5)} -{' '}
                       {event.end_at.split('T')[1].slice(0, 5)}
                     </p>
@@ -205,12 +205,12 @@ export default function HomePage() {
         {/* Today's Summary */}
         <div className="grid grid-cols-2 gap-3 mt-6">
           {/* Todos Summary */}
-          <div className="bg-white p-4 rounded-xl shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium flex items-center gap-2">
+              <h3 className="font-medium flex items-center gap-2 dark:text-white">
                 <span>✅</span> 투두
               </h3>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {completedTodos}/{todayTodos.length}
               </span>
             </div>
@@ -223,8 +223,8 @@ export default function HomePage() {
                 >
                   <div
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${todo.is_completed
-                        ? 'bg-success border-success'
-                        : 'border-gray-300 hover:border-success'
+                      ? 'bg-success border-success'
+                      : 'border-gray-300 hover:border-success'
                       }`}
                   >
                     {todo.is_completed && (
@@ -237,15 +237,15 @@ export default function HomePage() {
                     className={`text-sm flex-1 ${todo.is_completed ? 'text-gray-400 line-through' : ''
                       }`}
                   >
-                    {todo.title}
+                    <span className="dark:text-gray-200">{todo.title}</span>
                   </span>
                 </div>
               ))}
               {todayTodos.length > 3 && (
-                <p className="text-xs text-gray-400">+{todayTodos.length - 3}개 더</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">+{todayTodos.length - 3}개 더</p>
               )}
               {todayTodos.length === 0 && (
-                <p className="text-xs text-gray-400">투두가 없습니다</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">투두가 없습니다</p>
               )}
             </div>
           </div>
@@ -280,7 +280,7 @@ export default function HomePage() {
                       </svg>
                     )}
                   </div>
-                  <span className="text-sm flex-1">{habit.title}</span>
+                  <span className="text-sm flex-1 dark:text-gray-200">{habit.title}</span>
                   {habit.streak > 0 && (
                     <span className="text-xs text-primary font-medium">
                       {habit.streak}일
@@ -289,7 +289,7 @@ export default function HomePage() {
                 </div>
               ))}
               {habitsWithStreak.length === 0 && (
-                <p className="text-xs text-gray-400">습관이 없습니다</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">습관이 없습니다</p>
               )}
             </div>
           </div>

@@ -101,7 +101,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <Header title="캘린더" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
@@ -109,21 +109,19 @@ export default function CalendarPage() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setViewMode('week')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              viewMode === 'week'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'week'
                 ? 'bg-secondary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
           >
             주간
           </button>
           <button
             onClick={() => setViewMode('month')}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              viewMode === 'month'
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'month'
                 ? 'bg-secondary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
           >
             월간
           </button>
@@ -131,23 +129,23 @@ export default function CalendarPage() {
 
         {viewMode === 'month' ? (
           /* Month View */
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-4">
-              <button onClick={goToPrevMonth} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={goToPrevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M15 18l-6-6 6-6" />
                 </svg>
               </button>
               <div className="text-center">
-                <h2 className="font-semibold">
+                <h2 className="font-semibold dark:text-white">
                   {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
                 </h2>
                 <button onClick={goToToday} className="text-xs text-primary hover:underline">
                   오늘로 이동
                 </button>
               </div>
-              <button onClick={goToNextMonth} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={goToNextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M9 18l6-6-6-6" />
                 </svg>
@@ -159,9 +157,8 @@ export default function CalendarPage() {
               {dayLabels.map((day, i) => (
                 <div
                   key={day}
-                  className={`text-center text-xs font-medium py-2 ${
-                    i === 0 ? 'text-error' : i === 6 ? 'text-secondary' : 'text-gray-500'
-                  }`}
+                  className={`text-center text-xs font-medium py-2 ${i === 0 ? 'text-error' : i === 6 ? 'text-secondary' : 'text-gray-500'
+                    }`}
                 >
                   {day}
                 </div>
@@ -183,24 +180,22 @@ export default function CalendarPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedDate(date)}
-                    className={`aspect-square p-1 rounded-lg transition-colors relative ${
-                      isSelected
+                    className={`aspect-square p-1 rounded-lg transition-colors relative ${isSelected
                         ? 'bg-primary text-white'
                         : isToday
-                        ? 'bg-primary/10 text-primary'
-                        : isCurrentMonth
-                        ? 'hover:bg-gray-100'
-                        : 'text-gray-300'
-                    }`}
+                          ? 'bg-primary/10 text-primary'
+                          : isCurrentMonth
+                            ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                            : 'text-gray-300 dark:text-gray-600'
+                      }`}
                   >
                     <span
-                      className={`text-sm ${
-                        !isSelected && dayOfWeek === 0
+                      className={`text-sm ${!isSelected && dayOfWeek === 0
                           ? 'text-error'
                           : !isSelected && dayOfWeek === 6
-                          ? 'text-secondary'
-                          : ''
-                      }`}
+                            ? 'text-secondary'
+                            : ''
+                        }`}
                     >
                       {date.getDate()}
                     </span>
@@ -222,7 +217,7 @@ export default function CalendarPage() {
           </div>
         ) : (
           /* Week View */
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
             <div className="grid grid-cols-7 gap-2 mb-4">
               {weekDays.map((date) => {
                 const dateStr = date.toISOString().split('T')[0]
@@ -234,24 +229,22 @@ export default function CalendarPage() {
                   <button
                     key={dateStr}
                     onClick={() => setSelectedDate(date)}
-                    className={`flex flex-col items-center p-2 rounded-xl transition-colors ${
-                      isSelected
+                    className={`flex flex-col items-center p-2 rounded-xl transition-colors ${isSelected
                         ? 'bg-primary text-white'
                         : isToday
-                        ? 'bg-primary/10'
-                        : 'hover:bg-gray-100'
-                    }`}
+                          ? 'bg-primary/10'
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
                   >
                     <span
-                      className={`text-xs mb-1 ${
-                        !isSelected && dayOfWeek === 0
+                      className={`text-xs mb-1 ${!isSelected && dayOfWeek === 0
                           ? 'text-error'
                           : !isSelected && dayOfWeek === 6
-                          ? 'text-secondary'
-                          : isSelected
-                          ? 'text-white/80'
-                          : 'text-gray-500'
-                      }`}
+                            ? 'text-secondary'
+                            : isSelected
+                              ? 'text-white/80'
+                              : 'text-gray-500'
+                        }`}
                     >
                       {dayLabels[dayOfWeek]}
                     </span>
@@ -265,7 +258,7 @@ export default function CalendarPage() {
 
         {/* Selected Date Events */}
         <div className="mt-4">
-          <h3 className="font-medium mb-3 flex items-center gap-2">
+          <h3 className="font-medium mb-3 flex items-center gap-2 dark:text-white">
             <span>📅</span>
             {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
             {selectedDate.toISOString().split('T')[0] === todayStr && (
@@ -276,22 +269,22 @@ export default function CalendarPage() {
           {/* Events */}
           <div className="space-y-2">
             {getEventsForDate(selectedDate).length === 0 ? (
-              <p className="text-sm text-gray-400 py-4 text-center bg-white rounded-xl">
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center bg-white dark:bg-gray-800 rounded-xl">
                 일정이 없습니다
               </p>
             ) : (
               getEventsForDate(selectedDate).map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm"
+                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
                 >
                   <div
                     className="w-1 h-12 rounded-full"
                     style={{ backgroundColor: event.color }}
                   />
                   <div className="flex-1">
-                    <p className="font-medium">{event.title}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium dark:text-white">{event.title}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {event.start_at.split('T')[1].slice(0, 5)} -{' '}
                       {event.end_at.split('T')[1].slice(0, 5)}
                     </p>
@@ -304,19 +297,18 @@ export default function CalendarPage() {
           {/* Todos */}
           {getTodosForDate(selectedDate).length > 0 && (
             <div className="mt-4">
-              <h4 className="text-sm font-medium text-gray-500 mb-2">할 일</h4>
+              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">할 일</h4>
               <div className="space-y-2">
                 {getTodosForDate(selectedDate).map((todo) => (
                   <div
                     key={todo.id}
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm"
+                    className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
                   >
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                        todo.is_completed
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${todo.is_completed
                           ? 'bg-success border-success'
                           : 'border-gray-300'
-                      }`}
+                        }`}
                     >
                       {todo.is_completed && (
                         <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
@@ -324,7 +316,7 @@ export default function CalendarPage() {
                         </svg>
                       )}
                     </div>
-                    <span className={todo.is_completed ? 'line-through text-gray-400' : ''}>
+                    <span className={`dark:text-white ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
                       {todo.title}
                     </span>
                   </div>

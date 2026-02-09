@@ -54,23 +54,23 @@ export default function HabitsPage() {
     : 0
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <Header title="습관" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Today's Progress */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold">오늘의 진행률</h2>
+            <h2 className="font-semibold dark:text-white">오늘의 진행률</h2>
             <span className="text-2xl font-bold text-primary">{completionRate}%</span>
           </div>
-          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
               style={{ width: `${completionRate}%` }}
             />
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             {progress.completed}/{progress.total} 완료
           </p>
         </div>
@@ -101,7 +101,7 @@ export default function HabitsPage() {
           {habitsWithStreak.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-4xl mb-2">⭐</p>
-              <p className="text-gray-500">습관을 추가해보세요</p>
+              <p className="text-gray-500 dark:text-gray-400">습관을 추가해보세요</p>
               <button
                 onClick={() => setModalOpen(true)}
                 className="mt-4 px-4 py-2 bg-success text-white rounded-lg text-sm font-medium"
@@ -111,15 +111,15 @@ export default function HabitsPage() {
             </div>
           ) : (
             habitsWithStreak.map((habit) => (
-              <div key={habit.id} className="bg-white p-4 rounded-xl shadow-sm">
+              <div key={habit.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     {/* Toggle Button */}
                     <button
                       onClick={() => handleToggleHabit(habit.id)}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${habit.todayCompleted
-                          ? 'scale-110'
-                          : 'border-2 hover:scale-105'
+                        ? 'scale-110'
+                        : 'border-2 hover:scale-105'
                         }`}
                       style={{
                         backgroundColor: habit.todayCompleted ? habit.color : 'transparent',
@@ -135,8 +135,8 @@ export default function HabitsPage() {
                       )}
                     </button>
                     <div>
-                      <p className="font-medium">{habit.title}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium dark:text-white">{habit.title}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {habit.frequency === 'daily' ? '매일' : '매주'} · 목표 {habit.target_count}회
                       </p>
                     </div>
@@ -151,7 +151,7 @@ export default function HabitsPage() {
                 </div>
 
                 {/* Weekly Progress */}
-                <div className="flex justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="flex justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                   {last7Days.map((date) => {
                     const completed = getHabitLogForDate(habit.id, date)
                     const isToday = date === todayStr
@@ -163,10 +163,10 @@ export default function HabitsPage() {
                         </span>
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${completed
-                              ? 'text-white'
-                              : isToday
-                                ? 'border-2 border-dashed'
-                                : 'bg-gray-100'
+                            ? 'text-white'
+                            : isToday
+                              ? 'border-2 border-dashed'
+                              : 'bg-gray-100 dark:bg-gray-700'
                             }`}
                           style={{
                             backgroundColor: completed ? habit.color : undefined,

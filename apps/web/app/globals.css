@@ -90,6 +90,12 @@
   }
 }
 
+/* Dark mode overrides */
+.dark {
+  --color-background: #1a2634;
+  --color-foreground: #f8f9fa;
+}
+
 body {
   color: var(--color-foreground);
   background: var(--color-background);
@@ -97,6 +103,7 @@ body {
     'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Utility classes */

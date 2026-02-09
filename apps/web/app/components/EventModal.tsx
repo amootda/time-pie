@@ -66,25 +66,25 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">제목</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">제목</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="일정 제목을 입력하세요"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             autoFocus
           />
         </div>
 
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">날짜</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">날짜</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           />
         </div>
 
@@ -97,7 +97,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
             onChange={(e) => setIsAllDay(e.target.checked)}
             className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
           />
-          <label htmlFor="allDay" className="text-sm font-medium text-gray-700">
+          <label htmlFor="allDay" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             하루 종일
           </label>
         </div>
@@ -106,21 +106,21 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
         {!isAllDay && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">시작</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">시작</label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">종료</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">종료</label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
           </div>
@@ -128,18 +128,17 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
 
         {/* Color */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">카테고리</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">카테고리</label>
           <div className="flex flex-wrap gap-2">
             {COLORS.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 onClick={() => setColor(c.value)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  color === c.value
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${color === c.value
                     ? 'ring-2 ring-offset-2 ring-gray-400'
                     : 'hover:opacity-80'
-                }`}
+                  }`}
                 style={{ backgroundColor: c.value, color: 'white' }}
               >
                 {c.name}
@@ -150,13 +149,13 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">메모 (선택)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">메모 (선택)</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="메모를 입력하세요"
             rows={2}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
           />
         </div>
 

@@ -69,15 +69,15 @@ export default function TodosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
       <Header title="투두" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-white p-3 rounded-xl text-center shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-secondary">{stats.total}</p>
-            <p className="text-xs text-gray-500">전체</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">전체</p>
           </div>
           <div className="bg-white p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-success">{stats.completed}</p>
@@ -97,7 +97,7 @@ export default function TodosPage() {
               onClick={() => setFilter(f.value)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === f.value
                 ? 'bg-secondary text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
             >
               {f.label}
@@ -110,7 +110,7 @@ export default function TodosPage() {
           {displayTodos.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-4xl mb-2">✅</p>
-              <p className="text-gray-500">할 일이 없습니다</p>
+              <p className="text-gray-500 dark:text-gray-400">할 일이 없습니다</p>
               <button
                 onClick={() => setModalOpen(true)}
                 className="mt-4 px-4 py-2 bg-secondary text-white rounded-lg text-sm font-medium"
@@ -122,7 +122,7 @@ export default function TodosPage() {
             displayTodos.map((todo) => (
               <div
                 key={todo.id}
-                className={`bg-white p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
+                className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
                   }`}
               >
                 <div className="flex items-start gap-3">
@@ -162,20 +162,20 @@ export default function TodosPage() {
                       )}
                     </div>
                     <p
-                      className={`font-medium ${todo.is_completed ? 'line-through text-gray-400' : ''
+                      className={`font-medium dark:text-white ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
                         }`}
                     >
                       {todo.title}
                     </p>
                     {todo.description && (
-                      <p className="text-sm text-gray-500 mt-1">{todo.description}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{todo.description}</p>
                     )}
                   </button>
 
                   {/* Delete */}
                   <button
                     onClick={() => removeTodo(todo.id)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   >
                     <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                       <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
