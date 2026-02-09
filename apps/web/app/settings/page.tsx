@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Header, BottomNav, LoginButton } from '../components'
 import { useAuth } from '../providers'
 import { getUserSettings, upsertUserSettings } from '@time-pie/supabase'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { user, loading, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -85,6 +87,7 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     try {
       await signOut()
+      router.push('/login')
     } catch (error) {
       console.error('Sign out failed:', error)
     }
