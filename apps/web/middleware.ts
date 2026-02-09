@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = ['/login', '/auth/callback']
 
 // 정적 파일 및 Next.js 내부 경로
-const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/', '/assets/', '/manifest.json', '/sw.js', '/workbox-']
+const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/', '/assets/', '/manifest.json', '/sw.js', '/workbox-', '/_vercel/']
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
