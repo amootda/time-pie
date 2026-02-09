@@ -42,11 +42,11 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
   }
 
   return (
-    <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+    <header className="sticky top-0 z-10 bg-card border-b border-border">
       <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
         <h1 className="text-xl font-bold text-primary">{title}</h1>
-        <Link href="/settings" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-          <svg className="w-6 h-6 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+        <Link href="/settings" className="p-2 hover:bg-muted rounded-full transition-colors">
+          <svg className="w-6 h-6 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <circle cx="12" cy="12" r="1" />
             <circle cx="19" cy="12" r="1" />
             <circle cx="5" cy="12" r="1" />
@@ -55,16 +55,16 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
       </div>
       {showDate && (
         <div className="flex items-center justify-between px-4 pb-3 max-w-lg mx-auto">
-          <button onClick={goToPrevDay} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-            <svg className="w-5 h-5 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <button onClick={goToPrevDay} className="p-2 hover:bg-muted rounded-full">
+            <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
           <button onClick={goToToday} className="text-sm text-foreground/80 hover:text-primary transition-colors">
             {formattedDate}
           </button>
-          <button onClick={goToNextDay} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-            <svg className="w-5 h-5 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <button onClick={goToNextDay} className="p-2 hover:bg-muted rounded-full">
+            <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>

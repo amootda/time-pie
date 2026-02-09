@@ -94,12 +94,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 dark:bg-gray-900">
+    <div className="min-h-screen bg-background pb-20">
       <Header title="설정" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Profile Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4">
+        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -119,15 +119,15 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg dark:text-white">
+                  <p className="font-semibold text-lg text-foreground">
                     {user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0]}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               </div>
               <button
                 onClick={handleSignOut}
-                className="w-full mt-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="w-full mt-4 py-3 bg-muted text-foreground rounded-xl font-medium hover:opacity-80 transition-colors"
               >
                 로그아웃
               </button>
@@ -139,8 +139,8 @@ export default function SettingsPage() {
                   <span className="text-2xl">👤</span>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg dark:text-white">게스트 사용자</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">로그인하여 데이터를 동기화하세요</p>
+                  <p className="font-semibold text-lg text-foreground">게스트 사용자</p>
+                  <p className="text-sm text-muted-foreground">로그인하여 데이터를 동기화하세요</p>
                 </div>
               </div>
               <LoginButton />
@@ -149,72 +149,71 @@ export default function SettingsPage() {
         </div>
 
         {/* Notifications Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 dark:text-white">
+        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
             <span>🔔</span> 알림 설정
-            {saving && <span className="text-xs text-gray-400">(저장 중...)</span>}
           </h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium dark:text-white">일정 알림</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">일정 시작 전 알림</p>
+                <p className="font-medium text-foreground">일정 알림</p>
+                <p className="text-sm text-muted-foreground">일정 시작 전 알림</p>
               </div>
               <button
                 onClick={() => handleNotificationChange('events')}
                 disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.events ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.events ? 'bg-primary' : 'bg-muted'
                   } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.events ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.events ? 'translate-x-6' : 'translate-x-1'
                     }`}
                 />
               </button>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium dark:text-white">할 일 알림</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">마감일 알림</p>
+                <p className="font-medium text-foreground">할 일 알림</p>
+                <p className="text-sm text-muted-foreground">마감일 알림</p>
               </div>
               <button
                 onClick={() => handleNotificationChange('todos')}
                 disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.todos ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.todos ? 'bg-primary' : 'bg-muted'
                   } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.todos ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.todos ? 'translate-x-6' : 'translate-x-1'
                     }`}
                 />
               </button>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium dark:text-white">습관 리마인더</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">습관 완료 리마인더</p>
+                <p className="font-medium text-foreground">습관 리마인더</p>
+                <p className="text-sm text-muted-foreground">습관 완료 리마인더</p>
               </div>
               <button
                 onClick={() => handleNotificationChange('habits')}
                 disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.habits ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.habits ? 'bg-primary' : 'bg-muted'
                   } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications.habits ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.habits ? 'translate-x-6' : 'translate-x-1'
                     }`}
                 />
               </button>
             </div>
           </div>
           {!user && (
-            <p className="text-xs text-gray-400 mt-3">로그인하면 설정이 저장됩니다</p>
+            <p className="text-xs text-muted-foreground mt-3">로그인하면 설정이 저장됩니다</p>
           )}
         </div>
 
         {/* Theme Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 dark:text-white">
+        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
             <span>🎨</span> 테마
           </h3>
           <div className="grid grid-cols-3 gap-2">
@@ -227,8 +226,8 @@ export default function SettingsPage() {
                 key={option.value}
                 onClick={() => handleThemeChange(option.value as 'light' | 'dark' | 'system')}
                 className={`py-3 rounded-xl text-sm font-medium transition-colors ${theme === option.value
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-primary text-white'
+                  : 'bg-muted text-muted-foreground hover:opacity-80'
                   }`}
               >
                 <span className="block text-lg mb-1">{option.icon}</span>
@@ -239,20 +238,20 @@ export default function SettingsPage() {
         </div>
 
         {/* Data Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 dark:text-white">
+        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
             <span>💾</span> 데이터
           </h3>
           <div className="space-y-2">
-            <button className="w-full py-3 text-left px-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-between dark:text-white">
+            <button className="w-full py-3 text-left px-4 bg-muted rounded-xl hover:opacity-80 transition-colors flex items-center justify-between text-foreground">
               <span>데이터 내보내기</span>
-              <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
-            <button className="w-full py-3 text-left px-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-between dark:text-white">
+            <button className="w-full py-3 text-left px-4 bg-muted rounded-xl hover:opacity-80 transition-colors flex items-center justify-between text-foreground">
               <span>데이터 가져오기</span>
-              <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </button>
@@ -266,17 +265,17 @@ export default function SettingsPage() {
         </div>
 
         {/* About Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 dark:text-white">
+        <div className="bg-card rounded-xl shadow-sm p-4">
+          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
             <span>ℹ️</span> 정보
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">버전</span>
-              <span className="font-medium dark:text-white">1.0.0 (MVP)</span>
+              <span className="text-muted-foreground">버전</span>
+              <span className="font-medium text-foreground">1.0.0 (MVP)</span>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-2">
+          <div className="mt-4 pt-4 border-t border-border space-y-2">
             <a href="#" className="block text-secondary hover:underline">이용약관</a>
             <a href="#" className="block text-secondary hover:underline">개인정보처리방침</a>
             <a href="#" className="block text-secondary hover:underline">피드백 보내기</a>

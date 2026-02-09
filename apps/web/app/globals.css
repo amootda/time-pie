@@ -1,5 +1,29 @@
 @import 'tailwindcss';
 
+/* Tailwind v4: Enable class-based dark mode for next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light/Dark Theme CSS Variables */
+:root {
+  --background: #F8F9FA;
+  --foreground: #2D3436;
+  --border: #E5E7EB;
+  --card: #FFFFFF;
+  --card-foreground: #2D3436;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+}
+
+.dark {
+  --background: #111827;
+  --foreground: #F9FAFB;
+  --border: #374151;
+  --card: #1F2937;
+  --card-foreground: #F9FAFB;
+  --muted: #374151;
+  --muted-foreground: #9CA3AF;
+}
+
 /* Custom Theme */
 @theme {
   /* Primary - 따뜻한 주황 */
@@ -33,9 +57,14 @@
   --color-warning: #F39C12;
   --color-error: #E74C3C;
 
-  /* Neutrals */
-  --color-background: #F8F9FA;
-  --color-foreground: #2D3436;
+  /* Neutrals - reference the CSS variables */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
   /* Animations */
   --animate-slide-up: slide-up 0.3s ease-out;
@@ -49,6 +78,7 @@
     opacity: 0;
     transform: translateY(100%);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -59,6 +89,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -69,12 +100,15 @@
     opacity: 0;
     transform: scale(0.3);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   70% {
     transform: scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -82,23 +116,21 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
 }
 
-/* Dark mode overrides */
-.dark {
-  --color-background: #1a2634;
-  --color-foreground: #f8f9fa;
-}
 
 body {
-  color: var(--color-foreground);
-  background: var(--color-background);
+  color: var(--foreground);
+  background: var(--background);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -159,6 +191,7 @@ body {
 
 /* Touch feedback */
 @media (hover: none) {
+
   button:active,
   a:active {
     opacity: 0.7;
