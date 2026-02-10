@@ -18,7 +18,7 @@ export function FloatingAddButton({ onAddEvent, onAddTodo, onAddHabit }: Floatin
   ]
 
   return (
-    <div className="fixed bottom-20 right-4 z-20">
+    <div className="fixed right-4 z-20 bottom-[calc(5rem+env(safe-area-inset-bottom))]">
       {/* Action buttons */}
       <div
         className={`flex flex-col-reverse gap-2 mb-2 transition-all duration-200 ${
