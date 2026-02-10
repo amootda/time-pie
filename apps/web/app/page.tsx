@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { PieChart } from '@time-pie/ui'
 import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal } from './components'
-import type { EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
+import type { Event, EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
 import { useAuth } from './providers'
 
 export default function HomePage() {
@@ -17,6 +17,7 @@ export default function HomePage() {
   const {
     isLoading,
     createEvent,
+    updateEvent,
     createTodo,
     createHabit,
     logHabit,
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [todoModalOpen, setTodoModalOpen] = useState(false)
   const [habitModalOpen, setHabitModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'pie' | 'list'>('pie')
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined)
 
   const todayStr = toDateString(selectedDate)
   const todayTodos = todos.filter((t) => t.due_date === todayStr || !t.due_date)
@@ -47,12 +49,12 @@ export default function HomePage() {
   }))
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
-    try {
+    if (selectedEvent) {
+      await updateEvent(selectedEvent.id, event)
+    } else {
       await createEvent(event)
-      setEventModalOpen(false)
-    } catch (error) {
-      console.error('Failed to create event:', error)
     }
+    setSelectedEvent(undefined)
   }
 
   const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
@@ -148,10 +150,16 @@ export default function HomePage() {
               size={300}
               showLabels
               showCurrentTime
-              onEventClick={(event) => console.log('Event clicked:', event)}
+              onEventClick={(pieEvent) => {
+                const event = todayEvents.find((e) => e.id === pieEvent.id)
+                if (event) {
+                  setSelectedEvent(event)
+                  setEventModalOpen(true)
+                }
+              }}
               onTimeSlotClick={(hour) => {
-                console.log('Time slot clicked:', hour)
                 setEventModalOpen(true)
+                // Optional: Pre-fill time based on clicked hour
               }}
             />
 
@@ -307,9 +315,13 @@ export default function HomePage() {
       {/* Modals */}
       <EventModal
         isOpen={eventModalOpen}
-        onClose={() => setEventModalOpen(false)}
+        onClose={() => {
+          setEventModalOpen(false)
+          setSelectedEvent(undefined)
+        }}
         onSave={handleAddEvent}
         selectedDate={selectedDate}
+        initialData={selectedEvent}
       />
       <TodoModal
         isOpen={todoModalOpen}
