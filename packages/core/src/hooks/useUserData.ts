@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react'
 import { useEventStore } from '../stores/eventStore'
 import { useTodoStore } from '../stores/todoStore'
 import { useHabitStore } from '../stores/habitStore'
+import { toDateString } from '../utils/date'
 import {
     getEventsByDate,
     createEvent as createEventApi,
@@ -102,8 +103,8 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
 
                 const logs = await getHabitLogs(
                     habits.map((h) => h.id),
-                    thirtyDaysAgo.toISOString().split('T')[0],
-                    today.toISOString().split('T')[0]
+                    toDateString(thirtyDaysAgo),
+                    toDateString(today)
                 )
                 setLogs(logs)
             }

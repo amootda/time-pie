@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 /**
  * 날짜를 한국어 형식으로 포맷
  * @example formatDate(new Date()) // "2024년 1월 15일"
@@ -67,8 +69,8 @@ export function isToday(date: Date): boolean {
 }
 
 /**
- * 날짜를 YYYY-MM-DD 형식으로 변환
+ * 날짜를 YYYY-MM-DD 형식으로 변환 (로컬 타임존 기준)
  */
-export function toDateString(date: Date): string {
-  return date.toISOString().split('T')[0]
+export function toDateString(date: Date = new Date()): string {
+  return dayjs(date).format('YYYY-MM-DD')
 }

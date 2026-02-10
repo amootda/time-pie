@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AddModal } from './AddModal'
+import { toDateString } from '@time-pie/core'
 import type { Event } from '@time-pie/supabase'
 
 interface EventModalProps {
@@ -23,7 +24,7 @@ const COLORS = [
 
 export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate }: EventModalProps) {
   const defaultDate = selectedDate || new Date()
-  const dateStr = defaultDate.toISOString().split('T')[0]
+  const dateStr = toDateString(defaultDate)
 
   const [title, setTitle] = useState(initialData?.title || '')
   const [description, setDescription] = useState(initialData?.description || '')

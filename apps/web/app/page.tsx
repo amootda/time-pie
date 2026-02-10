@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { PieChart } from '@time-pie/ui'
-import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal } from './components'
 import type { EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
 import { useAuth } from './providers'
@@ -28,7 +28,7 @@ export default function HomePage() {
   const [habitModalOpen, setHabitModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'pie' | 'list'>('pie')
 
-  const todayStr = selectedDate.toISOString().split('T')[0]
+  const todayStr = toDateString(selectedDate)
   const todayTodos = todos.filter((t) => t.due_date === todayStr || !t.due_date)
   const completedTodos = todayTodos.filter((t) => t.is_completed).length
   const habitsWithStreak = getHabitsWithStreak()

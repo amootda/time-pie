@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Todo } from '@time-pie/supabase'
+import { toDateString } from '../utils/date'
 
 type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
@@ -71,7 +72,7 @@ export const useTodoStore = create<TodoState>((set, get) => ({
 
   filteredTodos: () => {
     const { todos, filter } = get()
-    const today = new Date().toISOString().split('T')[0]
+    const today = toDateString()
 
     switch (filter) {
       case 'today':

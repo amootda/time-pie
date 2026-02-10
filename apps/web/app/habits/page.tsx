@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useHabitStore, useUserData } from '@time-pie/core'
+import { useHabitStore, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
 import { useAuth } from '../providers'
 import type { HabitInsert } from '@time-pie/supabase'
@@ -12,7 +12,7 @@ export default function HabitsPage() {
   const { createHabit, logHabit } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = toDateString()
   const habitsWithStreak = getHabitsWithStreak()
   const progress = getTodayProgress()
 
@@ -20,7 +20,7 @@ export default function HabitsPage() {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date()
     date.setDate(date.getDate() - (6 - i))
-    return date.toISOString().split('T')[0]
+    return toDateString(date)
   })
 
   const dayLabels = ['일', '월', '화', '수', '목', '금', '토']

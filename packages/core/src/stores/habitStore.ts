@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Habit, HabitLog } from '@time-pie/supabase'
+import { toDateString } from '../utils/date'
 
 interface HabitWithStreak extends Habit {
   streak: number
@@ -88,7 +89,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
   getHabitsWithStreak: () => {
     const { habits, logs } = get()
-    const today = new Date().toISOString().split('T')[0]
+    const today = toDateString()
 
     return habits
       .filter((h) => h.is_active)
@@ -102,7 +103,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         const currentDate = new Date()
 
         for (let i = 0; i < 365; i++) {
-          const dateStr = currentDate.toISOString().split('T')[0]
+          const dateStr = toDateString(currentDate)
           const log = habitLogs.find((l) => l.date === dateStr)
 
           if (log && log.completed_count >= habit.target_count) {

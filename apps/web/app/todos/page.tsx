@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useTodoStore, useUserData } from '@time-pie/core'
+import { useTodoStore, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, TodoModal } from '../components'
 import { useAuth } from '../providers'
 import type { Todo, TodoInsert } from '@time-pie/supabase'
@@ -28,7 +28,7 @@ export default function TodosPage() {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
   const displayTodos = filteredTodos()
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = toDateString()
 
   const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
     try {

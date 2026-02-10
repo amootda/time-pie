@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useEventStore, useTodoStore, useHabitStore } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
 import type { Event } from '@time-pie/supabase'
 import Link from 'next/link'
@@ -65,15 +65,15 @@ export default function CalendarPage() {
   }, [selectedDate])
 
   const dayLabels = ['일', '월', '화', '수', '목', '금', '토']
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = toDateString()
 
   const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toDateString(date)
     return events.filter((e) => e.start_at.startsWith(dateStr))
   }
 
   const getTodosForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = toDateString(date)
     return todos.filter((t) => t.due_date === dateStr)
   }
 
@@ -168,10 +168,10 @@ export default function CalendarPage() {
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((date, index) => {
-                const dateStr = date.toISOString().split('T')[0]
+                const dateStr = toDateString(date)
                 const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
                 const isToday = dateStr === todayStr
-                const isSelected = dateStr === selectedDate.toISOString().split('T')[0]
+                const isSelected = dateStr === toDateString(selectedDate)
                 const dayEvents = getEventsForDate(date)
                 const dayTodos = getTodosForDate(date)
                 const dayOfWeek = date.getDay()
@@ -220,9 +220,9 @@ export default function CalendarPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
             <div className="grid grid-cols-7 gap-2 mb-4">
               {weekDays.map((date) => {
-                const dateStr = date.toISOString().split('T')[0]
+                const dateStr = toDateString(date)
                 const isToday = dateStr === todayStr
-                const isSelected = dateStr === selectedDate.toISOString().split('T')[0]
+                const isSelected = dateStr === toDateString(selectedDate)
                 const dayOfWeek = date.getDay()
 
                 return (
@@ -261,7 +261,7 @@ export default function CalendarPage() {
           <h3 className="font-medium mb-3 flex items-center gap-2 dark:text-white">
             <span>📅</span>
             {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
-            {selectedDate.toISOString().split('T')[0] === todayStr && (
+            {toDateString(selectedDate) === todayStr && (
               <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">오늘</span>
             )}
           </h3>

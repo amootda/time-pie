@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { supabase } from '../client'
 import type { Habit, HabitInsert, HabitUpdate, HabitLog } from '../types'
 
@@ -115,7 +116,7 @@ export async function getHabitStreak(habitId: string): Promise<number> {
     .from('habit_logs')
     .select('*')
     .eq('habit_id', habitId)
-    .gte('date', startDate.toISOString().split('T')[0])
+    .gte('date', dayjs(startDate).format('YYYY-MM-DD'))
     .order('date', { ascending: false })
 
   if (error) throw error
@@ -137,7 +138,7 @@ export async function getHabitStreak(habitId: string): Promise<number> {
   const logMap = new Map((data as HabitLog[]).map((l) => [l.date, l]))
 
   for (let i = 0; i < 365; i++) {
-    const dateStr = currentDate.toISOString().split('T')[0]
+    const dateStr = dayjs(currentDate).format('YYYY-MM-DD')
     const log = logMap.get(dateStr)
 
     if (log && log.completed_count >= targetCount) {
