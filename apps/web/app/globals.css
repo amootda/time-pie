@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source "../../../packages/ui/src";
 
 /* Tailwind v4: Enable class-based dark mode for next-themes */
 @custom-variant dark (&:where(.dark, .dark *));
