@@ -6,14 +6,15 @@ export async function getEventsByDate(
   userId: string,
   date: Date
 ): Promise<Event[]> {
-  const dateStr = dayjs(date).format('YYYY-MM-DD')
+  const startOfDay = dayjs(date).startOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
+  const endOfDay = dayjs(date).endOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
 
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .eq('user_id', userId)
-    .gte('start_at', `${dateStr}T00:00:00`)
-    .lte('start_at', `${dateStr}T23:59:59`)
+    .gte('start_at', startOfDay)
+    .lte('start_at', endOfDay)
     .order('start_at', { ascending: true })
 
   if (error) throw error
@@ -25,15 +26,15 @@ export async function getEventsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<Event[]> {
-  const startStr = dayjs(startDate).format('YYYY-MM-DD')
-  const endStr = dayjs(endDate).format('YYYY-MM-DD')
+  const start = dayjs(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
+  const end = dayjs(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
 
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .eq('user_id', userId)
-    .gte('start_at', `${startStr}T00:00:00`)
-    .lte('end_at', `${endStr}T23:59:59`)
+    .gte('start_at', start)
+    .lte('end_at', end)
     .order('start_at', { ascending: true })
 
   if (error) throw error
