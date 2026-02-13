@@ -69,8 +69,8 @@ export async function deleteHabit(id: string): Promise<void> {
 export async function logHabitCompletion(
   habitId: string,
   date: string
-): Promise<HabitLog> {
-  // upsert: 이미 있으면 completed_count 증가, 없으면 생성
+): Promise<HabitLog | null> {
+  // 토글: 이미 있으면 삭제(미완료), 없으면 생성(완료)
   const { data: existing } = await supabase
     .from('habit_logs')
     .select('*')
@@ -79,15 +79,13 @@ export async function logHabitCompletion(
     .single()
 
   if (existing) {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('habit_logs')
-      .update({ completed_count: existing.completed_count + 1 })
+      .delete()
       .eq('id', existing.id)
-      .select()
-      .single()
 
     if (error) throw error
-    return data as HabitLog
+    return null
   }
 
   const { data, error } = await supabase

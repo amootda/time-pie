@@ -5,6 +5,7 @@ export interface Event {
   end_at: string
   color: string
   category?: string
+  event_type?: 'fixed' | 'flexible' | 'recurring'
 }
 
 export interface TimeSlice {
@@ -13,6 +14,7 @@ export interface TimeSlice {
   event?: Event
   color: string
   isEmpty: boolean
+  eventType?: 'fixed' | 'flexible' | 'recurring'
 }
 
 export interface PieChartProps {

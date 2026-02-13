@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { supabase } from '../client'
 import type { Event, EventInsert, EventUpdate } from '../types'
 
@@ -5,18 +6,15 @@ export async function getEventsByDate(
   userId: string,
   date: Date
 ): Promise<Event[]> {
-  const startOfDay = new Date(date)
-  startOfDay.setHours(0, 0, 0, 0)
-
-  const endOfDay = new Date(date)
-  endOfDay.setHours(23, 59, 59, 999)
+  const startOfDay = dayjs(date).startOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
+  const endOfDay = dayjs(date).endOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
 
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .eq('user_id', userId)
-    .gte('start_at', startOfDay.toISOString())
-    .lte('start_at', endOfDay.toISOString())
+    .gte('start_at', startOfDay)
+    .lte('start_at', endOfDay)
     .order('start_at', { ascending: true })
 
   if (error) throw error
@@ -28,12 +26,15 @@ export async function getEventsByDateRange(
   startDate: Date,
   endDate: Date
 ): Promise<Event[]> {
+  const start = dayjs(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
+  const end = dayjs(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
+
   const { data, error } = await supabase
     .from('events')
     .select('*')
     .eq('user_id', userId)
-    .gte('start_at', startDate.toISOString())
-    .lte('end_at', endDate.toISOString())
+    .gte('start_at', start)
+    .lte('end_at', end)
     .order('start_at', { ascending: true })
 
   if (error) throw error

@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { PieChart } from '@time-pie/ui'
-import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString } from '@time-pie/core'
-import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal } from './components'
-import type { EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
+import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString, useExecutionStore, useSuggestionStore } from '@time-pie/core'
+import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal, ExecutionTimer } from './components'
+import type { Event, EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
 import { useAuth } from './providers'
 
 export default function HomePage() {
@@ -13,20 +13,29 @@ export default function HomePage() {
   const { events, selectedDate, setSelectedDate } = useEventStore()
   const { todos, toggleComplete } = useTodoStore()
   const { habits, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+  const { activeExecution } = useExecutionStore()
+  const topSuggestion = useSuggestionStore((s) => s.getTopSuggestion())
+  const unreadCount = useSuggestionStore((s) => s.getUnreadCount())
 
   const {
     isLoading,
     createEvent,
+    updateEvent,
     createTodo,
     createHabit,
     logHabit,
     toggleTodoComplete,
+    startEventExecution,
+    completeEventExecution,
+    skipEventExecution,
+    markSuggestionAsRead,
   } = useUserData(user?.id)
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [todoModalOpen, setTodoModalOpen] = useState(false)
   const [habitModalOpen, setHabitModalOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'pie' | 'list'>('pie')
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined)
 
   const todayStr = toDateString(selectedDate)
   const todayTodos = todos.filter((t) => t.due_date === todayStr || !t.due_date)
@@ -44,15 +53,16 @@ export default function HomePage() {
     start_at: e.start_at,
     end_at: e.end_at,
     color: e.color,
+    event_type: e.event_type,
   }))
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
-    try {
+    if (selectedEvent) {
+      await updateEvent(selectedEvent.id, event)
+    } else {
       await createEvent(event)
-      setEventModalOpen(false)
-    } catch (error) {
-      console.error('Failed to create event:', error)
     }
+    setSelectedEvent(undefined)
   }
 
   const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
@@ -88,6 +98,33 @@ export default function HomePage() {
       await logHabit(habitId, todayStr)
     } catch (error) {
       console.error('Failed to log habit:', error)
+    }
+  }
+
+  const handleStartTracking = async (event: Event) => {
+    if (event.event_type !== 'flexible') return
+    try {
+      await startEventExecution(event.id, event.start_at, event.end_at)
+    } catch (error) {
+      console.error('Failed to start tracking:', error)
+    }
+  }
+
+  const handleStopTracking = async () => {
+    if (!activeExecution) return
+    try {
+      await completeEventExecution(activeExecution.id)
+    } catch (error) {
+      console.error('Failed to stop tracking:', error)
+    }
+  }
+
+  const handleSkipTracking = async () => {
+    if (!activeExecution) return
+    try {
+      await skipEventExecution(activeExecution.id)
+    } catch (error) {
+      console.error('Failed to skip tracking:', error)
     }
   }
 
@@ -148,27 +185,43 @@ export default function HomePage() {
               size={300}
               showLabels
               showCurrentTime
-              onEventClick={(event) => console.log('Event clicked:', event)}
+              onEventClick={(pieEvent) => {
+                const event = todayEvents.find((e) => e.id === pieEvent.id)
+                if (event) {
+                  if (event.event_type === 'flexible' && !activeExecution) {
+                    handleStartTracking(event)
+                  } else {
+                    setSelectedEvent(event)
+                    setEventModalOpen(true)
+                  }
+                }
+              }}
               onTimeSlotClick={(hour) => {
-                console.log('Time slot clicked:', hour)
                 setEventModalOpen(true)
+                // Optional: Pre-fill time based on clicked hour
               }}
             />
 
             {/* Legend */}
             <div className="flex flex-wrap gap-3 mt-4 justify-center">
-              {Array.from(new Set(todayEvents.map((e) => e.color))).map((color) => {
-                const event = todayEvents.find((e) => e.color === color)
-                return (
-                  <div key={color} className="flex items-center gap-1.5">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-xs text-gray-600 dark:text-gray-400">{event?.title}</span>
-                  </div>
-                )
-              })}
+              {todayEvents.map((event) => (
+                <div key={event.id} className="flex items-center gap-1.5">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: event.color }}
+                  />
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{event.title}</span>
+                  {event.event_type && event.event_type !== 'fixed' && (
+                    <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${
+                      event.event_type === 'flexible'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                    }`}>
+                      {event.event_type === 'flexible' ? '유동' : '반복'}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         ) : (
@@ -190,15 +243,60 @@ export default function HomePage() {
                     style={{ backgroundColor: event.color }}
                   />
                   <div className="flex-1">
-                    <p className="font-medium dark:text-white">{event.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium dark:text-white">{event.title}</p>
+                      {event.event_type && event.event_type !== 'fixed' && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                          event.event_type === 'flexible'
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        }`}>
+                          {event.event_type === 'flexible' ? '유동' : '반복'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {event.start_at.split('T')[1].slice(0, 5)} -{' '}
                       {event.end_at.split('T')[1].slice(0, 5)}
                     </p>
                   </div>
+                  {event.event_type === 'flexible' && !activeExecution && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleStartTracking(event)
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                    >
+                      추적
+                    </button>
+                  )}
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* AI Insight */}
+        {topSuggestion && (
+          <div className="mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+            <div className="flex items-start gap-3">
+              <span className="text-lg flex-shrink-0">💡</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                  {topSuggestion.title}
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                  {topSuggestion.description}
+                </p>
+              </div>
+              <button
+                onClick={() => markSuggestionAsRead(topSuggestion.id)}
+                className="text-xs text-blue-500 hover:text-blue-700 flex-shrink-0"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         )}
 
@@ -296,6 +394,16 @@ export default function HomePage() {
         </div>
       </main>
 
+      {/* Execution Timer */}
+      {activeExecution && (
+        <ExecutionTimer
+          eventTitle={todayEvents.find((e) => e.id === activeExecution.event_id)?.title || ''}
+          startTime={new Date(activeExecution.actual_start || activeExecution.planned_start)}
+          onStop={handleStopTracking}
+          onSkip={handleSkipTracking}
+        />
+      )}
+
       <FloatingAddButton
         onAddEvent={() => setEventModalOpen(true)}
         onAddTodo={() => setTodoModalOpen(true)}
@@ -307,9 +415,13 @@ export default function HomePage() {
       {/* Modals */}
       <EventModal
         isOpen={eventModalOpen}
-        onClose={() => setEventModalOpen(false)}
+        onClose={() => {
+          setEventModalOpen(false)
+          setSelectedEvent(undefined)
+        }}
         onSave={handleAddEvent}
         selectedDate={selectedDate}
+        initialData={selectedEvent}
       />
       <TodoModal
         isOpen={todoModalOpen}

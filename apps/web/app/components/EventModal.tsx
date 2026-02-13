@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AddModal } from './AddModal'
 import { toDateString } from '@time-pie/core'
 import type { Event } from '@time-pie/supabase'
@@ -8,7 +8,7 @@ import type { Event } from '@time-pie/supabase'
 interface EventModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
+  onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void> | void
   initialData?: Partial<Event>
   selectedDate?: Date
 }
@@ -33,10 +33,31 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
   const [endTime, setEndTime] = useState(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
   const [color, setColor] = useState(initialData?.color || COLORS[0].value)
   const [isAllDay, setIsAllDay] = useState(initialData?.is_all_day || false)
+  const [eventType, setEventType] = useState<'fixed' | 'flexible' | 'recurring'>(
+    initialData?.event_type || 'fixed'
+  )
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (isOpen) {
+      const defaultDate = selectedDate || new Date()
+      const dateStr = toDateString(defaultDate)
+
+      setTitle(initialData?.title || '')
+      setDescription(initialData?.description || '')
+      setStartDate(initialData?.start_at?.split('T')[0] || dateStr)
+      setStartTime(initialData?.start_at?.split('T')[1]?.slice(0, 5) || '09:00')
+      setEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
+      setColor(initialData?.color || COLORS[0].value)
+      setIsAllDay(initialData?.is_all_day || false)
+      setEventType(initialData?.event_type || 'fixed')
+    }
+  }, [isOpen, initialData, selectedDate])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || isSaving) return
 
     const startAt = isAllDay
       ? `${startDate}T00:00:00`
@@ -45,21 +66,32 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
       ? `${startDate}T23:59:59`
       : `${startDate}T${endTime}:00`
 
-    onSave({
-      title: title.trim(),
-      description: description.trim() || null,
-      start_at: startAt,
-      end_at: endAt,
-      is_all_day: isAllDay,
-      color,
-      category_id: null,
-      reminder_min: 15,
-    })
+    setIsSaving(true)
+    setSaveError(null)
 
-    // Reset form
-    setTitle('')
-    setDescription('')
-    onClose()
+    try {
+      await onSave({
+        title: title.trim(),
+        description: description.trim() || null,
+        start_at: startAt,
+        end_at: endAt,
+        is_all_day: isAllDay,
+        event_type: eventType,
+        color,
+        category_id: null,
+        reminder_min: 15,
+      })
+
+      // Reset form only on success
+      setTitle('')
+      setDescription('')
+      onClose()
+    } catch (error) {
+      console.error('Event save failed:', error)
+      setSaveError(error instanceof Error ? error.message : '저장에 실패했습니다')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -76,6 +108,32 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             autoFocus
           />
+        </div>
+
+        {/* Event Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">일정 유형</label>
+          <div className="flex gap-2">
+            {([
+              { value: 'fixed', label: '고정', desc: '출근, 수업' },
+              { value: 'flexible', label: '유동', desc: '공부, 독서' },
+              { value: 'recurring', label: '반복', desc: '루틴' },
+            ] as const).map((type) => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setEventType(type.value)}
+                className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all border-2 ${
+                  eventType === type.value
+                    ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                }`}
+              >
+                <div>{type.label}</div>
+                <div className="text-xs opacity-60 mt-0.5">{type.desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Date */}
@@ -137,8 +195,8 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
                 type="button"
                 onClick={() => setColor(c.value)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${color === c.value
-                    ? 'ring-2 ring-offset-2 ring-gray-400'
-                    : 'hover:opacity-80'
+                  ? 'ring-2 ring-offset-2 ring-gray-400'
+                  : 'hover:opacity-80'
                   }`}
                 style={{ backgroundColor: c.value, color: 'white' }}
               >
@@ -160,13 +218,20 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
           />
         </div>
 
+        {/* Error */}
+        {saveError && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
+            {saveError}
+          </div>
+        )}
+
         {/* Submit */}
         <button
           type="submit"
-          disabled={!title.trim()}
+          disabled={!title.trim() || isSaving}
           className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
-          저장
+          {isSaving ? '저장 중...' : '저장'}
         </button>
       </form>
     </AddModal>

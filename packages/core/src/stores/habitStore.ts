@@ -61,14 +61,14 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         (l) => l.habit_id === habitId && l.date === date
       )
       if (existingLog) {
+        // 토글: 이미 있으면 삭제 (미완료)
         return {
-          logs: state.logs.map((l) =>
-            l.habit_id === habitId && l.date === date
-              ? { ...l, completed_count: l.completed_count + 1 }
-              : l
+          logs: state.logs.filter(
+            (l) => !(l.habit_id === habitId && l.date === date)
           ),
         }
       }
+      // 없으면 생성 (완료)
       return {
         logs: [
           ...state.logs,
@@ -106,7 +106,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
           const dateStr = toDateString(currentDate)
           const log = habitLogs.find((l) => l.date === dateStr)
 
-          if (log && log.completed_count >= habit.target_count) {
+          if (log) {
             streak++
             currentDate.setDate(currentDate.getDate() - 1)
           } else if (i === 0) {
@@ -122,9 +122,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         return {
           ...habit,
           streak,
-          todayCompleted:
-            todayLog !== undefined &&
-            todayLog.completed_count >= habit.target_count,
+          todayCompleted: todayLog !== undefined,
         }
       })
   },

@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef } from 'react'
 import { useEventStore } from '../stores/eventStore'
 import { useTodoStore } from '../stores/todoStore'
 import { useHabitStore } from '../stores/habitStore'
+import { useExecutionStore } from '../stores/executionStore'
+import { useSuggestionStore } from '../stores/suggestionStore'
 import { toDateString } from '../utils/date'
 import {
     getEventsByDate,
@@ -19,12 +21,22 @@ import {
     updateHabit as updateHabitApi,
     deleteHabit as deleteHabitApi,
     logHabitCompletion as logHabitApi,
+    getExecutionsByDate,
+    createExecution as createExecutionApi,
+    startExecution as startExecutionApi,
+    completeExecution as completeExecutionApi,
+    skipExecution as skipExecutionApi,
+    getSuggestions as getSuggestionsApi,
+    markSuggestionRead as markSuggestionReadApi,
     type Event,
     type Todo,
     type Habit,
     type EventInsert,
     type TodoInsert,
     type HabitInsert,
+    type EventExecution,
+    type EventExecutionInsert,
+    type AISuggestion,
 } from '@time-pie/supabase'
 
 interface UseUserDataReturn {
@@ -40,6 +52,10 @@ interface UseUserDataReturn {
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<Habit>
     removeHabit: (id: string) => Promise<void>
     logHabit: (habitId: string, date: string) => Promise<void>
+    startEventExecution: (eventId: string, plannedStart: string, plannedEnd: string) => Promise<EventExecution>
+    completeEventExecution: (executionId: string) => Promise<EventExecution>
+    skipEventExecution: (executionId: string) => Promise<EventExecution>
+    markSuggestionAsRead: (id: string) => Promise<void>
     refreshData: () => Promise<void>
 }
 
@@ -72,7 +88,19 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
     const setHabitError = useHabitStore((s) => s.setError)
     const habitLoading = useHabitStore((s) => s.isLoading)
 
-    const isLoading = eventLoading || todoLoading || habitLoading
+    const setExecutions = useExecutionStore((s) => s.setExecutions)
+    const addExecution = useExecutionStore((s) => s.addExecution)
+    const updateExecutionStore = useExecutionStore((s) => s.updateExecution)
+    const setActiveExecution = useExecutionStore((s) => s.setActiveExecution)
+    const setExecutionLoading = useExecutionStore((s) => s.setLoading)
+    const executionLoading = useExecutionStore((s) => s.isLoading)
+
+    const setSuggestions = useSuggestionStore((s) => s.setSuggestions)
+    const markReadStore = useSuggestionStore((s) => s.markRead)
+    const setSuggestionLoading = useSuggestionStore((s) => s.setLoading)
+    const suggestionLoading = useSuggestionStore((s) => s.isLoading)
+
+    const isLoading = eventLoading || todoLoading || habitLoading || executionLoading || suggestionLoading
 
     // Use ref to track if initial load has happened
     const initialLoadDone = useRef(false)
@@ -108,6 +136,14 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
                 )
                 setLogs(logs)
             }
+
+            // Load executions for selected date
+            const dateExecs = await getExecutionsByDate(userId, selectedDate)
+            setExecutions(dateExecs)
+
+            // Load suggestions
+            const suggestions = await getSuggestionsApi(userId)
+            setSuggestions(suggestions)
         } catch (error) {
             console.error('Failed to load data:', error)
             setEventError('Failed to load events')
@@ -125,9 +161,13 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
         setTodos,
         setHabits,
         setLogs,
+        setExecutions,
+        setSuggestions,
         setEventLoading,
         setTodoLoading,
         setHabitLoading,
+        setExecutionLoading,
+        setSuggestionLoading,
         setEventError,
         setTodoError,
         setHabitError,
@@ -153,17 +193,23 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
         const loadEvents = async () => {
             try {
                 setEventLoading(true)
-                const events = await getEventsByDate(userId, selectedDate)
+                setExecutionLoading(true)
+                const [events, executions] = await Promise.all([
+                    getEventsByDate(userId, selectedDate),
+                    getExecutionsByDate(userId, selectedDate),
+                ])
                 setEvents(events)
+                setExecutions(executions)
             } catch (error) {
                 console.error('Failed to load events:', error)
             } finally {
                 setEventLoading(false)
+                setExecutionLoading(false)
             }
         }
 
         loadEvents()
-    }, [userId, selectedDate, setEvents, setEventLoading])
+    }, [userId, selectedDate, setEvents, setExecutions, setEventLoading, setExecutionLoading])
 
     // Event CRUD
     const createEvent = useCallback(
@@ -260,10 +306,70 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
 
     const logHabit = useCallback(
         async (habitId: string, date: string): Promise<void> => {
-            await logHabitApi(habitId, date)
+            // 낙관적 업데이트: 스토어 먼저 반영
             logHabitStore(habitId, date)
+            try {
+                await logHabitApi(habitId, date)
+            } catch (error) {
+                // 실패 시 롤백 (토글 되돌리기)
+                logHabitStore(habitId, date)
+                throw error
+            }
         },
         [logHabitStore]
+    )
+
+    // Execution CRUD
+    const startEventExecution = useCallback(
+        async (eventId: string, plannedStart: string, plannedEnd: string): Promise<EventExecution> => {
+            if (!userId) throw new Error('User not authenticated')
+            const dateStr = toDateString(selectedDate)
+            const execution = await createExecutionApi({
+                event_id: eventId,
+                user_id: userId,
+                planned_start: plannedStart,
+                planned_end: plannedEnd,
+                actual_start: new Date().toISOString(),
+                actual_end: null,
+                status: 'in_progress',
+                completion_rate: 0,
+                date: dateStr,
+                notes: null,
+            })
+            addExecution(execution)
+            setActiveExecution(execution)
+            return execution
+        },
+        [userId, selectedDate, addExecution, setActiveExecution]
+    )
+
+    const completeEventExecution = useCallback(
+        async (executionId: string): Promise<EventExecution> => {
+            const updated = await completeExecutionApi(executionId)
+            updateExecutionStore(executionId, updated)
+            setActiveExecution(null)
+            return updated
+        },
+        [updateExecutionStore, setActiveExecution]
+    )
+
+    const skipEventExecution = useCallback(
+        async (executionId: string): Promise<EventExecution> => {
+            const updated = await skipExecutionApi(executionId)
+            updateExecutionStore(executionId, updated)
+            setActiveExecution(null)
+            return updated
+        },
+        [updateExecutionStore, setActiveExecution]
+    )
+
+    // Suggestion actions
+    const markSuggestionAsRead = useCallback(
+        async (id: string): Promise<void> => {
+            await markSuggestionReadApi(id)
+            markReadStore(id)
+        },
+        [markReadStore]
     )
 
     return {
@@ -279,6 +385,10 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
         updateHabit,
         removeHabit,
         logHabit,
+        startEventExecution,
+        completeEventExecution,
+        skipEventExecution,
+        markSuggestionAsRead,
         refreshData,
     }
 }
