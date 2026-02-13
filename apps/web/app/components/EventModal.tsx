@@ -33,6 +33,9 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
   const [endTime, setEndTime] = useState(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
   const [color, setColor] = useState(initialData?.color || COLORS[0].value)
   const [isAllDay, setIsAllDay] = useState(initialData?.is_all_day || false)
+  const [eventType, setEventType] = useState<'fixed' | 'flexible' | 'recurring'>(
+    initialData?.event_type || 'fixed'
+  )
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -48,6 +51,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
       setEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
       setColor(initialData?.color || COLORS[0].value)
       setIsAllDay(initialData?.is_all_day || false)
+      setEventType(initialData?.event_type || 'fixed')
     }
   }, [isOpen, initialData, selectedDate])
 
@@ -72,6 +76,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
         start_at: startAt,
         end_at: endAt,
         is_all_day: isAllDay,
+        event_type: eventType,
         color,
         category_id: null,
         reminder_min: 15,
@@ -103,6 +108,32 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
             className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             autoFocus
           />
+        </div>
+
+        {/* Event Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">일정 유형</label>
+          <div className="flex gap-2">
+            {([
+              { value: 'fixed', label: '고정', desc: '출근, 수업' },
+              { value: 'flexible', label: '유동', desc: '공부, 독서' },
+              { value: 'recurring', label: '반복', desc: '루틴' },
+            ] as const).map((type) => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setEventType(type.value)}
+                className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all border-2 ${
+                  eventType === type.value
+                    ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                }`}
+              >
+                <div>{type.label}</div>
+                <div className="text-xs opacity-60 mt-0.5">{type.desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Date */}

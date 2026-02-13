@@ -89,6 +89,7 @@ export function eventToSlice(event: Event): TimeSlice {
     event,
     color: event.color,
     isEmpty: false,
+    eventType: event.event_type,
   }
 }
 

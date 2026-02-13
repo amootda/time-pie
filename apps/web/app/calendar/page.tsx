@@ -283,7 +283,18 @@ export default function CalendarPage() {
                     style={{ backgroundColor: event.color }}
                   />
                   <div className="flex-1">
-                    <p className="font-medium dark:text-white">{event.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium dark:text-white">{event.title}</p>
+                      {event.event_type && event.event_type !== 'fixed' && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                          event.event_type === 'flexible'
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        }`}>
+                          {event.event_type === 'flexible' ? '유동' : '반복'}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {event.start_at.split('T')[1].slice(0, 5)} -{' '}
                       {event.end_at.split('T')[1].slice(0, 5)}

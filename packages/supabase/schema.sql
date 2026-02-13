@@ -20,11 +20,54 @@ CREATE TABLE IF NOT EXISTS events (
   start_at TIMESTAMPTZ NOT NULL,
   end_at TIMESTAMPTZ NOT NULL,
   is_all_day BOOLEAN NOT NULL DEFAULT false,
+  event_type TEXT NOT NULL DEFAULT 'fixed' CHECK (event_type IN ('fixed', 'flexible', 'recurring')),
   color TEXT NOT NULL DEFAULT '#4A90D9',
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   reminder_min INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Recurring Rules (for recurring events)
+CREATE TABLE IF NOT EXISTS recurring_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
+  days_of_week INTEGER[], -- 0=Sun, 1=Mon, ..., 6=Sat (for weekly)
+  interval INTEGER NOT NULL DEFAULT 1,
+  end_date DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Event Executions (tracking actual execution of flexible events)
+CREATE TABLE IF NOT EXISTS event_executions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  planned_start TIMESTAMPTZ NOT NULL,
+  planned_end TIMESTAMPTZ NOT NULL,
+  actual_start TIMESTAMPTZ,
+  actual_end TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'planned' CHECK (status IN ('planned', 'in_progress', 'completed', 'skipped', 'partial')),
+  completion_rate NUMERIC(5,2) DEFAULT 0,
+  date DATE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- AI Suggestions (schedule adjustment recommendations)
+CREATE TABLE IF NOT EXISTS ai_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+  suggestion_type TEXT NOT NULL CHECK (suggestion_type IN ('time_adjustment', 'unrealistic_warning', 'pattern_insight')),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  suggested_data JSONB,
+  is_read BOOLEAN NOT NULL DEFAULT false,
+  is_applied BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Todos
@@ -83,6 +126,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
 -- Enable Row Level Security (RLS)
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recurring_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_executions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
@@ -103,6 +149,56 @@ CREATE POLICY "Users can update own categories" ON categories
   FOR UPDATE USING (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Users can delete own categories" ON categories;
 CREATE POLICY "Users can delete own categories" ON categories
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Recurring rules policies (access through event ownership)
+DROP POLICY IF EXISTS "Users can view own recurring rules" ON recurring_rules;
+CREATE POLICY "Users can view own recurring rules" ON recurring_rules
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM events WHERE events.id = recurring_rules.event_id AND events.user_id = auth.uid())
+  );
+DROP POLICY IF EXISTS "Users can insert own recurring rules" ON recurring_rules;
+CREATE POLICY "Users can insert own recurring rules" ON recurring_rules
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM events WHERE events.id = recurring_rules.event_id AND events.user_id = auth.uid())
+  );
+DROP POLICY IF EXISTS "Users can update own recurring rules" ON recurring_rules;
+CREATE POLICY "Users can update own recurring rules" ON recurring_rules
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM events WHERE events.id = recurring_rules.event_id AND events.user_id = auth.uid())
+  );
+DROP POLICY IF EXISTS "Users can delete own recurring rules" ON recurring_rules;
+CREATE POLICY "Users can delete own recurring rules" ON recurring_rules
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM events WHERE events.id = recurring_rules.event_id AND events.user_id = auth.uid())
+  );
+
+-- Event executions policies
+DROP POLICY IF EXISTS "Users can view own executions" ON event_executions;
+CREATE POLICY "Users can view own executions" ON event_executions
+  FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own executions" ON event_executions;
+CREATE POLICY "Users can insert own executions" ON event_executions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own executions" ON event_executions;
+CREATE POLICY "Users can update own executions" ON event_executions
+  FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own executions" ON event_executions;
+CREATE POLICY "Users can delete own executions" ON event_executions
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- AI suggestions policies
+DROP POLICY IF EXISTS "Users can view own suggestions" ON ai_suggestions;
+CREATE POLICY "Users can view own suggestions" ON ai_suggestions
+  FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own suggestions" ON ai_suggestions;
+CREATE POLICY "Users can insert own suggestions" ON ai_suggestions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own suggestions" ON ai_suggestions;
+CREATE POLICY "Users can update own suggestions" ON ai_suggestions
+  FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own suggestions" ON ai_suggestions;
+CREATE POLICY "Users can delete own suggestions" ON ai_suggestions
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Events policies
@@ -185,6 +281,11 @@ CREATE POLICY "Users can delete own settings" ON user_settings
 
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_events_user_date ON events(user_id, start_at);
+CREATE INDEX IF NOT EXISTS idx_events_user_type ON events(user_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_recurring_rules_event ON recurring_rules(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_executions_user_date ON event_executions(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_event_executions_event ON event_executions(event_id);
+CREATE INDEX IF NOT EXISTS idx_ai_suggestions_user ON ai_suggestions(user_id) WHERE is_read = false;
 CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, due_date);
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);

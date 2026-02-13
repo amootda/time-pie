@@ -1,5 +1,9 @@
 // 수동 타입 정의 (Supabase 연결 후 자동 생성으로 대체 가능)
 
+export type EventType = 'fixed' | 'flexible' | 'recurring'
+export type ExecutionStatus = 'planned' | 'in_progress' | 'completed' | 'skipped' | 'partial'
+export type SuggestionType = 'time_adjustment' | 'unrealistic_warning' | 'pattern_insight'
+
 export interface User {
   id: string
   email: string
@@ -26,11 +30,51 @@ export interface Event {
   start_at: string
   end_at: string
   is_all_day: boolean
+  event_type: EventType
   color: string
   category_id: string | null
   reminder_min: number | null
   created_at: string
   updated_at: string
+}
+
+export interface RecurringRule {
+  id: string
+  event_id: string
+  frequency: 'daily' | 'weekly' | 'monthly'
+  days_of_week: number[] | null
+  interval: number
+  end_date: string | null
+  created_at: string
+}
+
+export interface EventExecution {
+  id: string
+  event_id: string
+  user_id: string
+  planned_start: string
+  planned_end: string
+  actual_start: string | null
+  actual_end: string | null
+  status: ExecutionStatus
+  completion_rate: number
+  date: string
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AISuggestion {
+  id: string
+  user_id: string
+  event_id: string | null
+  suggestion_type: SuggestionType
+  title: string
+  description: string
+  suggested_data: Record<string, unknown> | null
+  is_read: boolean
+  is_applied: boolean
+  created_at: string
 }
 
 export interface Todo {
@@ -73,6 +117,13 @@ export interface HabitLog {
 // Insert/Update 타입
 export type EventInsert = Omit<Event, 'id' | 'created_at' | 'updated_at'>
 export type EventUpdate = Partial<Omit<Event, 'id' | 'user_id' | 'created_at'>>
+
+export type RecurringRuleInsert = Omit<RecurringRule, 'id' | 'created_at'>
+
+export type EventExecutionInsert = Omit<EventExecution, 'id' | 'created_at' | 'updated_at'>
+export type EventExecutionUpdate = Partial<Omit<EventExecution, 'id' | 'user_id' | 'created_at'>>
+
+export type AISuggestionInsert = Omit<AISuggestion, 'id' | 'created_at'>
 
 export type TodoInsert = Omit<Todo, 'id' | 'created_at' | 'updated_at'>
 export type TodoUpdate = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at'>>

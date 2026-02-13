@@ -8,9 +8,10 @@ import type { HabitInsert } from '@time-pie/supabase'
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const { habits, logs, getHabitsWithStreak, getTodayProgress } = useHabitStore()
+  const { logs, getHabitsWithStreak, getTodayProgress } = useHabitStore()
   const { createHabit, logHabit } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const todayStr = toDateString()
   const habitsWithStreak = getHabitsWithStreak()
@@ -35,17 +36,19 @@ export default function HabitsPage() {
   }
 
   const handleToggleHabit = async (habitId: string) => {
+    if (togglingId) return
+    setTogglingId(habitId)
     try {
       await logHabit(habitId, todayStr)
     } catch (error) {
       console.error('Failed to log habit:', error)
+    } finally {
+      setTogglingId(null)
     }
   }
 
   const getHabitLogForDate = (habitId: string, date: string) => {
-    const habit = habits.find((h) => h.id === habitId)
-    const log = logs.find((l) => l.habit_id === habitId && l.date === date)
-    return log && habit ? log.completed_count >= habit.target_count : false
+    return logs.some((l) => l.habit_id === habitId && l.date === date)
   }
 
   // Calculate completion rate
@@ -117,10 +120,11 @@ export default function HabitsPage() {
                     {/* Toggle Button */}
                     <button
                       onClick={() => handleToggleHabit(habit.id)}
+                      disabled={togglingId === habit.id}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${habit.todayCompleted
                         ? 'scale-110'
                         : 'border-2 hover:scale-105'
-                        }`}
+                        } ${togglingId === habit.id ? 'opacity-50' : ''}`}
                       style={{
                         backgroundColor: habit.todayCompleted ? habit.color : 'transparent',
                         borderColor: habit.color,
@@ -137,7 +141,7 @@ export default function HabitsPage() {
                     <div>
                       <p className="font-medium dark:text-white">{habit.title}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {habit.frequency === 'daily' ? '매일' : '매주'} · 목표 {habit.target_count}회
+                        {habit.frequency === 'daily' ? '매일' : '매주'}
                       </p>
                     </div>
                   </div>
