@@ -47,17 +47,34 @@ export default function HomePage() {
   const selectedDayOfWeek = selectedDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
 
   const todayEvents = events.filter((e) => {
-    // Anchor events: always show (daily)
-    if (e.event_type === 'anchor') return true
-    // Hard events: show if no repeat_days set (one-time) OR if today's day is in repeat_days
+    // Anchor events: always show for the day
+    if (e.event_type === 'anchor') {
+      return e.start_at.startsWith(todayStr)
+    }
+
+    // Hard events (fixed schedule)
     if (e.event_type === 'hard') {
+      // One-time events: exact date match
       if (!e.repeat_days || e.repeat_days.length === 0) {
         return e.start_at.startsWith(todayStr)
       }
-      return e.repeat_days.includes(selectedDayOfWeek)
+
+      // Recurring events: check repeat_days AND start date
+      const eventStartDate = new Date(e.start_at.split('T')[0])
+      const selectedDateObj = new Date(todayStr)
+
+      // Only show if selected date is on/after event start date
+      if (selectedDateObj >= eventStartDate) {
+        return e.repeat_days.includes(selectedDayOfWeek)
+      }
+      return false
     }
-    // Soft events: always show (goal-based)
-    if (e.event_type === 'soft') return true
+
+    // Soft events: always show for the day
+    if (e.event_type === 'soft') {
+      return e.start_at.startsWith(todayStr)
+    }
+
     // Fallback
     return e.start_at.startsWith(todayStr)
   })

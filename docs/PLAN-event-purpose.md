@@ -10,8 +10,11 @@
 
 `events` 테이블에 `purpose TEXT` 컬럼을 추가하고, 기존 색상 피커를 이모지가 포함된 약속 유형 선택기로 교체.
 
-- `event_type` (고정/유동/반복) = 일정의 **스케줄 방식**
-- `purpose` (업무/미팅/약속/운동 등) = 일정의 **목적** (새로 추가)
+- `event_type` (anchor/hard/soft) = 일정의 **스케줄 방식** (schedule modality)
+  - anchor: 기준점 중심 일정 (reference-based scheduling)
+  - hard: 고정된 시간 일정 (fixed-time scheduling)
+  - soft: 유연한 일정 (flexible scheduling)
+- `purpose` (work/meeting/exercise/...) = 일정의 **목적/카테고리**
 
 ## 변경 파일 및 상세
 

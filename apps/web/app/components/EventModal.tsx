@@ -78,6 +78,20 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
     }
   }, [isOpen, initialData, selectedDate])
 
+  // Validate purpose when scheduleType changes
+  useEffect(() => {
+    if (scheduleType && purpose) {
+      const validPurposes = getPurposesByType(scheduleType)
+      const isPurposeValid = Object.keys(validPurposes).includes(purpose)
+
+      if (!isPurposeValid) {
+        // Reset to first valid purpose or null
+        const firstValidPurpose = Object.keys(validPurposes)[0] as EventPurpose | undefined
+        setPurpose(firstValidPurpose || null)
+      }
+    }
+  }, [scheduleType, purpose])
+
   const toggleRepeatDay = (dayIndex: number) => {
     setRepeatDays(prev =>
       prev.includes(dayIndex)
@@ -102,7 +116,15 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
         const startAt = `${startDate}T${baseTime}:00`
         const startDateTime = new Date(startAt)
         const endDateTime = new Date(startDateTime.getTime() + targetDurationMin * 60 * 1000)
-        const endAt = endDateTime.toISOString().slice(0, 19)
+
+        // Format endAt in local time to match startAt format (YYYY-MM-DDTHH:mm:ss)
+        const endYear = endDateTime.getFullYear()
+        const endMonth = String(endDateTime.getMonth() + 1).padStart(2, '0')
+        const endDay = String(endDateTime.getDate()).padStart(2, '0')
+        const endHour = String(endDateTime.getHours()).padStart(2, '0')
+        const endMin = String(endDateTime.getMinutes()).padStart(2, '0')
+        const endSec = String(endDateTime.getSeconds()).padStart(2, '0')
+        const endAt = `${endYear}-${endMonth}-${endDay}T${endHour}:${endMin}:${endSec}`
 
         eventData = {
           title: title.trim(),
