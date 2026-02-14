@@ -20,10 +20,23 @@ CREATE TABLE IF NOT EXISTS events (
   start_at TIMESTAMPTZ NOT NULL,
   end_at TIMESTAMPTZ NOT NULL,
   is_all_day BOOLEAN NOT NULL DEFAULT false,
-  event_type TEXT NOT NULL DEFAULT 'fixed' CHECK (event_type IN ('fixed', 'flexible', 'recurring')),
+  event_type TEXT NOT NULL DEFAULT 'hard' CHECK (event_type IN ('anchor', 'hard', 'soft')),
   color TEXT NOT NULL DEFAULT '#4A90D9',
+  purpose TEXT CHECK (purpose IN ('work', 'meeting', 'appointment', 'personal', 'exercise', 'study', 'meal', 'sleep', 'commute', 'hobby', 'other')),
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   reminder_min INTEGER,
+  -- Anchor-specific
+  base_time TIME,
+  target_duration_min INTEGER,
+  buffer_min INTEGER DEFAULT 0,
+  -- Hard-specific
+  repeat_days INTEGER[],
+  is_locked BOOLEAN NOT NULL DEFAULT false,
+  location TEXT,
+  -- Soft-specific
+  weekly_goal INTEGER,
+  preferred_window TEXT CHECK (preferred_window IN ('morning', 'afternoon', 'evening', 'night')),
+  priority INTEGER DEFAULT 3,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

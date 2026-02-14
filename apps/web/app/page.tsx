@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { PieChart } from '@time-pie/ui'
-import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString, useExecutionStore, useSuggestionStore } from '@time-pie/core'
+import { PieChart, Spinner } from '@time-pie/ui'
+import { useEventStore, useTodoStore, useHabitStore, useCurrentTime, useUserData, toDateString, useExecutionStore, useSuggestionStore, getPurposeInfo, getScheduleTypeInfo } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal, TodoModal, HabitModal, ExecutionTimer } from './components'
 import type { Event, EventInsert, TodoInsert, HabitInsert } from '@time-pie/supabase'
 import { useAuth } from './providers'
@@ -44,7 +44,23 @@ export default function HomePage() {
   const habitProgress = getTodayProgress()
 
   // Filter events for selected date
-  const todayEvents = events.filter((e) => e.start_at.startsWith(todayStr))
+  const selectedDayOfWeek = selectedDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
+
+  const todayEvents = events.filter((e) => {
+    // Anchor events: always show (daily)
+    if (e.event_type === 'anchor') return true
+    // Hard events: show if no repeat_days set (one-time) OR if today's day is in repeat_days
+    if (e.event_type === 'hard') {
+      if (!e.repeat_days || e.repeat_days.length === 0) {
+        return e.start_at.startsWith(todayStr)
+      }
+      return e.repeat_days.includes(selectedDayOfWeek)
+    }
+    // Soft events: always show (goal-based)
+    if (e.event_type === 'soft') return true
+    // Fallback
+    return e.start_at.startsWith(todayStr)
+  })
 
   // Convert to pie chart format
   const pieEvents = todayEvents.map((e) => ({
@@ -102,7 +118,7 @@ export default function HomePage() {
   }
 
   const handleStartTracking = async (event: Event) => {
-    if (event.event_type !== 'flexible') return
+    if (event.event_type !== 'soft') return
     try {
       await startEventExecution(event.id, event.start_at, event.end_at)
     } catch (error) {
@@ -130,11 +146,7 @@ export default function HomePage() {
 
   // Loading state
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-500 dark:text-gray-400">로딩 중...</div>
-      </div>
-    )
+    return <Spinner size="lg" fullScreen />
   }
 
   return (
@@ -146,13 +158,6 @@ export default function HomePage() {
       />
 
       <main className="max-w-lg mx-auto px-4 py-4">
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="text-center text-sm text-gray-400 dark:text-gray-500 mb-4">
-            데이터 로딩 중...
-          </div>
-        )}
-
         {/* View Toggle */}
         <div className="flex gap-2 mb-4">
           <button
@@ -177,7 +182,12 @@ export default function HomePage() {
 
         {viewMode === 'pie' ? (
           /* Pie Chart View */
-          <div className="flex flex-col items-center">
+          <div className="relative flex flex-col items-center">
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-xl backdrop-blur-sm">
+                <Spinner size="md" />
+              </div>
+            )}
             <PieChart
               events={pieEvents}
               currentTime={currentTime}
@@ -188,7 +198,7 @@ export default function HomePage() {
               onEventClick={(pieEvent) => {
                 const event = todayEvents.find((e) => e.id === pieEvent.id)
                 if (event) {
-                  if (event.event_type === 'flexible' && !activeExecution) {
+                  if (event.event_type === 'soft' && !activeExecution) {
                     handleStartTracking(event)
                   } else {
                     setSelectedEvent(event)
@@ -204,24 +214,28 @@ export default function HomePage() {
 
             {/* Legend */}
             <div className="flex flex-wrap gap-3 mt-4 justify-center">
-              {todayEvents.map((event) => (
-                <div key={event.id} className="flex items-center gap-1.5">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: event.color }}
-                  />
-                  <span className="text-xs text-gray-600 dark:text-gray-400">{event.title}</span>
-                  {event.event_type && event.event_type !== 'fixed' && (
-                    <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${
-                      event.event_type === 'flexible'
-                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                    }`}>
-                      {event.event_type === 'flexible' ? '유동' : '반복'}
+              {todayEvents.map((event) => {
+                const purposeInfo = getPurposeInfo(event.purpose)
+                const typeInfo = getScheduleTypeInfo(event.event_type)
+                return (
+                  <div key={event.id} className="flex items-center gap-1.5">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: event.color }}
+                    />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      {typeInfo && <span className="mr-0.5">{typeInfo.emoji}</span>}
+                      {purposeInfo && <span className="mr-0.5">{purposeInfo.emoji}</span>}
+                      {event.title}
                     </span>
-                  )}
-                </div>
-              ))}
+                    {event.event_type === 'soft' && event.weekly_goal && (
+                      <span className="text-[10px] px-1 py-0.5 rounded font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+                        주 {event.weekly_goal}회
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         ) : (
@@ -233,46 +247,55 @@ export default function HomePage() {
             {todayEvents.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">일정이 없습니다</p>
             ) : (
-              todayEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
-                >
+              todayEvents.map((event) => {
+                const purposeInfo = getPurposeInfo(event.purpose)
+                const typeInfo = getScheduleTypeInfo(event.event_type)
+                return (
                   <div
-                    className="w-1 h-12 rounded-full"
-                    style={{ backgroundColor: event.color }}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium dark:text-white">{event.title}</p>
-                      {event.event_type && event.event_type !== 'fixed' && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                          event.event_type === 'flexible'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        }`}>
-                          {event.event_type === 'flexible' ? '유동' : '반복'}
-                        </span>
-                      )}
+                    key={event.id}
+                    className={`flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm ${event.event_type === 'anchor' ? 'border-l-4' : ''
+                      }`}
+                    style={event.event_type === 'anchor' ? { borderLeftColor: event.color } : undefined}
+                  >
+                    <div
+                      className="w-1 h-12 rounded-full"
+                      style={{ backgroundColor: event.color }}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {typeInfo && <span className="text-sm">{typeInfo.emoji}</span>}
+                        {purposeInfo && <span>{purposeInfo.emoji}</span>}
+                        <p className="font-medium dark:text-white">{event.title}</p>
+                        {event.event_type === 'soft' && event.weekly_goal && (
+                          <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+                            주 {event.weekly_goal}회
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {event.start_at.split('T')[1]?.slice(0, 5)} -{' '}
+                        {event.end_at.split('T')[1]?.slice(0, 5)}
+                        {event.event_type === 'hard' && event.repeat_days && event.repeat_days.length > 0 && (
+                          <span className="ml-2 text-xs text-gray-400">
+                            {event.repeat_days.map(d => ['일', '월', '화', '수', '목', '금', '토'][d]).join('·')}
+                          </span>
+                        )}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {event.start_at.split('T')[1].slice(0, 5)} -{' '}
-                      {event.end_at.split('T')[1].slice(0, 5)}
-                    </p>
+                    {event.event_type === 'soft' && !activeExecution && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleStartTracking(event)
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                      >
+                        추적
+                      </button>
+                    )}
                   </div>
-                  {event.event_type === 'flexible' && !activeExecution && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleStartTracking(event)
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                    >
-                      추적
-                    </button>
-                  )}
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         )}
