@@ -1,17 +1,20 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useEventStore, useTodoStore, useHabitStore, toDateString } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
-import type { Event } from '@time-pie/supabase'
+import type { EventInsert } from '@time-pie/supabase'
+import { useAuth } from '../providers'
 import Link from 'next/link'
 
 type ViewMode = 'week' | 'month'
 
 export default function CalendarPage() {
-  const { events, addEvent, selectedDate, setSelectedDate } = useEventStore()
+  const { user } = useAuth()
+  const { events, selectedDate, setSelectedDate } = useEventStore()
   const { todos } = useTodoStore()
   const { getHabitsWithStreak } = useHabitStore()
+  const { createEvent } = useUserData(user?.id)
 
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [eventModalOpen, setEventModalOpen] = useState(false)
@@ -77,14 +80,8 @@ export default function CalendarPage() {
     return todos.filter((t) => t.due_date === dateStr)
   }
 
-  const handleAddEvent = (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    addEvent({
-      ...event,
-      id: crypto.randomUUID(),
-      user_id: 'demo',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+  const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
+    await createEvent(event)
   }
 
   const goToPrevMonth = () => {
@@ -285,15 +282,15 @@ export default function CalendarPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium dark:text-white">{event.title}</p>
-                      {event.event_type && event.event_type !== 'fixed' && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                          event.event_type === 'flexible'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                        event.event_type === 'anchor'
+                          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                          : event.event_type === 'soft'
+                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
                             : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                        }`}>
-                          {event.event_type === 'flexible' ? '유동' : '반복'}
-                        </span>
-                      )}
+                      }`}>
+                        {event.event_type === 'anchor' ? '⚓ 앵커' : event.event_type === 'soft' ? '☁️ 소프트' : '🔒 하드'}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {event.start_at.split('T')[1].slice(0, 5)} -{' '}
