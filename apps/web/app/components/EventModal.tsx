@@ -127,7 +127,6 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
     setSaveError(null)
 
     try {
-      console.log('💾 Saving event:', { scheduleType, title, initialData })
       const purposeInfo = getPurposeInfo(purpose)
       let eventData: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 

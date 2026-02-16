@@ -12,7 +12,6 @@ function parseLocalDateTime(isoString: string): Date {
   const [hours, minutes, seconds = 0] = time.split(':').map(Number)
   const result = new Date(year, month - 1, day, hours, minutes, seconds)
 
-  console.log(`📅 parseLocalDateTime: "${isoString}" → ${result.toLocaleString('ko-KR')} (${hours}:${minutes})`)
 
   return result
 }
@@ -30,7 +29,6 @@ export function timeToAngle(date: Date): number {
   const totalMinutes = hours * 60 + minutes
   const angle = (totalMinutes / (24 * 60)) * 360
 
-  console.log(`⏰ timeToAngle: ${hours}:${minutes.toString().padStart(2, '0')} → ${angle.toFixed(1)}°`)
 
   return angle
 }
@@ -118,11 +116,9 @@ export function eventToSlice(event: Event): TimeSlice {
  * 이벤트 배열을 파이 조각 배열로 변환 (이벤트만 표시, 빈 시간대 제거)
  */
 export function eventsToSlices(events: Event[]): TimeSlice[] {
-  console.log('🔧 eventsToSlices input:', events)
 
   // 이벤트가 없으면 빈 배열 반환 (완전히 빈 파이차트)
   if (events.length === 0) {
-    console.log('⚠️ No events, returning empty array')
     return []
   }
 
@@ -136,12 +132,10 @@ export function eventsToSlices(events: Event[]): TimeSlice[] {
     const eventStart = timeToAngle(parseLocalDateTime(event.start_at))
     const eventEnd = timeToAngle(parseLocalDateTime(event.end_at))
 
-    console.log(`📍 Event "${event.title}": start=${eventStart}°, end=${eventEnd}°`)
 
     return eventToSlice(event)
   })
 
-  console.log('✅ eventsToSlices output:', slices)
   return slices
 }
 

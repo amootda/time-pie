@@ -98,10 +98,6 @@ export default function HomePage() {
     return e
   })
 
-  console.log('📊 Pie Chart Debug:')
-  console.log('- todayEvents count:', todayEvents.length)
-  console.log('- pieEvents:', pieEvents)
-  console.log('- pieEvents[0]:', pieEvents[0])
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
     if (selectedEvent) {
