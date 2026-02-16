@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-
 interface FloatingAddButtonProps {
   onAddEvent?: () => void
   onAddTodo?: () => void
@@ -9,45 +7,14 @@ interface FloatingAddButtonProps {
 }
 
 export function FloatingAddButton({ onAddEvent, onAddTodo, onAddHabit }: FloatingAddButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const actions = [
-    { label: '일정', icon: '📅', onClick: onAddEvent, color: 'bg-primary' },
-    { label: '투두', icon: '✅', onClick: onAddTodo, color: 'bg-secondary' },
-    { label: '습관', icon: '⭐', onClick: onAddHabit, color: 'bg-success' },
-  ]
-
   return (
-    <div className="fixed right-4 z-20 bottom-[calc(5rem+env(safe-area-inset-bottom))]">
-      {/* Action buttons */}
-      <div
-        className={`flex flex-col-reverse gap-2 mb-2 transition-all duration-200 ${
-          isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
-        }`}
-      >
-        {actions.map((action) => (
-          <button
-            key={action.label}
-            onClick={() => {
-              action.onClick?.()
-              setIsOpen(false)
-            }}
-            className={`flex items-center gap-2 px-4 py-2 ${action.color} text-white rounded-full shadow-lg hover:shadow-xl transition-shadow`}
-          >
-            <span>{action.icon}</span>
-            <span className="text-sm font-medium">{action.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Main FAB */}
+    <div className="fixed right-6 z-20 bottom-[calc(5rem+env(safe-area-inset-bottom))]">
+      {/* Main FAB - 이미지처럼 단순한 청록색 버튼 */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center ${
-          isOpen ? 'rotate-45' : ''
-        }`}
+        onClick={onAddEvent || onAddTodo || onAddHabit}
+        className="w-16 h-16 rounded-full bg-cyan-500 text-white shadow-2xl hover:bg-cyan-400 transition-all duration-200 flex items-center justify-center hover:scale-110"
       >
-        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
           <path d="M12 5v14M5 12h14" />
         </svg>
       </button>

@@ -10,7 +10,7 @@ import {
   timeToAngle,
 } from './utils'
 
-const HOUR_LABELS = [0, 3, 6, 9, 12, 15, 18, 21]
+const HOUR_LABELS = [6, 12, 18, 0]
 
 export function PieChart({
   events,
@@ -71,11 +71,11 @@ export function PieChart({
           const isSoft = slice.eventType === 'soft'
 
           return (
-            <g key={index} onClick={() => handleSliceClick(slice, hour)}>
+            <g key={index} onClick={() => handleSliceClick(slice, hour)} className={slice.isEmpty ? 'text-foreground' : ''}>
               <path
                 d={path}
                 fill={slice.color}
-                stroke={slice.isEmpty ? 'white' : isSoft ? slice.color : 'white'}
+                stroke={slice.isEmpty ? 'currentColor' : isSoft ? slice.color : 'currentColor'}
                 strokeWidth={slice.isEmpty ? 2 : isHard ? 3 : isSoft ? 2 : 1}
                 strokeDasharray={isSoft && !slice.isEmpty ? '6 3' : undefined}
                 className={`transition-opacity ${
@@ -92,48 +92,72 @@ export function PieChart({
           )
         })}
 
-        {/* 중앙 원 (날짜 표시 영역) */}
+        {/* 중앙 원 (현재 시간/활동 표시 영역) */}
         <circle
           cx={center}
           cy={center}
           r={innerRadius}
-          className="fill-white dark:fill-gray-900"
-          stroke="#E5E7EB"
-          strokeWidth={1}
+          className="fill-background"
+          stroke="none"
         />
 
-        {/* 중앙 텍스트 */}
+        {/* 중앙 텍스트 - 현재 시간과 활동 */}
         <text
           x={center}
-          y={center - 10}
+          y={center - 30}
           textAnchor="middle"
-          className="text-sm font-medium fill-foreground"
+          className="text-[10px] font-medium fill-muted-foreground uppercase tracking-wider"
         >
-          {selectedDate.getMonth() + 1}/{selectedDate.getDate()}
+          CURRENT
         </text>
         <text
           x={center}
-          y={center + 10}
+          y={center - 5}
           textAnchor="middle"
-          className="text-xs fill-foreground/60"
+          className="text-3xl font-bold fill-foreground"
+          style={{ fontSize: '32px' }}
         >
-          {['일', '월', '화', '수', '목', '금', '토'][selectedDate.getDay()]}요일
+          {currentTime.getHours().toString().padStart(2, '0')}:{currentTime.getMinutes().toString().padStart(2, '0')}
         </text>
+        {/* 현재 진행 중인 이벤트 표시 */}
+        {(() => {
+          const currentHour = currentTime.getHours()
+          const currentMinute = currentTime.getMinutes()
+          const currentSlice = slices.find((slice) => {
+            if (!slice.event) return false
+            const startHour = Math.floor((slice.startAngle / 360) * 24)
+            const endHour = Math.floor((slice.endAngle / 360) * 24)
+            return currentHour >= startHour && currentHour < endHour
+          })
+          return currentSlice?.event ? (
+            <text
+              x={center}
+              y={center + 25}
+              textAnchor="middle"
+              className="text-[11px] font-semibold fill-cyan-400 uppercase tracking-wide"
+            >
+              {currentSlice.event.title.length > 12
+                ? currentSlice.event.title.slice(0, 12) + '...'
+                : currentSlice.event.title}
+            </text>
+          ) : null
+        })()}
 
         {/* 현재 시간 바늘 */}
         {showCurrentTime && (
-          <>
+          <g className="text-foreground">
             <line
               x1={center}
               y1={center}
               x2={needleEnd.x}
               y2={needleEnd.y}
-              stroke="#FF6B35"
-              strokeWidth={3}
+              stroke="currentColor"
+              strokeWidth={4}
               strokeLinecap="round"
             />
-            <circle cx={center} cy={center} r={6} fill="#FF6B35" />
-          </>
+            <circle cx={center} cy={center} r={8} fill="currentColor" />
+            <circle cx={needleEnd.x} cy={needleEnd.y} r={6} fill="currentColor" />
+          </g>
         )}
 
         {/* 시간 레이블 */}
@@ -147,9 +171,9 @@ export function PieChart({
                 y={pos.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="text-xs fill-foreground/50"
+                className="text-xs font-medium fill-muted-foreground"
               >
-                {hour}
+                {hour === 0 ? '00' : hour.toString().padStart(2, '0')}
               </text>
             )
           })}

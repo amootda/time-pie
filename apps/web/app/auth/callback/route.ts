@@ -3,11 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
-  console.log('=== AUTH CALLBACK HIT ===')
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const redirectTo = requestUrl.searchParams.get('redirectTo') || '/'
-  console.log('Code:', code ? 'exists' : 'null', 'RedirectTo:', redirectTo)
 
   if (code) {
     const cookieStore = await cookies()
@@ -42,7 +40,6 @@ export async function GET(request: NextRequest) {
 
     // 세션 확인 로깅
     const { data: { session } } = await supabase.auth.getSession()
-    console.log('Session after exchange:', session ? 'exists' : 'null', session?.user?.email)
   }
 
   // 리다이렉트 목적지로 이동

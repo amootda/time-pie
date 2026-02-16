@@ -26,18 +26,14 @@ export function useWebViewBridge(webViewRef: React.RefObject<WebView>) {
       switch (message.type) {
         case 'NAVIGATE':
           // Handle navigation requests
-          console.log('Navigate to:', message.payload)
           break
         case 'SHARE':
           // Handle share requests
-          console.log('Share:', message.payload)
           break
         case 'HAPTIC':
           // Handle haptic feedback requests
-          console.log('Haptic:', message.payload)
           break
         default:
-          console.log('Unknown message type:', message.type)
       }
     } catch (error) {
       console.error('Error parsing WebView message:', error)

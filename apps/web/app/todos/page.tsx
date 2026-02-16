@@ -119,7 +119,17 @@ export default function TodosPage() {
               </button>
             </div>
           ) : (
-            displayTodos.map((todo) => (
+            displayTodos
+              .sort((a, b) => {
+                // Primary: incomplete todos first (false before true)
+                if (a.is_completed !== b.is_completed) {
+                  return a.is_completed ? 1 : -1
+                }
+                // Secondary: priority (high → medium → low)
+                const priorityOrder = { high: 0, medium: 1, low: 2 }
+                return priorityOrder[a.priority] - priorityOrder[b.priority]
+              })
+              .map((todo) => (
               <div
                 key={todo.id}
                 className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''

@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dayjs from 'dayjs'
 import { AddModal } from './AddModal'
-import { toDateString, SCHEDULE_TYPES, getPurposesByType, PREFERRED_WINDOWS, getPurposeInfo } from '@time-pie/core'
-import type { Event, EventType, EventPurpose, PreferredWindow } from '@time-pie/supabase'
+import { toDateString, SCHEDULE_TYPES, getPurposesByType, getPurposeInfo } from '@time-pie/core'
+import type { Event, EventType, EventPurpose } from '@time-pie/supabase'
 
 interface EventModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (event: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void> | void
+  onDelete?: (id: string) => Promise<void> | void
   initialData?: Partial<Event>
   selectedDate?: Date
 }
 
-export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate }: EventModalProps) {
+export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, selectedDate }: EventModalProps) {
   const defaultDate = selectedDate || new Date()
   const dateStr = toDateString(defaultDate)
 
@@ -33,16 +35,19 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
 
   // Anchor type fields
   const [baseTime, setBaseTime] = useState('07:00')
-  const [targetDurationMin, setTargetDurationMin] = useState(60)
+  const [anchorEndTime, setAnchorEndTime] = useState('08:00')
   const [bufferMin, setBufferMin] = useState(15)
 
   // Soft type fields
   const [weeklyGoal, setWeeklyGoal] = useState(3)
-  const [preferredWindow, setPreferredWindow] = useState<PreferredWindow>('evening')
   const [priority, setPriority] = useState(3)
+  const [softStartTime, setSoftStartTime] = useState('09:00')
+  const [softEndTime, setSoftEndTime] = useState('10:00')
 
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -55,7 +60,9 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
       setPurpose(initialData?.purpose || null)
 
       // Hard type fields
-      setStartDate(initialData?.start_at?.split('T')[0] || dateStr)
+      // anchor/soft events always use selected date (recurring)
+      const isRecurring = initialData?.event_type === 'anchor' || initialData?.event_type === 'soft'
+      setStartDate(isRecurring ? dateStr : (initialData?.start_at?.split('T')[0] || dateStr))
       setStartTime(initialData?.start_at?.split('T')[1]?.slice(0, 5) || '09:00')
       setEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
       setIsAllDay(initialData?.is_all_day || false)
@@ -65,13 +72,23 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
 
       // Anchor type fields
       setBaseTime(initialData?.base_time || '07:00')
-      setTargetDurationMin(initialData?.target_duration_min || 60)
+      // Calculate end time from base_time + target_duration_min
+      if (initialData?.base_time && initialData?.target_duration_min) {
+        const [hours, minutes] = initialData.base_time.split(':').map(Number)
+        const totalMinutes = hours * 60 + minutes + initialData.target_duration_min
+        const endHours = Math.floor(totalMinutes / 60) % 24
+        const endMinutes = totalMinutes % 60
+        setAnchorEndTime(`${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`)
+      } else {
+        setAnchorEndTime('08:00')
+      }
       setBufferMin(initialData?.buffer_min || 15)
 
       // Soft type fields
       setWeeklyGoal(initialData?.weekly_goal || 3)
-      setPreferredWindow(initialData?.preferred_window || 'evening')
       setPriority(initialData?.priority || 3)
+      setSoftStartTime(initialData?.start_at?.split('T')[1]?.slice(0, 5) || '09:00')
+      setSoftEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
 
       setIsSaving(false)
       setSaveError(null)
@@ -86,6 +103,22 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
     )
   }
 
+  const handleDelete = async () => {
+    if (!initialData?.id || !onDelete || isDeleting) return
+
+    setIsDeleting(true)
+    try {
+      await onDelete(initialData.id)
+      setShowDeleteConfirm(false)
+      onClose()
+    } catch (error) {
+      console.error('Delete failed:', error)
+      setSaveError('삭제에 실패했습니다')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || isSaving) return
@@ -98,11 +131,21 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
       let eventData: Omit<Event, 'id' | 'user_id' | 'created_at' | 'updated_at'>
 
       if (scheduleType === 'anchor') {
+        // Calculate target_duration_min from baseTime and anchorEndTime
+        const [startHours, startMinutes] = baseTime.split(':').map(Number)
+        const [endHours, endMinutes] = anchorEndTime.split(':').map(Number)
+        const startTotalMin = startHours * 60 + startMinutes
+        const endTotalMin = endHours * 60 + endMinutes
+        const targetDurationMin = endTotalMin >= startTotalMin
+          ? endTotalMin - startTotalMin
+          : (24 * 60 - startTotalMin) + endTotalMin // Handle overnight
+
         // Anchor: start_at = date + base_time, end_at = start_at + target_duration_min
-        const startAt = `${startDate}T${baseTime}:00`
-        const startDateTime = new Date(startAt)
-        const endDateTime = new Date(startDateTime.getTime() + targetDurationMin * 60 * 1000)
-        const endAt = endDateTime.toISOString().slice(0, 19)
+        // Use dayjs for safe date parsing and formatting
+        const startDateTime = dayjs(`${startDate} ${baseTime}`, 'YYYY-MM-DD HH:mm')
+        const endDateTime = startDateTime.add(targetDurationMin, 'minute')
+        const startAt = startDateTime.format('YYYY-MM-DDTHH:mm:ss')
+        const endAt = endDateTime.format('YYYY-MM-DDTHH:mm:ss')
 
         eventData = {
           title: title.trim(),
@@ -118,7 +161,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
           base_time: baseTime,
           target_duration_min: targetDurationMin,
           buffer_min: bufferMin,
-          repeat_days: null,
+          repeat_days: repeatDays.length > 0 ? repeatDays : null,
           is_locked: false,
           location: null,
           weekly_goal: null,
@@ -156,9 +199,9 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
           priority: null,
         }
       } else {
-        // Soft: placeholder times, goal-based
-        const startAt = `${startDate}T12:00:00`
-        const endAt = `${startDate}T13:00:00`
+        // Soft: use user-selected times
+        const startAt = `${startDate}T${softStartTime}:00`
+        const endAt = `${startDate}T${softEndTime}:00`
 
         eventData = {
           title: title.trim(),
@@ -172,7 +215,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
           category_id: null,
           reminder_min: null,
           weekly_goal: weeklyGoal,
-          preferred_window: preferredWindow,
+          preferred_window: null,
           priority,
           base_time: null,
           target_duration_min: null,
@@ -201,7 +244,7 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
   }
 
   return (
-    <AddModal isOpen={isOpen} onClose={onClose} title="일정 추가">
+    <AddModal isOpen={isOpen} onClose={onClose} title={initialData ? "일정 수정" : "일정 추가"}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Schedule Type Tabs */}
         <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-4">
@@ -260,29 +303,26 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
         {/* === Anchor Form === */}
         {scheduleType === 'anchor' && (
           <>
-            {/* Base Time */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">기준 시간</label>
-              <input
-                type="time"
-                value={baseTime}
-                onChange={(e) => setBaseTime(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-              />
-            </div>
-
-            {/* Target Duration */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">목표 시간 (분)</label>
-              <input
-                type="number"
-                value={targetDurationMin}
-                onChange={(e) => setTargetDurationMin(Number(e.target.value))}
-                min={15}
-                max={720}
-                step={15}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-              />
+            {/* Start/End Time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">시작</label>
+                <input
+                  type="time"
+                  value={baseTime}
+                  onChange={(e) => setBaseTime(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">종료</label>
+                <input
+                  type="time"
+                  value={anchorEndTime}
+                  onChange={(e) => setAnchorEndTime(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                />
+              </div>
             </div>
 
             {/* Buffer */}
@@ -299,9 +339,25 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
               />
             </div>
 
-            {/* Daily badge */}
-            <div className="text-sm text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-              ⚓ 매일 자동 반복됩니다
+            {/* Repeat Days */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">반복 요일</label>
+              <div className="flex gap-1">
+                {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleRepeatDay(i)}
+                    className={`w-9 h-9 rounded-full text-sm font-medium transition-all ${
+                      repeatDays.includes(i)
+                        ? 'bg-primary text-white'
+                        : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -410,6 +466,28 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
         {/* === Soft Form === */}
         {scheduleType === 'soft' && (
           <>
+            {/* Start/End Time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">시작</label>
+                <input
+                  type="time"
+                  value={softStartTime}
+                  onChange={(e) => setSoftStartTime(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">종료</label>
+                <input
+                  type="time"
+                  value={softEndTime}
+                  onChange={(e) => setSoftEndTime(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                />
+              </div>
+            </div>
+
             {/* Weekly Goal */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">주간 목표 (회)</label>
@@ -426,28 +504,6 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
                     }`}
                   >
                     {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Preferred Window */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">선호 시간대</label>
-              <div className="grid grid-cols-4 gap-2">
-                {PREFERRED_WINDOWS.map((w) => (
-                  <button
-                    key={w.key}
-                    type="button"
-                    onClick={() => setPreferredWindow(w.key as PreferredWindow)}
-                    className={`py-2 px-2 rounded-xl text-xs font-medium transition-all border-2 ${
-                      w.key === preferredWindow
-                        ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-                        : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="font-semibold">{w.label}</div>
-                    <div className="text-[10px] opacity-60 mt-0.5">{w.range}</div>
                   </button>
                 ))}
               </div>
@@ -493,6 +549,43 @@ export function EventModal({ isOpen, onClose, onSave, initialData, selectedDate 
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
             {saveError}
           </div>
+        )}
+
+        {/* Delete button - only show in edit mode */}
+        {initialData && onDelete && (
+          showDeleteConfirm ? (
+            <div className="space-y-3 p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
+              <p className="text-sm text-red-700 dark:text-red-400 font-medium">
+                정말로 이 일정을 삭제하시겠습니까?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isDeleting ? '삭제 중...' : '삭제'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="flex-1 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-2 border-red-200 dark:border-red-800 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            >
+              일정 삭제
+            </button>
+          )
         )}
 
         {/* Submit */}
