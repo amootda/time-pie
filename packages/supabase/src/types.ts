@@ -41,8 +41,9 @@ export interface Event {
   base_time: string | null
   target_duration_min: number | null
   buffer_min: number | null
-  // Hard-specific
+  // Anchor/Hard-specific
   repeat_days: number[] | null
+  // Hard-specific
   is_locked: boolean
   location: string | null
   // Soft-specific

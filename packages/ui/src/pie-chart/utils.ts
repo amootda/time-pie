@@ -1,6 +1,23 @@
 import type { Event, TimeSlice } from './types'
 
 /**
+ * ISO 문자열을 로컬 시간으로 파싱
+ * "2024-02-16T12:00:00" 또는 "2024-02-16T12:00:00.000Z"을 UTC가 아닌 로컬 시간으로 해석
+ */
+function parseLocalDateTime(isoString: string): Date {
+  // Remove milliseconds and timezone suffix (.000Z, +00:00, etc.)
+  const cleanDatetime = isoString.replace(/(\.\d+)?(Z|[+-]\d{2}:\d{2})$/, '')
+  const [date, time] = cleanDatetime.split('T')
+  const [year, month, day] = date.split('-').map(Number)
+  const [hours, minutes, seconds = 0] = time.split(':').map(Number)
+  const result = new Date(year, month - 1, day, hours, minutes, seconds)
+
+  console.log(`📅 parseLocalDateTime: "${isoString}" → ${result.toLocaleString('ko-KR')} (${hours}:${minutes})`)
+
+  return result
+}
+
+/**
  * 시간을 각도로 변환
  * 0시(자정) = 0도 (상단)
  * 6시 = 90도 (우측)
@@ -11,7 +28,11 @@ export function timeToAngle(date: Date): number {
   const hours = date.getHours()
   const minutes = date.getMinutes()
   const totalMinutes = hours * 60 + minutes
-  return (totalMinutes / (24 * 60)) * 360
+  const angle = (totalMinutes / (24 * 60)) * 360
+
+  console.log(`⏰ timeToAngle: ${hours}:${minutes.toString().padStart(2, '0')} → ${angle.toFixed(1)}°`)
+
+  return angle
 }
 
 /**
@@ -84,8 +105,8 @@ export function describeArc(
  */
 export function eventToSlice(event: Event): TimeSlice {
   return {
-    startAngle: timeToAngle(new Date(event.start_at)),
-    endAngle: timeToAngle(new Date(event.end_at)),
+    startAngle: timeToAngle(parseLocalDateTime(event.start_at)),
+    endAngle: timeToAngle(parseLocalDateTime(event.end_at)),
     event,
     color: event.color,
     isEmpty: false,
@@ -94,18 +115,15 @@ export function eventToSlice(event: Event): TimeSlice {
 }
 
 /**
- * 이벤트 배열을 파이 조각 배열로 변환 (빈 시간대 포함)
+ * 이벤트 배열을 파이 조각 배열로 변환 (이벤트만 표시, 빈 시간대 제거)
  */
 export function eventsToSlices(events: Event[]): TimeSlice[] {
+  console.log('🔧 eventsToSlices input:', events)
+
+  // 이벤트가 없으면 빈 배열 반환 (완전히 빈 파이차트)
   if (events.length === 0) {
-    return [
-      {
-        startAngle: 0,
-        endAngle: 360,
-        color: '#E5E7EB',
-        isEmpty: true,
-      },
-    ]
+    console.log('⚠️ No events, returning empty array')
+    return []
   }
 
   // 시작 시간순 정렬
@@ -113,38 +131,17 @@ export function eventsToSlices(events: Event[]): TimeSlice[] {
     (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
   )
 
-  const slices: TimeSlice[] = []
-  let currentAngle = 0
+  // 이벤트만 슬라이스로 변환 (빈 시간대 없음)
+  const slices: TimeSlice[] = sorted.map(event => {
+    const eventStart = timeToAngle(parseLocalDateTime(event.start_at))
+    const eventEnd = timeToAngle(parseLocalDateTime(event.end_at))
 
-  for (const event of sorted) {
-    const eventStart = timeToAngle(new Date(event.start_at))
-    const eventEnd = timeToAngle(new Date(event.end_at))
+    console.log(`📍 Event "${event.title}": start=${eventStart}°, end=${eventEnd}°`)
 
-    // 빈 시간대 추가
-    if (eventStart > currentAngle) {
-      slices.push({
-        startAngle: currentAngle,
-        endAngle: eventStart,
-        color: '#E5E7EB',
-        isEmpty: true,
-      })
-    }
+    return eventToSlice(event)
+  })
 
-    // 이벤트 추가
-    slices.push(eventToSlice(event))
-    currentAngle = eventEnd
-  }
-
-  // 마지막 빈 시간대
-  if (currentAngle < 360) {
-    slices.push({
-      startAngle: currentAngle,
-      endAngle: 360,
-      color: '#E5E7EB',
-      isEmpty: true,
-    })
-  }
-
+  console.log('✅ eventsToSlices output:', slices)
   return slices
 }
 
