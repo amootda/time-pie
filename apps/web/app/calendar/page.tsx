@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useEventStore, useTodoStore, useHabitStore, useMonthEvents, useCreateEventMutation, toDateString } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useMonthEvents, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
-import type { EventInsert, EventMonthMeta } from '@time-pie/supabase'
+import type { EventInsert, EventMonthMeta, Event } from '@time-pie/supabase'
 import { useAuth } from '../providers'
 import Link from 'next/link'
 
@@ -15,10 +15,13 @@ export default function CalendarPage() {
   const { todos } = useTodoStore()
   const { getHabitsWithStreak } = useHabitStore()
   const createEventMutation = useCreateEventMutation()
+  const updateEventMutation = useUpdateEventMutation()
+  const deleteEventMutation = useDeleteEventMutation()
 
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
   const habitsWithStreak = getHabitsWithStreak()
 
@@ -110,9 +113,37 @@ export default function CalendarPage() {
     return todos.filter((t) => t.due_date === dateStr)
   }
 
-  const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
+  const handleSaveEvent = async (event: Omit<EventInsert, 'user_id'>) => {
     if (!user) return
-    await createEventMutation.mutateAsync({ ...event, user_id: user.id })
+
+    if (selectedEvent?.id) {
+      // Update existing event
+      await updateEventMutation.mutateAsync({
+        id: selectedEvent.id,
+        updates: event,
+      })
+    } else {
+      // Create new event
+      await createEventMutation.mutateAsync({ ...event, user_id: user.id })
+    }
+
+    setSelectedEvent(null)
+  }
+
+  const handleDeleteEvent = async (id: string) => {
+    await deleteEventMutation.mutateAsync(id)
+    setSelectedEvent(null)
+    setEventModalOpen(false)
+  }
+
+  const handleOpenEventModal = (event?: Event) => {
+    setSelectedEvent(event || null)
+    setEventModalOpen(true)
+  }
+
+  const handleCloseEventModal = () => {
+    setEventModalOpen(false)
+    setSelectedEvent(null)
   }
 
   const goToPrevMonth = () => {
@@ -302,15 +333,16 @@ export default function CalendarPage() {
               </p>
             ) : (
               getEventsForDate(selectedDate).map((event: EventMonthMeta) => (
-                <div
+                <button
                   key={event.id}
-                  className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
+                  onClick={() => handleOpenEventModal(event as Event)}
+                  className="w-full flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer"
                 >
                   <div
                     className="w-1 h-12 rounded-full"
                     style={{ backgroundColor: event.color }}
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 text-left">
                     <div className="flex items-center gap-2">
                       <p className="font-medium dark:text-white">{event.title}</p>
                       <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${event.event_type === 'anchor'
@@ -327,7 +359,7 @@ export default function CalendarPage() {
                       {event.end_at.split('T')[1].slice(0, 5)}
                     </p>
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>
@@ -373,13 +405,15 @@ export default function CalendarPage() {
         </div>
       </main>
 
-      <FloatingAddButton onAddEvent={() => setEventModalOpen(true)} />
+      <FloatingAddButton onAddEvent={() => handleOpenEventModal()} />
       <BottomNav />
 
       <EventModal
         isOpen={eventModalOpen}
-        onClose={() => setEventModalOpen(false)}
-        onSave={handleAddEvent}
+        onClose={handleCloseEventModal}
+        onSave={handleSaveEvent}
+        onDelete={selectedEvent ? handleDeleteEvent : undefined}
+        initialData={selectedEvent || undefined}
         selectedDate={selectedDate}
       />
     </div>
