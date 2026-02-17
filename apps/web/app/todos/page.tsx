@@ -1,7 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useTodoStore, useUserData, toDateString } from '@time-pie/core'
+import {
+  useTodoStore,
+  useTodosQuery,
+  useCreateTodoMutation,
+  useUpdateTodoMutation,
+  useToggleTodoMutation,
+  useDeleteTodoMutation,
+  toDateString,
+} from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, TodoModal } from '../components'
 import { useAuth } from '../providers'
 import type { Todo, TodoInsert } from '@time-pie/supabase'
@@ -22,17 +30,26 @@ type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
 export default function TodosPage() {
   const { user } = useAuth()
-  const { todos, filter, setFilter, filteredTodos } = useTodoStore()
-  const { createTodo, updateTodo, toggleTodoComplete, removeTodo } = useUserData(user?.id)
+  const { todos: storeTodos, filter, setFilter, filteredTodos } = useTodoStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
+  // React Query hooks
+  const { data: todosData } = useTodosQuery(user?.id)
+  const createTodoMutation = useCreateTodoMutation()
+  const updateTodoMutation = useUpdateTodoMutation()
+  const toggleTodoMutation = useToggleTodoMutation()
+  const deleteTodoMutation = useDeleteTodoMutation()
+
+  // Use API data if available, otherwise fallback to store
+  const todos = todosData && todosData.length > 0 ? todosData : storeTodos
   const displayTodos = filteredTodos()
   const todayStr = toDateString()
 
   const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
+    if (!user) return
     try {
-      await createTodo(todo)
+      await createTodoMutation.mutateAsync({ ...todo, user_id: user.id })
       setModalOpen(false)
     } catch (error) {
       console.error('Failed to create todo:', error)
@@ -42,7 +59,7 @@ export default function TodosPage() {
   const handleEditTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
     if (!editingTodo) return
     try {
-      await updateTodo(editingTodo.id, todo)
+      await updateTodoMutation.mutateAsync({ id: editingTodo.id, updates: todo })
       setModalOpen(false)
       setEditingTodo(null)
     } catch (error) {
@@ -138,7 +155,7 @@ export default function TodosPage() {
                 <div className="flex items-start gap-3">
                   {/* Checkbox */}
                   <button
-                    onClick={() => toggleTodoComplete(todo.id)}
+                    onClick={() => toggleTodoMutation.mutate(todo.id)}
                     className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
                       ? 'bg-success border-success'
                       : 'border-gray-300 hover:border-success'
@@ -184,7 +201,7 @@ export default function TodosPage() {
 
                   {/* Delete */}
                   <button
-                    onClick={() => removeTodo(todo.id)}
+                    onClick={() => deleteTodoMutation.mutate(todo.id)}
                     className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                   >
                     <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>

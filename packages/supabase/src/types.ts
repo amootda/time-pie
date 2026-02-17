@@ -54,6 +54,11 @@ export interface Event {
   updated_at: string
 }
 
+// 캘린더 월간 뷰용 최적화된 메타데이터 타입
+export type EventMonthMeta = Pick<Event,
+  'id' | 'title' | 'start_at' | 'end_at' | 'event_type' | 'purpose' | 'color'
+>
+
 export interface RecurringRule {
   id: string
   event_id: string

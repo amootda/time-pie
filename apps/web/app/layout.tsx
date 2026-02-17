@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { AuthProvider, ThemeProvider } from './providers'
+import { AuthProvider, ThemeProvider, QueryProvider } from './providers'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
@@ -43,9 +43,11 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body>
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

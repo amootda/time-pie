@@ -91,6 +91,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.39.3
         version: 2.90.1
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.90.21(react@19.2.4)
       '@time-pie/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -125,6 +128,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.0.0
         version: 4.1.18
+      '@tanstack/react-query-devtools':
+        specifier: ^5.91.3
+        version: 5.91.3(@tanstack/react-query@5.90.21)(react@19.2.4)
       '@time-pie/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config/eslint
@@ -175,6 +181,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.90.21(react@19.2.4)
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -3588,6 +3597,32 @@ packages:
       postcss: 8.5.6
       tailwindcss: 4.1.18
     dev: true
+
+  /@tanstack/query-core@5.90.20:
+    resolution: {integrity: sha512-OMD2HLpNouXEfZJWcKeVKUgQ5n+n3A2JFmBaScpNDUqSrQSjiveC7dKMe53uJUg1nDG16ttFPz2xfilz6i2uVg==}
+
+  /@tanstack/query-devtools@5.93.0:
+    resolution: {integrity: sha512-+kpsx1NQnOFTZsw6HAFCW3HkKg0+2cepGtAWXjiiSOJJ1CtQpt72EE2nyZb+AjAbLRPoeRmPJ8MtQd8r8gsPdg==}
+    dev: true
+
+  /@tanstack/react-query-devtools@5.91.3(@tanstack/react-query@5.90.21)(react@19.2.4):
+    resolution: {integrity: sha512-nlahjMtd/J1h7IzOOfqeyDh5LNfG0eULwlltPEonYy0QL+nqrBB+nyzJfULV+moL7sZyxc2sHdNJki+vLA9BSA==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.90.20
+      react: ^18 || ^19
+    dependencies:
+      '@tanstack/query-devtools': 5.93.0
+      '@tanstack/react-query': 5.90.21(react@19.2.4)
+      react: 19.2.4
+    dev: true
+
+  /@tanstack/react-query@5.90.21(react@19.2.4):
+    resolution: {integrity: sha512-0Lu6y5t+tvlTJMTO7oh5NSpJfpg/5D41LlThfepTixPYkJ0sE2Jj0m0f6yYqujBwIXlId87e234+MxG3D3g7kg==}
+    peerDependencies:
+      react: ^18 || ^19
+    dependencies:
+      '@tanstack/query-core': 5.90.20
+      react: 19.2.4
 
   /@tybys/wasm-util@0.10.1:
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
@@ -9168,7 +9203,6 @@ packages:
   /react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
     engines: {node: '>=0.10.0'}
-    dev: false
 
   /read-cmd-shim@5.0.0:
     resolution: {integrity: sha512-SEbJV7tohp3DAAILbEMPXavBjAnMN0tVnh4+9G8ihV4Pq3HYF9h8QNez9zkJ1ILkv9G2BjdzwctznGZXgu/HGw==}

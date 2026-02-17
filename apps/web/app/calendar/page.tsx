@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useEventStore, useTodoStore, useHabitStore, useUserData, toDateString } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useMonthEvents, useCreateEventMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
 import type { EventInsert } from '@time-pie/supabase'
 import { useAuth } from '../providers'
@@ -11,16 +11,22 @@ type ViewMode = 'week' | 'month'
 
 export default function CalendarPage() {
   const { user } = useAuth()
-  const { events, selectedDate, setSelectedDate } = useEventStore()
+  const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
   const { todos } = useTodoStore()
   const { getHabitsWithStreak } = useHabitStore()
-  const { createEvent } = useUserData(user?.id)
+  const createEventMutation = useCreateEventMutation()
 
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const habitsWithStreak = getHabitsWithStreak()
+
+  // Load month events with React Query
+  const { data: monthEventsData, isLoading: isLoadingMonth } = useMonthEvents(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1
+  )
 
   // Get calendar data
   const calendarDays = useMemo(() => {
@@ -72,7 +78,11 @@ export default function CalendarPage() {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = toDateString(date)
-    return events.filter((e) => e.start_at.startsWith(dateStr))
+    // API 데이터가 있으면 사용, 없으면 storeEvents 사용 (폴백)
+    const eventsToUse = monthEventsData?.events && monthEventsData.events.length > 0
+      ? monthEventsData.events
+      : storeEvents
+    return eventsToUse.filter((e: any) => e.start_at.startsWith(dateStr))
   }
 
   const getTodosForDate = (date: Date) => {
@@ -81,7 +91,8 @@ export default function CalendarPage() {
   }
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
-    await createEvent(event)
+    if (!user) return
+    await createEventMutation.mutateAsync({ ...event, user_id: user.id })
   }
 
   const goToPrevMonth = () => {
@@ -270,7 +281,7 @@ export default function CalendarPage() {
                 일정이 없습니다
               </p>
             ) : (
-              getEventsForDate(selectedDate).map((event) => (
+              getEventsForDate(selectedDate).map((event: any) => (
                 <div
                   key={event.id}
                   className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"

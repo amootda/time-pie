@@ -13,6 +13,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.39.3",
+    "@tanstack/react-query": "^5.90.21",
     "@time-pie/core": "workspace:*",
     "@time-pie/supabase": "workspace:*",
     "@time-pie/ui": "workspace:*",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "@time-pie/eslint-config": "workspace:*",
     "@time-pie/typescript-config": "workspace:*",
     "@types/node": "^22.0.0",
