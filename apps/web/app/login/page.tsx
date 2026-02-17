@@ -94,8 +94,7 @@ export default function LoginPage() {
                             카카오로 시작하기
                         </button>
 
-                        {/* 구분선 */}
-                        <div className="relative my-6">
+                        {/* <div className="relative my-6">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-600"></div>
                             </div>
@@ -104,7 +103,6 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {/* Google 로그인 */}
                         <button
                             onClick={handleGoogleLogin}
                             disabled={isLoggingIn}
@@ -129,7 +127,7 @@ export default function LoginPage() {
                                 />
                             </svg>
                             Google로 시작하기
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* 안내 문구 */}
