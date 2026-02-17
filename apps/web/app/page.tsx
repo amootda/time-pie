@@ -2,7 +2,18 @@
 
 import { useState } from 'react'
 import { PieChart, Spinner } from '@time-pie/ui'
-import { useEventStore, useCurrentTime, useUserData, useExecutionStore } from '@time-pie/core'
+import {
+  useEventStore,
+  useCurrentTime,
+  useExecutionStore,
+  useEventsQuery,
+  useCreateEventMutation,
+  useUpdateEventMutation,
+  useDeleteEventMutation,
+  useCreateExecutionMutation,
+  useCompleteExecutionMutation,
+  useSkipExecutionMutation,
+} from '@time-pie/core'
 import { Header, FloatingAddButton, EventModal, EventCard, ExecutionTimer, BottomNav } from './components'
 import type { Event, EventInsert } from '@time-pie/supabase'
 import { useAuth } from './providers'
@@ -10,21 +21,24 @@ import { useAuth } from './providers'
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
   const currentTime = useCurrentTime()
-  const { events, selectedDate, setSelectedDate } = useEventStore()
+  const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
   const { activeExecution } = useExecutionStore()
 
-  const {
-    isLoading,
-    createEvent,
-    updateEvent,
-    removeEvent,
-    startEventExecution,
-    completeEventExecution,
-    skipEventExecution,
-  } = useUserData(user?.id)
+  // React Query hooks
+  const { data: eventsData, isLoading: eventsLoading } = useEventsQuery(user?.id, selectedDate)
+  const createEventMutation = useCreateEventMutation()
+  const updateEventMutation = useUpdateEventMutation()
+  const deleteEventMutation = useDeleteEventMutation()
+  const createExecutionMutation = useCreateExecutionMutation()
+  const completeExecutionMutation = useCompleteExecutionMutation()
+  const skipExecutionMutation = useSkipExecutionMutation()
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined)
+
+  // Use API data if available, otherwise fallback to store
+  const events = eventsData && eventsData.length > 0 ? eventsData : storeEvents
+  const isLoading = eventsLoading || createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending
 
   // Filter events for selected date
   const selectedDayOfWeek = selectedDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
@@ -40,8 +54,13 @@ export default function HomePage() {
       }
       return e.repeat_days.includes(selectedDayOfWeek)
     }
-    // Soft events: always show (goal-based)
-    if (e.event_type === 'soft') return true
+    // Soft events: repeat_days 체크, 없으면 매일 표시
+    if (e.event_type === 'soft') {
+      if (e.repeat_days && e.repeat_days.length > 0) {
+        return e.repeat_days.includes(selectedDayOfWeek)
+      }
+      return true
+    }
     // Fallback
     return e.start_at.startsWith(todayStr)
   })
@@ -100,17 +119,19 @@ export default function HomePage() {
 
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
+    if (!user) return
+
     if (selectedEvent) {
-      await updateEvent(selectedEvent.id, event)
+      await updateEventMutation.mutateAsync({ id: selectedEvent.id, updates: event })
     } else {
-      await createEvent(event)
+      await createEventMutation.mutateAsync({ ...event, user_id: user.id })
     }
     setSelectedEvent(undefined)
   }
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      await removeEvent(eventId)
+      await deleteEventMutation.mutateAsync(eventId)
       setEventModalOpen(false)
       setSelectedEvent(undefined)
     } catch (error) {
@@ -119,8 +140,22 @@ export default function HomePage() {
   }
 
   const handleStartExecution = async (event: Event) => {
+    if (!user) return
+
     try {
-      await startEventExecution(event.id, event.start_at, event.end_at)
+      const dateStr = selectedDate.toISOString().split('T')[0]
+      await createExecutionMutation.mutateAsync({
+        event_id: event.id,
+        user_id: user.id,
+        planned_start: event.start_at,
+        planned_end: event.end_at,
+        actual_start: new Date().toISOString(),
+        actual_end: null,
+        status: 'in_progress',
+        completion_rate: 0,
+        date: dateStr,
+        notes: null,
+      })
     } catch (error) {
       console.error('Failed to start execution:', error)
     }
@@ -129,7 +164,7 @@ export default function HomePage() {
   const handleStopExecution = async () => {
     if (!activeExecution) return
     try {
-      await completeEventExecution(activeExecution.id)
+      await completeExecutionMutation.mutateAsync(activeExecution.id)
     } catch (error) {
       console.error('Failed to stop execution:', error)
     }
@@ -138,7 +173,7 @@ export default function HomePage() {
   const handleSkipExecution = async () => {
     if (!activeExecution) return
     try {
-      await skipEventExecution(activeExecution.id)
+      await skipExecutionMutation.mutateAsync(activeExecution.id)
     } catch (error) {
       console.error('Failed to skip execution:', error)
     }

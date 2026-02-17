@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useEventStore, useTodoStore, useHabitStore, useUserData, toDateString } from '@time-pie/core'
+import { useEventStore, useTodoStore, useHabitStore, useMonthEvents, useCreateEventMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
-import type { EventInsert } from '@time-pie/supabase'
+import type { EventInsert, EventMonthMeta } from '@time-pie/supabase'
 import { useAuth } from '../providers'
 import Link from 'next/link'
 
@@ -11,16 +11,22 @@ type ViewMode = 'week' | 'month'
 
 export default function CalendarPage() {
   const { user } = useAuth()
-  const { events, selectedDate, setSelectedDate } = useEventStore()
+  const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
   const { todos } = useTodoStore()
   const { getHabitsWithStreak } = useHabitStore()
-  const { createEvent } = useUserData(user?.id)
+  const createEventMutation = useCreateEventMutation()
 
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const habitsWithStreak = getHabitsWithStreak()
+
+  // Load month events with React Query
+  const { data: monthEventsData, isLoading: isLoadingMonth } = useMonthEvents(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1
+  )
 
   // Get calendar data
   const calendarDays = useMemo(() => {
@@ -72,7 +78,31 @@ export default function CalendarPage() {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = toDateString(date)
-    return events.filter((e) => e.start_at.startsWith(dateStr))
+    const dayOfWeek = date.getDay() // 0=일, 1=월, ..., 6=토
+    const eventsToUse = monthEventsData?.events ?? storeEvents
+
+    return eventsToUse.filter((e) => {
+      // Anchor: 항상 표시
+      if (e.event_type === 'anchor') return true
+
+      // Hard: repeat_days 체크
+      if (e.event_type === 'hard') {
+        if (e.repeat_days && e.repeat_days.length > 0) {
+          return e.repeat_days.includes(dayOfWeek)
+        }
+        return e.start_at.startsWith(dateStr)
+      }
+
+      // Soft: repeat_days 체크, 없으면 매일 표시
+      if (e.event_type === 'soft') {
+        if (e.repeat_days && e.repeat_days.length > 0) {
+          return e.repeat_days.includes(dayOfWeek)
+        }
+        return true
+      }
+
+      return e.start_at.startsWith(dateStr)
+    })
   }
 
   const getTodosForDate = (date: Date) => {
@@ -81,7 +111,8 @@ export default function CalendarPage() {
   }
 
   const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
-    await createEvent(event)
+    if (!user) return
+    await createEventMutation.mutateAsync({ ...event, user_id: user.id })
   }
 
   const goToPrevMonth = () => {
@@ -107,8 +138,8 @@ export default function CalendarPage() {
           <button
             onClick={() => setViewMode('week')}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'week'
-                ? 'bg-secondary text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'bg-secondary text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
             주간
@@ -116,8 +147,8 @@ export default function CalendarPage() {
           <button
             onClick={() => setViewMode('month')}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'month'
-                ? 'bg-secondary text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'bg-secondary text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
           >
             월간
@@ -178,20 +209,20 @@ export default function CalendarPage() {
                     key={index}
                     onClick={() => setSelectedDate(date)}
                     className={`aspect-square p-1 rounded-lg transition-colors relative ${isSelected
-                        ? 'bg-primary text-white'
-                        : isToday
-                          ? 'bg-primary/10 text-primary'
-                          : isCurrentMonth
-                            ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                            : 'text-gray-300 dark:text-gray-600'
+                      ? 'bg-primary text-white'
+                      : isToday
+                        ? 'bg-primary/10 text-primary'
+                        : isCurrentMonth
+                          ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                          : 'text-gray-300 dark:text-gray-600'
                       }`}
                   >
                     <span
                       className={`text-sm ${!isSelected && dayOfWeek === 0
-                          ? 'text-error'
-                          : !isSelected && dayOfWeek === 6
-                            ? 'text-secondary'
-                            : ''
+                        ? 'text-error'
+                        : !isSelected && dayOfWeek === 6
+                          ? 'text-secondary'
+                          : ''
                         }`}
                     >
                       {date.getDate()}
@@ -227,20 +258,20 @@ export default function CalendarPage() {
                     key={dateStr}
                     onClick={() => setSelectedDate(date)}
                     className={`flex flex-col items-center p-2 rounded-xl transition-colors ${isSelected
-                        ? 'bg-primary text-white'
-                        : isToday
-                          ? 'bg-primary/10'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-primary text-white'
+                      : isToday
+                        ? 'bg-primary/10'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                   >
                     <span
                       className={`text-xs mb-1 ${!isSelected && dayOfWeek === 0
-                          ? 'text-error'
-                          : !isSelected && dayOfWeek === 6
-                            ? 'text-secondary'
-                            : isSelected
-                              ? 'text-white/80'
-                              : 'text-gray-500'
+                        ? 'text-error'
+                        : !isSelected && dayOfWeek === 6
+                          ? 'text-secondary'
+                          : isSelected
+                            ? 'text-white/80'
+                            : 'text-gray-500'
                         }`}
                     >
                       {dayLabels[dayOfWeek]}
@@ -270,7 +301,7 @@ export default function CalendarPage() {
                 일정이 없습니다
               </p>
             ) : (
-              getEventsForDate(selectedDate).map((event) => (
+              getEventsForDate(selectedDate).map((event: EventMonthMeta) => (
                 <div
                   key={event.id}
                   className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm"
@@ -282,13 +313,12 @@ export default function CalendarPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium dark:text-white">{event.title}</p>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                        event.event_type === 'anchor'
-                          ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                          : event.event_type === 'soft'
-                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
-                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-                      }`}>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${event.event_type === 'anchor'
+                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+                        : event.event_type === 'soft'
+                          ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
+                          : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                        }`}>
                         {event.event_type === 'anchor' ? '⚓ 앵커' : event.event_type === 'soft' ? '☁️ 소프트' : '🔒 하드'}
                       </span>
                     </div>
@@ -314,8 +344,8 @@ export default function CalendarPage() {
                   >
                     <div
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center ${todo.is_completed
-                          ? 'bg-success border-success'
-                          : 'border-gray-300'
+                        ? 'bg-success border-success'
+                        : 'border-gray-300'
                         }`}
                     >
                       {todo.is_completed && (

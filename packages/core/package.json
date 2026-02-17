@@ -19,7 +19,8 @@
     "zustand": "^5.0.0"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "@tanstack/react-query": "^5.0.0"
   },
   "devDependencies": {
     "@time-pie/eslint-config": "workspace:*",
