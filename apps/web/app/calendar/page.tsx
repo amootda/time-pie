@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useEventStore, useTodoStore, useHabitStore, useMonthEvents, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, EventModal } from '../components'
+import { getEventById } from '@time-pie/supabase'
 import type { EventInsert, EventMonthMeta, Event } from '@time-pie/supabase'
 import { useAuth } from '../providers'
 import Link from 'next/link'
@@ -141,9 +142,31 @@ export default function CalendarPage() {
     setEventModalOpen(false)
   }
 
-  const handleOpenEventModal = (event?: Event) => {
-    setSelectedEvent(event || null)
-    setEventModalOpen(true)
+  const handleOpenEventModal = async (event?: Event | EventMonthMeta) => {
+    if (!event) {
+      // New event
+      setSelectedEvent(null)
+      setEventModalOpen(true)
+      return
+    }
+
+    // If event is EventMonthMeta (from month view), fetch full Event
+    const isMonthMeta = !('description' in event)
+    if (isMonthMeta) {
+      try {
+        const fullEvent = await getEventById(event.id)
+        if (fullEvent) {
+          setSelectedEvent(fullEvent)
+          setEventModalOpen(true)
+        }
+      } catch (error) {
+        console.error('Failed to fetch event details:', error)
+      }
+    } else {
+      // Already a full Event
+      setSelectedEvent(event as Event)
+      setEventModalOpen(true)
+    }
   }
 
   const handleCloseEventModal = () => {
@@ -340,7 +363,7 @@ export default function CalendarPage() {
               getEventsForDate(selectedDate).map((event: EventMonthMeta) => (
                 <button
                   key={event.id}
-                  onClick={() => handleOpenEventModal(event as Event)}
+                  onClick={() => handleOpenEventModal(event)}
                   className="w-full flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer"
                 >
                   <div

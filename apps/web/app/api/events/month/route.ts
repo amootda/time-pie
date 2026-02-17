@@ -83,12 +83,12 @@ export async function GET(request: NextRequest) {
       .lte('start_at', end)
       .order('start_at', { ascending: true })
 
-    // 4-2. anchor/soft 반복 이벤트 (repeat_days가 설정된 것들)
+    // 4-2. anchor/soft/hard 반복 이벤트 (repeat_days가 설정된 것들)
     const recurringEventsPromise = supabase
       .from('events')
       .select(selectFields)
       .eq('user_id', user.id)
-      .in('event_type', ['anchor', 'soft'])
+      .in('event_type', ['anchor', 'soft', 'hard'])
       .not('repeat_days', 'is', null)
 
     const [monthResult, recurringResult] = await Promise.all([
