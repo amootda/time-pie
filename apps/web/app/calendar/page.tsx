@@ -85,8 +85,13 @@ export default function CalendarPage() {
     const eventsToUse = monthEventsData?.events ?? storeEvents
 
     return eventsToUse.filter((e) => {
-      // Anchor: 항상 표시
-      if (e.event_type === 'anchor') return true
+      // Anchor: repeat_days가 설정되어 있으면 해당 요일만, 없으면 매일 표시
+      if (e.event_type === 'anchor') {
+        if (e.repeat_days && e.repeat_days.length > 0) {
+          return e.repeat_days.includes(dayOfWeek)
+        }
+        return true
+      }
 
       // Hard: repeat_days 체크
       if (e.event_type === 'hard') {

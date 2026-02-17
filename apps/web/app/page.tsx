@@ -45,8 +45,13 @@ export default function HomePage() {
 
   const todayEvents = events.filter((e) => {
     const todayStr = selectedDate.toISOString().split('T')[0]
-    // Anchor events: always show (daily)
-    if (e.event_type === 'anchor') return true
+    // Anchor events: repeat_days가 설정되어 있으면 해당 요일만, 없으면 매일 표시
+    if (e.event_type === 'anchor') {
+      if (e.repeat_days && e.repeat_days.length > 0) {
+        return e.repeat_days.includes(selectedDayOfWeek)
+      }
+      return true
+    }
     // Hard events: show if no repeat_days set (one-time) OR if today's day is in repeat_days
     if (e.event_type === 'hard') {
       if (!e.repeat_days || e.repeat_days.length === 0) {
@@ -258,8 +263,8 @@ export default function HomePage() {
 
       <FloatingAddButton
         onAddEvent={() => setEventModalOpen(true)}
-        onAddTodo={() => {}}
-        onAddHabit={() => {}}
+        onAddTodo={() => { }}
+        onAddHabit={() => { }}
       />
 
       {/* Execution Timer */}
