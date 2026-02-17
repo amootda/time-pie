@@ -54,8 +54,13 @@ export default function HomePage() {
       }
       return e.repeat_days.includes(selectedDayOfWeek)
     }
-    // Soft events: always show (goal-based)
-    if (e.event_type === 'soft') return true
+    // Soft events: repeat_days 체크, 없으면 매일 표시
+    if (e.event_type === 'soft') {
+      if (e.repeat_days && e.repeat_days.length > 0) {
+        return e.repeat_days.includes(selectedDayOfWeek)
+      }
+      return true
+    }
     // Fallback
     return e.start_at.startsWith(todayStr)
   })

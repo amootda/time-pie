@@ -1,22 +1,77 @@
 'use client'
 
-import { useState } from 'react'
-import { useHabitStore, useCreateHabitMutation, useLogHabitMutation, toDateString } from '@time-pie/core'
+import { useState, useMemo } from 'react'
+import { useHabitsQuery, useHabitLogsQuery, useUserData, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
 import { useAuth } from '../providers'
 import type { HabitInsert } from '@time-pie/supabase'
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const { logs, getHabitsWithStreak, getTodayProgress } = useHabitStore()
-  const createHabitMutation = useCreateHabitMutation()
-  const logHabitMutation = useLogHabitMutation()
+  const { createHabit, logHabit } = useUserData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const todayStr = toDateString()
-  const habitsWithStreak = getHabitsWithStreak()
-  const progress = getTodayProgress()
+
+  // Fetch habits using React Query
+  const { data: habits = [], isLoading: isLoadingHabits } = useHabitsQuery(user?.id)
+
+  // Calculate date range for last 30 days
+  const dateRange = useMemo(() => {
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - 30)
+    return {
+      start: toDateString(startDate),
+      end: toDateString(endDate),
+    }
+  }, [])
+
+  // Fetch habit logs for all habits
+  const habitIds = useMemo(() => habits.map((h) => h.id), [habits])
+  const { data: logs = [], isLoading: isLoadingLogs } = useHabitLogsQuery(
+    habitIds,
+    dateRange.start,
+    dateRange.end,
+    habitIds.length > 0
+  )
+
+  const isLoading = isLoadingHabits || isLoadingLogs
+
+  // Calculate habits with streak and today completion status
+  const habitsWithStreak = useMemo(() => {
+    return habits.map((habit) => {
+      const habitLogs = logs.filter((log) => log.habit_id === habit.id)
+      const todayCompleted = habitLogs.some((log) => log.date === todayStr)
+
+      // Calculate streak
+      let streak = 0
+      const today = new Date()
+      let checkDate = new Date(today)
+
+      while (true) {
+        const dateStr = toDateString(checkDate)
+        const hasLog = habitLogs.some((log) => log.date === dateStr)
+        if (!hasLog) break
+        streak++
+        checkDate.setDate(checkDate.getDate() - 1)
+      }
+
+      return {
+        ...habit,
+        streak,
+        todayCompleted,
+      }
+    })
+  }, [habits, logs, todayStr])
+
+  // Calculate today's progress
+  const progress = useMemo(() => {
+    const total = habits.length
+    const completed = habitsWithStreak.filter((h) => h.todayCompleted).length
+    return { total, completed }
+  }, [habits.length, habitsWithStreak])
 
   // Get last 7 days
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -30,7 +85,7 @@ export default function HabitsPage() {
   const handleAddHabit = async (habit: Omit<HabitInsert, 'user_id'>) => {
     if (!user) return
     try {
-      await createHabitMutation.mutateAsync({ ...habit, user_id: user.id })
+      await createHabit(habit)
       setModalOpen(false)
     } catch (error) {
       console.error('Failed to create habit:', error)
@@ -41,7 +96,7 @@ export default function HabitsPage() {
     if (togglingId) return
     setTogglingId(habitId)
     try {
-      await logHabitMutation.mutateAsync({ habitId, date: todayStr })
+      await logHabit(habitId, todayStr)
     } catch (error) {
       console.error('Failed to log habit:', error)
     } finally {
@@ -57,6 +112,21 @@ export default function HabitsPage() {
   const completionRate = progress.total > 0
     ? Math.round((progress.completed / progress.total) * 100)
     : 0
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
+        <Header title="습관" />
+        <main className="max-w-lg mx-auto px-4 py-4">
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">로딩 중...</p>
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   useTodoStore,
   useTodosQuery,
@@ -30,7 +30,7 @@ type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
 export default function TodosPage() {
   const { user } = useAuth()
-  const { todos: storeTodos, filter, setFilter, filteredTodos } = useTodoStore()
+  const { todos: storeTodos, filter, setFilter } = useTodoStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
@@ -41,10 +41,24 @@ export default function TodosPage() {
   const toggleTodoMutation = useToggleTodoMutation()
   const deleteTodoMutation = useDeleteTodoMutation()
 
-  // Use API data if available, otherwise fallback to store
-  const todos = todosData && todosData.length > 0 ? todosData : storeTodos
-  const displayTodos = filteredTodos()
   const todayStr = toDateString()
+
+  // Use API data if available (even if empty array), otherwise fallback to store
+  const todos = todosData ?? storeTodos
+
+  // Filter todos based on selected filter
+  const displayTodos = useMemo(() => {
+    switch (filter) {
+      case 'today':
+        return todos.filter((t) => t.due_date === todayStr)
+      case 'completed':
+        return todos.filter((t) => t.is_completed)
+      case 'pending':
+        return todos.filter((t) => !t.is_completed)
+      default:
+        return todos
+    }
+  }, [todos, filter, todayStr])
 
   const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
     if (!user) return

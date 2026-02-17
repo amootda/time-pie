@@ -220,7 +220,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           base_time: null,
           target_duration_min: null,
           buffer_min: null,
-          repeat_days: null,
+          repeat_days: repeatDays.length > 0 ? repeatDays : null,
           is_locked: false,
           location: null,
         }
@@ -486,6 +486,32 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 />
               </div>
+            </div>
+
+            {/* Repeat Days */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                반복 요일 (선택)
+              </label>
+              <div className="flex gap-1">
+                {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleRepeatDay(i)}
+                    className={`w-9 h-9 rounded-full text-sm font-medium transition-all ${
+                      repeatDays.includes(i)
+                        ? 'bg-primary text-white'
+                        : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                    }`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                선택 안하면 매일 표시됩니다
+              </p>
             </div>
 
             {/* Weekly Goal */}

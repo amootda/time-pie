@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     const { data: events, error: queryError } = await supabase
       .from('events')
-      .select('id, title, start_at, end_at, event_type, purpose, color')
+      .select('id, title, start_at, end_at, event_type, purpose, color, repeat_days')
       .eq('user_id', user.id)
       .gte('start_at', start)
       .lte('start_at', end)

@@ -16,9 +16,9 @@ export interface ScheduleTypeInfo {
 
 // Schedule type definitions
 export const SCHEDULE_TYPES: ScheduleTypeInfo[] = [
-  { key: 'anchor', label: '앵커', emoji: '⚓', description: '매일 반복되는 필수 일정' },
-  { key: 'hard',   label: '하드 블록', emoji: '🔒', description: '고정된 시간의 약속' },
-  { key: 'soft',   label: '소프트 루틴', emoji: '☁️', description: '유연한 자기관리 시간' },
+  { key: 'anchor', label: '앵커', emoji: '⚓', description: '절대 움직이지 않는 고정 일정' },
+  { key: 'hard',   label: '하드', emoji: '🔒', description: '웬만하면 고정된 일정' },
+  { key: 'soft',   label: '소프트', emoji: '☁️', description: '자유롭게 이동 가능한 일정' },
 ]
 
 const SCHEDULE_TYPE_MAP = new Map(SCHEDULE_TYPES.map(t => [t.key, t]))
