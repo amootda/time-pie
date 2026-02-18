@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { PieChart } from 'lucide-react'
 import { useHabitsQuery, useHabitLogsQuery, useLogHabitMutation, useCreateHabitMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
 import { useAuth } from '../providers'
@@ -116,15 +117,29 @@ export default function HabitsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
-        <Header title="습관" />
-        <main className="max-w-lg mx-auto px-4 py-4">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">로딩 중...</p>
-          </div>
-        </main>
-        <BottomNav />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-6">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-16 h-16 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
+          <PieChart className="w-8 h-8 text-primary/80" />
+        </div>
+        <div className="flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="w-2 h-2 rounded-full bg-primary opacity-70"
+              style={{
+                animation: 'loading-dot 1.2s ease-in-out infinite',
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+          ))}
+        </div>
+        <style jsx global>{`
+          @keyframes loading-dot {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+          }
+        `}</style>
       </div>
     )
   }
@@ -150,27 +165,6 @@ export default function HabitsPage() {
             {progress.completed}/{progress.total} 완료
           </p>
         </div>
-
-        {/* Streak Leaders */}
-        {habitsWithStreak.some((h) => h.streak > 0) && (
-          <div className="bg-gradient-to-r from-primary to-primary-600 p-4 rounded-xl text-white mb-4">
-            <h3 className="font-medium mb-2 flex items-center gap-2">
-              <span>🔥</span> 스트릭 리더
-            </h3>
-            <div className="flex gap-4">
-              {habitsWithStreak
-                .filter((h) => h.streak > 0)
-                .sort((a, b) => b.streak - a.streak)
-                .slice(0, 3)
-                .map((habit) => (
-                  <div key={habit.id} className="text-center">
-                    <p className="text-2xl font-bold">{habit.streak}</p>
-                    <p className="text-xs opacity-80">{habit.title}</p>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
 
         {/* Habits List */}
         <div className="space-y-3">
