@@ -220,7 +220,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       console.error('Event save failed:', error)
       const msg = error instanceof Error ? error.message
         : typeof error === 'object' && error !== null && 'message' in error ? String((error as { message: unknown }).message)
-        : '저장에 실패했습니다'
+          : '저장에 실패했습니다'
       setSaveError(msg)
     } finally {
       setIsSaving(false)
@@ -267,16 +267,16 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
             setDescription={setDescription}
             repeatDays={repeatDays}
             setRepeatDays={setRepeatDays}
-            isLocked={scheduleType === 'hard' ? isLocked : undefined}
-            setIsLocked={scheduleType === 'hard' ? setIsLocked : undefined}
-            location={scheduleType === 'hard' ? location : undefined}
-            setLocation={scheduleType === 'hard' ? setLocation : undefined}
-            bufferMin={scheduleType === 'anchor' ? bufferMin : undefined}
-            setBufferMin={scheduleType === 'anchor' ? setBufferMin : undefined}
-            weeklyGoal={scheduleType === 'soft' ? weeklyGoal : undefined}
-            setWeeklyGoal={scheduleType === 'soft' ? setWeeklyGoal : undefined}
-            priority={scheduleType === 'soft' ? priority : undefined}
-            setPriority={scheduleType === 'soft' ? setPriority : undefined}
+            isLocked={isLocked}
+            setIsLocked={setIsLocked}
+            location={location}
+            setLocation={setLocation}
+            bufferMin={bufferMin}
+            setBufferMin={setBufferMin}
+            weeklyGoal={weeklyGoal}
+            setWeeklyGoal={setWeeklyGoal}
+            priority={priority}
+            setPriority={setPriority}
           />
         )}
 

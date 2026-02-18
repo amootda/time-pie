@@ -1,14 +1,15 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useHabitsQuery, useHabitLogsQuery, useUserData, toDateString } from '@time-pie/core'
+import { useHabitsQuery, useHabitLogsQuery, useLogHabitMutation, useCreateHabitMutation, toDateString } from '@time-pie/core'
 import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
 import { useAuth } from '../providers'
 import type { HabitInsert } from '@time-pie/supabase'
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const { createHabit, logHabit } = useUserData(user?.id)
+  const createHabitMutation = useCreateHabitMutation()
+  const logHabitMutation = useLogHabitMutation()
   const [modalOpen, setModalOpen] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
@@ -85,7 +86,7 @@ export default function HabitsPage() {
   const handleAddHabit = async (habit: Omit<HabitInsert, 'user_id'>) => {
     if (!user) return
     try {
-      await createHabit(habit)
+      await createHabitMutation.mutateAsync({ ...habit, user_id: user.id })
       setModalOpen(false)
     } catch (error) {
       console.error('Failed to create habit:', error)
@@ -96,7 +97,7 @@ export default function HabitsPage() {
     if (togglingId) return
     setTogglingId(habitId)
     try {
-      await logHabit(habitId, todayStr)
+      await logHabitMutation.mutateAsync({ habitId, date: todayStr })
     } catch (error) {
       console.error('Failed to log habit:', error)
     } finally {

@@ -169,7 +169,7 @@ export default function TodosPage() {
                   <div className="flex items-start gap-3">
                     {/* Checkbox */}
                     <button
-                      onClick={() => toggleTodoMutation.mutate(todo.id)}
+                      onClick={() => toggleTodoMutation.mutate({ id: todo.id, currentIsCompleted: todo.is_completed })}
                       className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
                         ? 'bg-success border-success'
                         : 'border-gray-300 hover:border-success'

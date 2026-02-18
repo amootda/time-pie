@@ -17,13 +17,13 @@
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --border: #262626;
-  --card: #171717;
-  --card-foreground: #ededed;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
+  --background: #111827;
+  --foreground: #F9FAFB;
+  --border: #374151;
+  --card: #1F2937;
+  --card-foreground: #F9FAFB;
+  --muted: #374151;
+  --muted-foreground: #9CA3AF;
 }
 
 /* Custom Theme */

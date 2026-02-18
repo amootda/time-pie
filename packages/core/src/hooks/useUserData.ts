@@ -47,7 +47,7 @@ interface UseUserDataReturn {
     createTodo: (todo: Omit<TodoInsert, 'user_id'>) => Promise<Todo>
     updateTodo: (id: string, updates: Partial<Todo>) => Promise<Todo>
     removeTodo: (id: string) => Promise<void>
-    toggleTodoComplete: (id: string) => Promise<Todo>
+    toggleTodoComplete: (id: string, currentIsCompleted: boolean) => Promise<Todo>
     createHabit: (habit: Omit<HabitInsert, 'user_id'>) => Promise<Habit>
     updateHabit: (id: string, updates: Partial<Habit>) => Promise<Habit>
     removeHabit: (id: string) => Promise<void>
@@ -268,8 +268,8 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
     )
 
     const toggleTodoComplete = useCallback(
-        async (id: string): Promise<Todo> => {
-            const updated = await toggleTodoApi(id)
+        async (id: string, currentIsCompleted: boolean): Promise<Todo> => {
+            const updated = await toggleTodoApi(id, currentIsCompleted)
             updateTodoStore(id, updated)
             return updated
         },

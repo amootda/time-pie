@@ -41,7 +41,6 @@ export function useCreateTodoMutation() {
       return createTodoApi(todo)
     },
     onSuccess: () => {
-      // 모든 할 일 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: todoKeys.all })
     },
   })
@@ -58,7 +57,6 @@ export function useUpdateTodoMutation() {
       return updateTodoApi(id, updates)
     },
     onSuccess: () => {
-      // 모든 할 일 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: todoKeys.all })
     },
   })
@@ -75,7 +73,6 @@ export function useDeleteTodoMutation() {
       await deleteTodoApi(id)
     },
     onSuccess: () => {
-      // 모든 할 일 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: todoKeys.all })
     },
   })
@@ -83,16 +80,16 @@ export function useDeleteTodoMutation() {
 
 /**
  * 할 일 완료/미완료 토글
+ * currentIsCompleted를 받아서 waterfall 없이 단일 UPDATE
  */
 export function useToggleTodoMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      return toggleTodoCompleteApi(id)
+    mutationFn: async ({ id, currentIsCompleted }: { id: string; currentIsCompleted: boolean }) => {
+      return toggleTodoCompleteApi(id, currentIsCompleted)
     },
     onSuccess: () => {
-      // 모든 할 일 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: todoKeys.all })
     },
   })
