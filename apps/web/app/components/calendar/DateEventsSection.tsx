@@ -22,6 +22,9 @@ export function DateEventsSection({
   const todayStr = toDateString()
   const isToday = toDateString(selectedDate) === todayStr
 
+  // Filter out anchor events
+  const displayEvents = events.filter((e) => e.event_type !== 'anchor')
+
   return (
     <div className="mt-4">
       <h3 className="font-medium mb-3 flex items-center gap-2 dark:text-white">
@@ -34,12 +37,12 @@ export function DateEventsSection({
 
       {/* Events */}
       <div className="space-y-2">
-        {events.length === 0 ? (
+        {displayEvents.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center bg-white dark:bg-gray-800 rounded-xl">
             일정이 없습니다
           </p>
         ) : (
-          events.map((event) => (
+          displayEvents.map((event) => (
             <EventListItem
               key={event.id}
               event={event}

@@ -16,6 +16,7 @@ interface DayCell {
   isCurrentMonth: boolean
   isToday: boolean
   eventCount: number
+  events: (Event | EventMonthMeta)[]
   densityColor: string
 }
 
@@ -31,19 +32,16 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
     return now
   }, [])
 
-  // Calculate event density for a specific date
-  const getEventCountForDate = useMemo(() => {
-    return (date: Date): number => {
+  // Calculate events for a specific date
+  const getEventsForDate = useMemo(() => {
+    return (date: Date): (Event | EventMonthMeta)[] => {
       const dateStr = dayjs(date).format('YYYY-MM-DD')
       const dayOfWeek = date.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
 
       return events.filter((e) => {
-        // Anchor events: check repeat_days or one-time event
+        // Anchor events: do not count in heatmap
         if (e.event_type === 'anchor') {
-          if (e.repeat_days && e.repeat_days.length > 0) {
-            return e.repeat_days.includes(dayOfWeek)
-          }
-          return e.start_at.startsWith(dateStr)
+          return false
         }
 
         // Hard events: check repeat_days or one-time event
@@ -64,7 +62,7 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
 
         // Fallback
         return e.start_at.startsWith(dateStr)
-      }).length
+      })
     }
   }, [events])
 
@@ -99,8 +97,9 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
       dateOnly.setHours(0, 0, 0, 0)
       const isToday = dateOnly.getTime() === today.getTime()
 
-      // Get event count for this date
-      const eventCount = getEventCountForDate(date)
+      // Get events for this date
+      const dateEvents = getEventsForDate(date)
+      const eventCount = dateEvents.length
       const densityColor = getDensityColor(eventCount)
 
       days.push({
@@ -110,11 +109,12 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
         isToday,
         eventCount,
         densityColor,
+        events: dateEvents
       })
     }
 
     return days
-  }, [monthStart, today, getEventCountForDate])
+  }, [monthStart, today, getEventsForDate])
 
   // Format month/year display
   const monthYearText = useMemo(() => {
@@ -190,14 +190,14 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 auto-rows-fr">
         {calendarDays.map((day, index) => (
           <button
             key={index}
             onClick={() => handleDayClick(day.date)}
             className={`
-              aspect-square flex flex-col items-center justify-center
-              rounded-lg transition-all duration-200
+              min-h-[80px] flex flex-col items-stretch justify-start pt-1 px-1
+              rounded-lg transition-all duration-200 overflow-hidden
               ${day.densityColor}
               ${day.isCurrentMonth ? '' : 'opacity-40'}
               ${day.isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
@@ -208,24 +208,30 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
             {/* Day Number */}
             <span
               className={`
-                text-sm font-semibold
+                text-xs font-semibold mb-1 self-center
                 ${day.isToday ? 'text-primary' : day.eventCount > 5 ? 'text-white' : 'text-foreground'}
               `}
             >
               {day.dayNumber}
             </span>
 
-            {/* Event Count (optional, small text) */}
-            {day.eventCount > 0 && (
-              <span
-                className={`
-                  text-xs mt-0.5
-                  ${day.eventCount > 5 ? 'text-white/80' : 'text-muted-foreground'}
-                `}
-              >
-                {day.eventCount}
-              </span>
-            )}
+            {/* Event Badges */}
+            <div className="flex flex-col gap-1 w-full flex-1">
+              {day.events.slice(0, 2).map((event, i) => (
+                <span
+                  key={i}
+                  className="text-[10px] bg-white/50 backdrop-blur-sm text-black dark:text-white dark:bg-black/30 px-1 py-0.5 rounded truncate text-left w-full"
+                  title={event.title}
+                >
+                  {event.title}
+                </span>
+              ))}
+              {day.events.length > 2 && (
+                <span className="text-[10px] text-center text-black/50 dark:text-white/50 -mt-1 tracking-widest">
+                  ...
+                </span>
+              )}
+            </div>
           </button>
         ))}
       </div>
