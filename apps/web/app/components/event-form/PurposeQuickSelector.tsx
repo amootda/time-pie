@@ -32,7 +32,7 @@ export function PurposeQuickSelector({
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         약속 유형
       </label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {quickPurposes.map((p) => (
           <button
             key={p.key}

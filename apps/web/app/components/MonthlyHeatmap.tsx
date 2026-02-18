@@ -133,7 +133,9 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
   }
 
   const handleToday = () => {
-    onDateSelect(new Date())
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    onDateSelect(now)
   }
 
   const handleDayClick = (date: Date) => {

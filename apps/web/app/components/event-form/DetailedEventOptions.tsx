@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import type { EventType, EventPurpose } from '@time-pie/supabase'
 import { getPurposesByType } from '@time-pie/core'
 
@@ -126,6 +127,7 @@ function HardEventOptions({
   isLocked, setIsLocked,
   location, setLocation,
 }: HardEventOptionsProps) {
+  const lockId = useId()
   return (
     <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <PurposeSelector type="hard" purpose={purpose} setPurpose={setPurpose} />
@@ -145,12 +147,12 @@ function HardEventOptions({
       <div className="flex items-center gap-3">
         <input
           type="checkbox"
-          id="isLocked"
+          id={lockId}
           checked={isLocked}
           onChange={(e) => setIsLocked(e.target.checked)}
           className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
         />
-        <label htmlFor="isLocked" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor={lockId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
           다른 일정 잠금
         </label>
       </div>

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import type { EventType, EventPurpose } from '@time-pie/supabase'
-import { toDateString, PURPOSES_BY_TYPE } from '@time-pie/core'
+import { toDateString } from '@time-pie/core'
 import { PurposeQuickSelector } from './PurposeQuickSelector'
 
 interface QuickEventFormProps {

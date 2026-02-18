@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { AddModal } from './AddModal'
 import { toDateString, SCHEDULE_TYPES, getPurposesByType, getPurposeInfo } from '@time-pie/core'
 import type { Event, EventType, EventPurpose } from '@time-pie/supabase'
+
+dayjs.extend(customParseFormat)
 
 interface EventModalProps {
   isOpen: boolean
@@ -174,7 +177,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           ? `${startDate}T00:00:00`
           : `${startDate}T${startTime}:00`
         const endAt = isAllDay
-          ? `${startDate}T23:59:59`
+          ? dayjs(startDate).add(1, 'day').format('YYYY-MM-DD') + 'T00:00:00'
           : `${startDate}T${endTime}:00`
 
         eventData = {

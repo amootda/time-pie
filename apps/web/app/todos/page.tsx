@@ -112,11 +112,11 @@ export default function TodosPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-success">{stats.completed}</p>
-            <p className="text-xs text-gray-500">완료</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">완료</p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-primary">{stats.today}</p>
-            <p className="text-xs text-gray-500">오늘</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">오늘</p>
           </div>
         </div>
 
@@ -170,6 +170,7 @@ export default function TodosPage() {
                     {/* Checkbox */}
                     <button
                       onClick={() => toggleTodoMutation.mutate({ id: todo.id, currentIsCompleted: todo.is_completed })}
+                      aria-label={todo.is_completed ? '완료 취소' : '완료로 표시'}
                       className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
                         ? 'bg-success border-success'
                         : 'border-gray-300 hover:border-success'
@@ -216,6 +217,7 @@ export default function TodosPage() {
                     {/* Delete */}
                     <button
                       onClick={() => deleteTodoMutation.mutate(todo.id)}
+                      aria-label={`${todo.title} 삭제`}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                     >
                       <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>

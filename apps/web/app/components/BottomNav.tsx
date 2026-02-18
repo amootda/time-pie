@@ -5,11 +5,11 @@ import { usePathname } from 'next/navigation'
 import { PieChart, CalendarDays, ListTodo, Trophy, Settings } from 'lucide-react'
 
 const navItems = [
-  { href: '/', label: '파이', icon: PieChart },
-  { href: '/calendar', label: '캘린더', icon: CalendarDays },
-  { href: '/todos', label: '투두', icon: ListTodo },
-  { href: '/habits', label: '습관', icon: Trophy },
-  { href: '/settings', label: '설정', icon: Settings },
+  { href: '/', label: 'Home', icon: PieChart },
+  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/todos', label: 'Todos', icon: ListTodo },
+  { href: '/habits', label: 'Habits', icon: Trophy },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function BottomNav() {

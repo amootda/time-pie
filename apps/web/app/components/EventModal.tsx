@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { AddModal } from './AddModal'
 import { EventTypeTab } from './event-form/EventTypeTab'
 import { QuickEventForm } from './event-form/QuickEventForm'
 import { DetailedEventOptions } from './event-form/DetailedEventOptions'
 import { toDateString, getPurposeInfo } from '@time-pie/core'
 import type { Event, EventType, EventPurpose } from '@time-pie/supabase'
+
+dayjs.extend(customParseFormat)
 
 interface EventModalProps {
   isOpen: boolean

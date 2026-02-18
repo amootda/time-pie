@@ -4,10 +4,8 @@ import { useMemo } from 'react'
 import { PieChart } from '@time-pie/ui'
 import type { Event, EventMonthMeta } from '@time-pie/supabase'
 import dayjs from 'dayjs'
-import weekOfYear from 'dayjs/plugin/weekOfYear'
 import isoWeek from 'dayjs/plugin/isoWeek'
 
-dayjs.extend(weekOfYear)
 dayjs.extend(isoWeek)
 
 interface WeeklyPieViewProps {
@@ -30,12 +28,12 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
   const weekStart = useMemo(() => dayjs(selectedDate).startOf('isoWeek').toDate(), [selectedDate])
   const weekEnd = useMemo(() => dayjs(selectedDate).endOf('isoWeek').toDate(), [selectedDate])
 
-  // Get today for highlighting
+  // Get today for highlighting (recalculates on selectedDate change to handle midnight crossover)
   const today = useMemo(() => {
     const now = new Date()
     now.setHours(0, 0, 0, 0)
     return now
-  }, [])
+  }, [selectedDate])
 
   // Generate 7 days data (Mon-Sun)
   const weekDays = useMemo((): DayData[] => {
@@ -80,7 +78,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
 
       // Convert events to selected date format for PieChart
       const pieEvents = dayEvents.map((e) => {
-        const isRecurring = e.event_type === 'anchor' || e.event_type === 'soft'
+        const isRecurring = e.event_type === 'anchor' || e.event_type === 'soft' || (e.event_type === 'hard' && e.repeat_days && e.repeat_days.length > 0)
 
         if (isRecurring) {
           // Extract time portion from stored timestamp
@@ -108,7 +106,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
           }
         }
 
-        // Hard events: return as-is
+        // Non-recurring hard events: return as-is
         return e
       })
 
@@ -166,9 +164,19 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
           <div
             key={index}
             onClick={() => onDateSelect(day.date)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onDateSelect(day.date)
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label={`${day.dayLabel}요일 ${dayjs(day.date).format('M월 D일')} 선택`}
             className={`
               flex flex-col items-center cursor-pointer
               transition-all duration-200
+              focus:outline-none focus:ring-2 focus:ring-primary focus:rounded-xl
               ${day.isToday ? 'ring-2 ring-primary rounded-xl p-2 -m-2' : ''}
             `}
           >
@@ -187,7 +195,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
               {day.dayEvents.length > 0 ? (
                 <PieChart
                   events={day.dayEvents}
-                  currentTime={day.isToday ? new Date() : undefined}
+                  currentTime={day.isToday ? today : undefined}
                   selectedDate={day.date}
                   size={80}
                   showLabels={false}
