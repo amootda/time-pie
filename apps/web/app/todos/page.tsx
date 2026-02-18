@@ -110,13 +110,13 @@ export default function TodosPage() {
             <p className="text-2xl font-bold text-secondary">{stats.total}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">전체</p>
           </div>
-          <div className="bg-white p-3 rounded-xl text-center shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-success">{stats.completed}</p>
-            <p className="text-xs text-gray-500">완료</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">완료</p>
           </div>
-          <div className="bg-white p-3 rounded-xl text-center shadow-sm">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
             <p className="text-2xl font-bold text-primary">{stats.today}</p>
-            <p className="text-xs text-gray-500">오늘</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">오늘</p>
           </div>
         </div>
 
@@ -161,70 +161,72 @@ export default function TodosPage() {
                 return priorityOrder[a.priority] - priorityOrder[b.priority]
               })
               .map((todo) => (
-              <div
-                key={todo.id}
-                className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
-                  }`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Checkbox */}
-                  <button
-                    onClick={() => toggleTodoMutation.mutate(todo.id)}
-                    className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
-                      ? 'bg-success border-success'
-                      : 'border-gray-300 hover:border-success'
-                      }`}
-                  >
-                    {todo.is_completed && (
-                      <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {/* Content - Clickable for edit */}
-                  <button
-                    onClick={() => openEditModal(todo)}
-                    className="flex-1 min-w-0 text-left"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs text-white ${PRIORITY_COLORS[todo.priority]
-                          }`}
-                      >
-                        {PRIORITY_LABELS[todo.priority]}
-                      </span>
-                      {todo.due_date && (
-                        <span className={`text-xs ${todo.due_date < todayStr ? 'text-error' :
-                          todo.due_date === todayStr ? 'text-primary' : 'text-gray-500'
-                          }`}>
-                          {todo.due_date === todayStr ? '오늘' : todo.due_date}
-                        </span>
-                      )}
-                    </div>
-                    <p
-                      className={`font-medium dark:text-white ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
+                <div
+                  key={todo.id}
+                  className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
+                    }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => toggleTodoMutation.mutate({ id: todo.id, currentIsCompleted: todo.is_completed })}
+                      aria-label={todo.is_completed ? '완료 취소' : '완료로 표시'}
+                      className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
+                        ? 'bg-success border-success'
+                        : 'border-gray-300 hover:border-success'
                         }`}
                     >
-                      {todo.title}
-                    </p>
-                    {todo.description && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{todo.description}</p>
-                    )}
-                  </button>
+                      {todo.is_completed && (
+                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
 
-                  {/* Delete */}
-                  <button
-                    onClick={() => deleteTodoMutation.mutate(todo.id)}
-                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                  >
-                    <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                    {/* Content - Clickable for edit */}
+                    <button
+                      onClick={() => openEditModal(todo)}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs text-white ${PRIORITY_COLORS[todo.priority]
+                            }`}
+                        >
+                          {PRIORITY_LABELS[todo.priority]}
+                        </span>
+                        {todo.due_date && (
+                          <span className={`text-xs ${todo.due_date < todayStr ? 'text-error' :
+                            todo.due_date === todayStr ? 'text-primary' : 'text-gray-500'
+                            }`}>
+                            {todo.due_date === todayStr ? '오늘' : todo.due_date}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`font-medium dark:text-white ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
+                          }`}
+                      >
+                        {todo.title}
+                      </p>
+                      {todo.description && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{todo.description}</p>
+                      )}
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => deleteTodoMutation.mutate(todo.id)}
+                      aria-label={`${todo.title} 삭제`}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
           )}
         </div>
       </main>

@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from 'next'
+import { Outfit, Noto_Sans_KR } from 'next/font/google'
 import { AuthProvider, ThemeProvider, QueryProvider } from './providers'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
+})
+
+const notoSansKr = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-noto-sans-kr',
+  display: 'swap',
+  preload: true,
+})
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -41,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning className={`${outfit.variable} ${notoSansKr.variable}`}>
       <body>
         <QueryProvider>
           <ThemeProvider>
