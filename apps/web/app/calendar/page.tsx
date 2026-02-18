@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useEventStore, useTodoStore, useMonthEvents, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation, toDateString } from '@time-pie/core'
+import { useEventStore, useTodoStore, useUIStore, useMonthEvents, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation, toDateString } from '@time-pie/core'
 import {
   Header,
   BottomNav,
@@ -15,17 +15,15 @@ import { getEventById } from '@time-pie/supabase'
 import type { EventInsert, EventMonthMeta, Event } from '@time-pie/supabase'
 import { useAuth } from '../providers'
 
-type ViewMode = 'week' | 'month'
-
 export default function CalendarPage() {
   const { user } = useAuth()
   const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
   const { todos } = useTodoStore()
+  const { calendarViewMode: viewMode, setCalendarViewMode: setViewMode } = useUIStore()
   const createEventMutation = useCreateEventMutation()
   const updateEventMutation = useUpdateEventMutation()
   const deleteEventMutation = useDeleteEventMutation()
 
-  const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)

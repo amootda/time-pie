@@ -177,7 +177,6 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
               flex flex-col items-center cursor-pointer
               transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-primary focus:rounded-xl
-              ${day.isToday ? 'ring-2 ring-primary rounded-xl p-2 -m-2' : ''}
             `}
           >
             {/* Day Label */}
@@ -199,7 +198,8 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
                   selectedDate={day.date}
                   size={80}
                   showLabels={false}
-                  showCurrentTime={day.isToday}
+                  showCurrentTime={false}
+                  showCenterInfo={false}
                   className="pointer-events-none"
                 />
               ) : (

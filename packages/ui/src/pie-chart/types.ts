@@ -24,6 +24,7 @@ export interface PieChartProps {
   size?: number
   showLabels?: boolean
   showCurrentTime?: boolean
+  showCenterInfo?: boolean
   onEventClick?: (event: Event) => void
   onTimeSlotClick?: (hour: number) => void
   className?: string

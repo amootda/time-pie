@@ -2,27 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 import { Header, BottomNav, LoginButton } from '../components'
-import { useAuth } from '../providers'
+import { useAuth, useTheme } from '../providers'
 import { getUserSettings, upsertUserSettings } from '@time-pie/supabase'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState({
     events: true,
     todos: true,
     habits: true,
   })
   const [saving, setSaving] = useState(false)
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Load user settings from Supabase
   useEffect(() => {
@@ -217,7 +210,7 @@ export default function SettingsPage() {
             <span>🎨</span> 테마
           </h3>
           <div className="grid grid-cols-3 gap-2">
-            {mounted && [
+            {[
               { value: 'light', label: '라이트', icon: '☀️' },
               { value: 'dark', label: '다크', icon: '🌙' },
               { value: 'system', label: '시스템', icon: '💻' },

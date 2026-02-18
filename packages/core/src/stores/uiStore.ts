@@ -1,38 +1,30 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-type ViewMode = 'pie' | 'list'
-type Theme = 'light' | 'dark' | 'system'
+type CalendarViewMode = 'week' | 'month'
+type HomeViewMode = 'day' | 'week' | 'month'
 
 interface UIState {
-  viewMode: ViewMode
-  theme: Theme
-  isSidebarOpen: boolean
-  isModalOpen: boolean
-  modalContent: React.ReactNode | null
+  // 캘린더 페이지 뷰 모드
+  calendarViewMode: CalendarViewMode
+  setCalendarViewMode: (mode: CalendarViewMode) => void
 
-  // Actions
-  setViewMode: (mode: ViewMode) => void
-  setTheme: (theme: Theme) => void
-  toggleSidebar: () => void
-  openModal: (content: React.ReactNode) => void
-  closeModal: () => void
+  // 홈 페이지 뷰 모드 (일간/주간/월간)
+  homeViewMode: HomeViewMode
+  setHomeViewMode: (mode: HomeViewMode) => void
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  viewMode: 'pie',
-  theme: 'light',
-  isSidebarOpen: false,
-  isModalOpen: false,
-  modalContent: null,
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      calendarViewMode: 'month',
+      setCalendarViewMode: (mode) => set({ calendarViewMode: mode }),
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-
-  setTheme: (theme) => set({ theme }),
-
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-
-  openModal: (content) => set({ isModalOpen: true, modalContent: content }),
-
-  closeModal: () => set({ isModalOpen: false, modalContent: null }),
-}))
+      homeViewMode: 'day',
+      setHomeViewMode: (mode) => set({ homeViewMode: mode }),
+    }),
+    {
+      name: 'time-pie-ui',
+    }
+  )
+)
