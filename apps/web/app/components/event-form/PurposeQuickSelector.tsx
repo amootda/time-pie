@@ -1,7 +1,7 @@
 'use client'
 
+import { getPurposesByType } from '@time-pie/core'
 import type { EventType } from '@time-pie/supabase'
-import { EVENT_PURPOSES, getPurposesByType } from '@time-pie/core'
 
 interface PurposeQuickSelectorProps {
   selectedPurpose: string | null
@@ -53,24 +53,16 @@ export function PurposeQuickSelector({
             key={p.key}
             type="button"
             onClick={() => onSelect(p.key)}
-            className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${
-              selectedPurpose === p.key
+            className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${selectedPurpose === p.key
                 ? 'border-primary bg-primary/10 text-primary dark:text-primary'
                 : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-            }`}
+              }`}
           >
             <span className="text-lg mb-0.5">{p.emoji}</span>
             <span>{p.label}</span>
           </button>
         ))}
       </div>
-
-      {/* Selected purpose indicator */}
-      {selectedPurpose && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          선택됨: {EVENT_PURPOSES.find(p => p.key === selectedPurpose)?.label}
-        </p>
-      )}
     </div>
   )
 }
