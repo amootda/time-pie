@@ -1,6 +1,7 @@
 'use client'
 
 import type { EventMonthMeta } from '@time-pie/supabase'
+import { Anchor, Cloud, Lock } from 'lucide-react'
 
 interface EventListItemProps {
   event: EventMonthMeta
@@ -11,28 +12,33 @@ export function EventListItem({ event, onClick }: EventListItemProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+      className="w-full flex items-center gap-3 p-3 bg-card rounded-xl shadow-sm border border-border/50 hover:shadow-md hover:scale-[1.01] transition-all duration-200 cursor-pointer group"
     >
       <div
-        className="w-1 h-12 rounded-full"
+        className="w-1.5 h-12 rounded-full"
         style={{ backgroundColor: event.color }}
       />
       <div className="flex-1 text-left">
-        <div className="flex items-center gap-2">
-          <p className="font-medium dark:text-white">{event.title}</p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className="font-bold text-foreground group-hover:text-primary transition-colors">{event.title}</p>
           <span
-            className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-              event.event_type === 'anchor'
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-                : event.event_type === 'soft'
-                  ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
-                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-            }`}
+            className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 uppercase tracking-tight ${event.event_type === 'anchor'
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
+              : event.event_type === 'soft'
+                ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
+                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+              }`}
           >
-            {event.event_type === 'anchor' ? '⚓ 앵커' : event.event_type === 'soft' ? '☁️ 소프트' : '🔒 하드'}
+            {event.event_type === 'anchor' ? (
+              <><Anchor className="w-3 h-3" /> 앵커</>
+            ) : event.event_type === 'soft' ? (
+              <><Cloud className="w-3 h-3" /> 소프트</>
+            ) : (
+              <><Lock className="w-3 h-3" /> 하드</>
+            )}
           </span>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground font-medium">
           {event.start_at.split('T')[1].slice(0, 5)} -{' '}
           {event.end_at.split('T')[1].slice(0, 5)}
         </p>

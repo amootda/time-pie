@@ -19,6 +19,7 @@ export function PieChart({
   size = 300,
   showLabels = true,
   showCurrentTime = true,
+  showCenterInfo = true,
   onEventClick,
   onTimeSlotClick,
   className = '',
@@ -102,46 +103,50 @@ export function PieChart({
         />
 
         {/* 중앙 텍스트 - 현재 시간과 활동 */}
-        <text
-          x={center}
-          y={center - 30}
-          textAnchor="middle"
-          className="text-[10px] font-medium fill-muted-foreground uppercase tracking-wider"
-        >
-          CURRENT
-        </text>
-        <text
-          x={center}
-          y={center - 5}
-          textAnchor="middle"
-          className="text-3xl font-bold fill-foreground"
-          style={{ fontSize: '32px' }}
-        >
-          {currentTime.getHours().toString().padStart(2, '0')}:{currentTime.getMinutes().toString().padStart(2, '0')}
-        </text>
-        {/* 현재 진행 중인 이벤트 표시 */}
-        {(() => {
-          const currentHour = currentTime.getHours()
-          const currentMinute = currentTime.getMinutes()
-          const currentSlice = slices.find((slice) => {
-            if (!slice.event) return false
-            const startHour = Math.floor((slice.startAngle / 360) * 24)
-            const endHour = Math.floor((slice.endAngle / 360) * 24)
-            return currentHour >= startHour && currentHour < endHour
-          })
-          return currentSlice?.event ? (
+        {showCenterInfo && (
+          <>
             <text
               x={center}
-              y={center + 25}
+              y={center - 30}
               textAnchor="middle"
-              className="text-[11px] font-semibold fill-cyan-400 uppercase tracking-wide"
+              className="text-[10px] font-medium fill-muted-foreground uppercase tracking-wider"
             >
-              {currentSlice.event.title.length > 12
-                ? currentSlice.event.title.slice(0, 12) + '...'
-                : currentSlice.event.title}
+              CURRENT
             </text>
-          ) : null
-        })()}
+            <text
+              x={center}
+              y={center - 5}
+              textAnchor="middle"
+              className="text-3xl font-bold fill-foreground"
+              style={{ fontSize: '32px' }}
+            >
+              {currentTime.getHours().toString().padStart(2, '0')}:{currentTime.getMinutes().toString().padStart(2, '0')}
+            </text>
+            {/* 현재 진행 중인 이벤트 표시 */}
+            {(() => {
+              const currentHour = currentTime.getHours()
+              const currentMinute = currentTime.getMinutes()
+              const currentSlice = slices.find((slice) => {
+                if (!slice.event) return false
+                const startHour = Math.floor((slice.startAngle / 360) * 24)
+                const endHour = Math.floor((slice.endAngle / 360) * 24)
+                return currentHour >= startHour && currentHour < endHour
+              })
+              return currentSlice?.event ? (
+                <text
+                  x={center}
+                  y={center + 25}
+                  textAnchor="middle"
+                  className="text-[11px] font-semibold fill-cyan-400 uppercase tracking-wide"
+                >
+                  {currentSlice.event.title.length > 12
+                    ? currentSlice.event.title.slice(0, 12) + '...'
+                    : currentSlice.event.title}
+                </text>
+              ) : null
+            })()}
+          </>
+        )}
 
         {/* 현재 시간 바늘 */}
         {showCurrentTime && (

@@ -1,5 +1,7 @@
 'use client'
 
+import { Plus } from 'lucide-react'
+
 interface FloatingAddButtonProps {
   onAddEvent?: () => void
   onAddTodo?: () => void
@@ -12,11 +14,9 @@ export function FloatingAddButton({ onAddEvent, onAddTodo, onAddHabit }: Floatin
       {/* Main FAB - 이미지처럼 단순한 청록색 버튼 */}
       <button
         onClick={onAddEvent || onAddTodo || onAddHabit}
-        className="w-16 h-16 rounded-full bg-cyan-500 text-white shadow-2xl hover:bg-cyan-400 transition-all duration-200 flex items-center justify-center hover:scale-110"
+        className="w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary-600 transition-all duration-300 flex items-center justify-center hover:scale-110 active:scale-95"
       >
-        <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-          <path d="M12 5v14M5 12h14" />
-        </svg>
+        <Plus className="w-8 h-8" strokeWidth={3} />
       </button>
     </div>
   )

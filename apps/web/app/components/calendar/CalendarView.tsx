@@ -22,24 +22,24 @@ export function CalendarView({
   onDateSelect,
   onMonthChange,
 }: CalendarViewProps) {
-  if (viewMode === 'month') {
-    return (
-      <MonthlyHeatmap
-        events={events}
-        selectedDate={currentMonth}
-        onDateSelect={(date) => {
-          onMonthChange(date)
-          onDateSelect(date)
-        }}
-      />
-    )
-  }
-
+  // if (viewMode === 'month') {
   return (
-    <WeeklyPieView
+    <MonthlyHeatmap
       events={events}
-      selectedDate={selectedDate}
-      onDateSelect={onDateSelect}
+      selectedDate={currentMonth}
+      onDateSelect={(date) => {
+        onMonthChange(date)
+        onDateSelect(date)
+      }}
     />
   )
+  // }
+
+  // return (
+  //   <WeeklyPieView
+  //     events={events}
+  //     selectedDate={selectedDate}
+  //     onDateSelect={onDateSelect}
+  //   />
+  // )
 }

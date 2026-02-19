@@ -26,8 +26,8 @@ function PurposeSelector({ type, purpose, setPurpose }: PurposeSelectorProps) {
             type="button"
             onClick={() => setPurpose(p.key)}
             className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${purpose === p.key
-                ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-                : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+              ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
               }`}
           >
             <span className="text-lg mb-0.5">{p.emoji}</span>
@@ -66,8 +66,8 @@ function RepeatDaysSelector({ type, repeatDays, setRepeatDays }: RepeatDaysSelec
             type="button"
             onClick={() => toggleRepeatDay(i)}
             className={`w-9 h-9 rounded-full text-sm font-medium transition-all ${repeatDays.includes(i)
-                ? 'bg-primary text-white'
-                : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+              ? 'bg-primary text-white'
+              : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
               }`}
           >
             {day}
@@ -79,6 +79,48 @@ function RepeatDaysSelector({ type, repeatDays, setRepeatDays }: RepeatDaysSelec
           선택 안하면 매일 표시됩니다
         </p>
       )}
+    </div>
+  )
+}
+
+// ─── Reminder selector ─────────────────────────────────────────────────────
+
+const REMINDER_OPTIONS: { value: number | null; label: string }[] = [
+  { value: null, label: '없음' },
+  { value: 0, label: '정시' },
+  { value: 5, label: '5분 전' },
+  { value: 10, label: '10분 전' },
+  { value: 15, label: '15분 전' },
+  { value: 30, label: '30분 전' },
+  { value: 60, label: '1시간 전' },
+]
+
+interface ReminderSelectorProps {
+  reminderMin: number | null
+  setReminderMin: (value: number | null) => void
+}
+
+function ReminderSelector({ reminderMin, setReminderMin }: ReminderSelectorProps) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        🔔 알림
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {REMINDER_OPTIONS.map((opt) => (
+          <button
+            key={opt.label}
+            type="button"
+            onClick={() => setReminderMin(opt.value)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2 ${reminderMin === opt.value
+                ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+                : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+              }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -118,6 +160,8 @@ interface HardEventOptionsProps {
   setIsLocked: (value: boolean) => void
   location: string
   setLocation: (value: string) => void
+  reminderMin: number | null
+  setReminderMin: (value: number | null) => void
 }
 
 function HardEventOptions({
@@ -126,6 +170,7 @@ function HardEventOptions({
   repeatDays, setRepeatDays,
   isLocked, setIsLocked,
   location, setLocation,
+  reminderMin, setReminderMin,
 }: HardEventOptionsProps) {
   const lockId = useId()
   return (
@@ -156,6 +201,7 @@ function HardEventOptions({
           다른 일정 잠금
         </label>
       </div>
+      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
   )
@@ -170,6 +216,8 @@ interface AnchorEventOptionsProps {
   setRepeatDays: (value: number[]) => void
   bufferMin: number
   setBufferMin: (value: number) => void
+  reminderMin: number | null
+  setReminderMin: (value: number | null) => void
 }
 
 function AnchorEventOptions({
@@ -177,6 +225,7 @@ function AnchorEventOptions({
   description, setDescription,
   repeatDays, setRepeatDays,
   bufferMin, setBufferMin,
+  reminderMin, setReminderMin,
 }: AnchorEventOptionsProps) {
   return (
     <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -196,6 +245,7 @@ function AnchorEventOptions({
           className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
         />
       </div>
+      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
   )
@@ -212,6 +262,8 @@ interface SoftEventOptionsProps {
   setWeeklyGoal: (value: number) => void
   priority: number
   setPriority: (value: number) => void
+  reminderMin: number | null
+  setReminderMin: (value: number | null) => void
 }
 
 function SoftEventOptions({
@@ -220,6 +272,7 @@ function SoftEventOptions({
   repeatDays, setRepeatDays,
   weeklyGoal, setWeeklyGoal,
   priority, setPriority,
+  reminderMin, setReminderMin,
 }: SoftEventOptionsProps) {
   return (
     <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -236,8 +289,8 @@ function SoftEventOptions({
               type="button"
               onClick={() => setWeeklyGoal(n)}
               className={`flex-1 h-10 rounded-full text-sm font-medium transition-all ${n === weeklyGoal
-                  ? 'bg-primary text-white'
-                  : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                ? 'bg-primary text-white'
+                : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
                 }`}
             >
               {n}
@@ -256,8 +309,8 @@ function SoftEventOptions({
               type="button"
               onClick={() => setPriority(n)}
               className={`flex-1 h-10 rounded-full text-sm font-medium transition-all ${n === priority
-                  ? 'bg-primary text-white'
-                  : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                ? 'bg-primary text-white'
+                : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
                 }`}
             >
               {n}
@@ -265,6 +318,7 @@ function SoftEventOptions({
           ))}
         </div>
       </div>
+      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
   )
@@ -293,6 +347,9 @@ interface DetailedEventOptionsProps {
   setWeeklyGoal: (value: number) => void
   priority: number
   setPriority: (value: number) => void
+  // Alarm
+  reminderMin: number | null
+  setReminderMin: (value: number | null) => void
 }
 
 /**
@@ -307,6 +364,8 @@ export function DetailedEventOptions(props: DetailedEventOptionsProps) {
     setDescription: props.setDescription,
     repeatDays: props.repeatDays,
     setRepeatDays: props.setRepeatDays,
+    reminderMin: props.reminderMin,
+    setReminderMin: props.setReminderMin,
   }
 
   if (props.type === 'hard') {

@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @source "../../../packages/ui/src";
 
-/* Tailwind v4: Enable class-based dark mode for next-themes */
+/* Tailwind v4: Enable class-based dark mode (cookie-based server-side theme) */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Light/Dark Theme CSS Variables */
@@ -58,7 +58,7 @@
   --color-secondary: #0077E6;
 
   /* Status Colors (Refined) */
-  --color-success: #10B981;
+  --color-success: #22d3ee;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
 
@@ -199,4 +199,17 @@ body {
   a:active {
     opacity: 0.7;
   }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

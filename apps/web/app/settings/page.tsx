@@ -1,27 +1,39 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
-import { Header, BottomNav, LoginButton } from '../components'
-import { useAuth } from '../providers'
 import { getUserSettings, upsertUserSettings } from '@time-pie/supabase'
+import {
+  Calendar,
+  CheckSquare,
+  ChevronRight,
+  LogOut,
+  Monitor,
+  Moon,
+  Sun,
+  Trophy,
+  User
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { BottomNav, Header, LoginButton } from '../components'
+import { useAuth, useTheme } from '../providers'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, loading, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState({
     events: true,
     todos: true,
     habits: true,
   })
   const [saving, setSaving] = useState(false)
+  const [notifPermission, setNotifPermission] = useState<string>('default')
 
-  // Prevent hydration mismatch
+  // 브라우저 알림 권한 상태 초기화
   useEffect(() => {
-    setMounted(true)
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission)
+    }
   }, [])
 
   // Load user settings from Supabase
@@ -50,6 +62,20 @@ export default function SettingsPage() {
   // Save notification setting to Supabase
   const handleNotificationChange = async (key: 'events' | 'todos' | 'habits') => {
     const newValue = !notifications[key]
+
+    // 일정 알림 활성화 시 브라우저 권한 요청
+    if (key === 'events' && newValue && typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        const result = await Notification.requestPermission()
+        setNotifPermission(result)
+        if (result === 'denied') {
+          return // 권한 거부 시 토글하지 않음
+        }
+      } else if (Notification.permission === 'denied') {
+        return // 이미 차단된 경우 토글하지 않음
+      }
+    }
+
     setNotifications((prev) => ({ ...prev, [key]: newValue }))
 
     if (!user?.id) return
@@ -97,17 +123,17 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background pb-20">
       <Header title="설정" />
 
-      <main className="max-w-lg mx-auto px-4 py-4">
+      <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Profile Section */}
-        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
+        <section className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 overflow-hidden relative">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : user ? (
             <>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-5 relative">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary/20">
                   {user.user_metadata?.avatar_url ? (
                     <img
                       src={user.user_metadata.avatar_url}
@@ -115,172 +141,212 @@ export default function SettingsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-2xl">👤</span>
+                    <User className="w-8 h-8 text-primary" />
                   )}
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-lg text-foreground">
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-lg text-foreground truncate">
                     {user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0]}
                   </p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                  <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
               <button
                 onClick={handleSignOut}
-                className="w-full mt-4 py-3 bg-muted text-foreground rounded-xl font-medium hover:opacity-80 transition-colors"
+                className="w-full mt-6 py-3 bg-muted/50 hover:bg-muted text-foreground rounded-xl font-medium transition-colors flex items-center justify-center gap-2 group"
               >
-                로그아웃
+                <LogOut className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <span>로그아웃</span>
               </button>
             </>
           ) : (
             <>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">👤</span>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg text-foreground">게스트 사용자</p>
+                  <p className="font-bold text-lg text-foreground">게스트 사용자</p>
                   <p className="text-sm text-muted-foreground">로그인하여 데이터를 동기화하세요</p>
                 </div>
               </div>
               <LoginButton />
             </>
           )}
-        </div>
+        </section>
 
         {/* Notifications Section */}
-        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
-            <span>🔔</span> 알림 설정
+        <section className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <h3 className="font-bold mb-5 flex items-center gap-2 text-foreground text-lg">
+            <span>알림 설정</span>
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">일정 알림</p>
-                <p className="text-sm text-muted-foreground">일정 시작 전 알림</p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <p className="font-medium text-foreground">일정 알림</p>
+                </div>
+                <p className="text-xs text-muted-foreground ml-7">
+                  {notifPermission === 'denied'
+                    ? '브라우저 알림이 차단되어 있습니다'
+                    : ''}
+                </p>
               </div>
               <button
                 onClick={() => handleNotificationChange('events')}
-                disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.events ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!user || notifPermission === 'denied'}
+                className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.events ? 'bg-primary' : 'bg-muted'
+                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.events ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.events ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
               </button>
             </div>
+
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">할 일 알림</p>
-                <p className="text-sm text-muted-foreground">마감일 알림</p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-3">
+                  <CheckSquare className="w-4 h-4 text-muted-foreground" />
+                  <p className="font-medium text-foreground">할 일 알림</p>
+                </div>
               </div>
               <button
                 onClick={() => handleNotificationChange('todos')}
                 disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.todos ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.todos ? 'bg-primary' : 'bg-muted'
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.todos ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.todos ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
               </button>
             </div>
+
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">습관 리마인더</p>
-                <p className="text-sm text-muted-foreground">습관 완료 리마인더</p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-3">
+                  <Trophy className="w-4 h-4 text-muted-foreground" />
+                  <p className="font-medium text-foreground">습관 리마인더</p>
+                </div>
               </div>
               <button
                 onClick={() => handleNotificationChange('habits')}
                 disabled={!user}
-                className={`w-12 h-7 rounded-full transition-colors relative ${notifications.habits ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.habits ? 'bg-primary' : 'bg-muted'
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.habits ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.habits ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
               </button>
             </div>
           </div>
           {!user && (
-            <p className="text-xs text-muted-foreground mt-3">로그인하면 설정이 저장됩니다</p>
+            <p className="text-xs text-muted-foreground mt-4 bg-muted/50 p-3 rounded-lg text-center">
+              로그인하면 설정이 클라우드에 저장됩니다
+            </p>
           )}
-        </div>
+        </section>
 
         {/* Theme Section */}
-        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
-            <span>🎨</span> 테마
+        <section className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <h3 className="font-bold mb-5 flex items-center gap-2 text-foreground text-lg">
+            <span>테마 설정</span>
           </h3>
-          <div className="grid grid-cols-3 gap-2">
-            {mounted && [
-              { value: 'light', label: '라이트', icon: '☀️' },
-              { value: 'dark', label: '다크', icon: '🌙' },
-              { value: 'system', label: '시스템', icon: '💻' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleThemeChange(option.value as 'light' | 'dark' | 'system')}
-                className={`py-3 rounded-xl text-sm font-medium transition-colors ${theme === option.value
-                  ? 'bg-primary text-white'
-                  : 'bg-muted text-muted-foreground hover:opacity-80'
-                  }`}
-              >
-                <span className="block text-lg mb-1">{option.icon}</span>
-                {option.label}
-              </button>
-            ))}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { value: 'light', label: '라이트', icon: Sun },
+              { value: 'dark', label: '다크', icon: Moon },
+              { value: 'system', label: '시스템', icon: Monitor },
+            ].map((option) => {
+              const Icon = option.icon
+              const isSelected = theme === option.value
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => handleThemeChange(option.value as 'light' | 'dark' | 'system')}
+                  className={`py-3 px-2 rounded-xl text-sm font-medium transition-all duration-200 flex flex-col items-center gap-2 ${isSelected
+                    ? 'bg-primary text-white shadow-md shadow-primary/20 scale-105'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                >
+                  <Icon className={`w-6 h-6 ${isSelected ? 'animate-bounce-in' : ''}`} />
+                  <span>{option.label}</span>
+                </button>
+              )
+            })}
           </div>
-        </div>
+        </section>
 
         {/* Data Section */}
-        <div className="bg-card rounded-xl shadow-sm p-4 mb-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
-            <span>💾</span> 데이터
+        {/* <section className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <h3 className="font-bold mb-5 flex items-center gap-2 text-foreground text-lg">
+            <span>데이터 관리</span>
           </h3>
-          <div className="space-y-2">
-            <button className="w-full py-3 text-left px-4 bg-muted rounded-xl hover:opacity-80 transition-colors flex items-center justify-between text-foreground">
-              <span>데이터 내보내기</span>
-              <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+          <div className="space-y-3">
+            <button className="w-full p-4 bg-muted/30 hover:bg-muted/60 rounded-xl transition-colors flex items-center justify-between group text-foreground">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-background rounded-lg text-muted-foreground group-hover:text-foreground transition-colors">
+                  <Download className="w-5 h-5" />
+                </div>
+                <span className="font-medium">데이터 내보내기</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
             </button>
-            <button className="w-full py-3 text-left px-4 bg-muted rounded-xl hover:opacity-80 transition-colors flex items-center justify-between text-foreground">
-              <span>데이터 가져오기</span>
-              <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+
+            <button className="w-full p-4 bg-muted/30 hover:bg-muted/60 rounded-xl transition-colors flex items-center justify-between group text-foreground">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-background rounded-lg text-muted-foreground group-hover:text-foreground transition-colors">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <span className="font-medium">데이터 가져오기</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
             </button>
-            <button className="w-full py-3 text-left px-4 bg-error/10 text-error rounded-xl hover:bg-error/20 transition-colors flex items-center justify-between">
-              <span>모든 데이터 삭제</span>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+
+            <button className="w-full p-4 bg-error/5 hover:bg-error/10 text-error rounded-xl transition-colors flex items-center justify-between group mt-2 border border-error/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-background rounded-lg text-error/80 group-hover:text-error transition-colors">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <span className="font-medium">모든 데이터 삭제</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-error/30 group-hover:text-error/60 transition-colors" />
             </button>
           </div>
-        </div>
+        </section> */}
 
         {/* About Section */}
-        <div className="bg-card rounded-xl shadow-sm p-4">
-          <h3 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
-            <span>ℹ️</span> 정보
+        <section className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <h3 className="font-bold mb-5 flex items-center gap-2 text-foreground text-lg">
+            <span>앱 정보</span>
           </h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-2 border-b border-border/50">
               <span className="text-muted-foreground">버전</span>
-              <span className="font-medium text-foreground">1.0.0 (MVP)</span>
+              <span className="font-medium text-foreground bg-muted px-2 py-1 rounded text-xs">v1.0.0 (MVP)</span>
+            </div>
+            <div className="space-y-3 pt-2">
+              <a href="#" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
+                <span>이용약관</span>
+                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <a href="#" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
+                <span>개인정보처리방침</span>
+                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <a href="#" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
+                <span>피드백 보내기</span>
+                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-border space-y-2">
-            <a href="#" className="block text-secondary hover:underline">이용약관</a>
-            <a href="#" className="block text-secondary hover:underline">개인정보처리방침</a>
-            <a href="#" className="block text-secondary hover:underline">피드백 보내기</a>
-          </div>
-        </div>
+        </section>
       </main>
 
       <BottomNav />

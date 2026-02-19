@@ -1,3 +1,4 @@
+export { useAlarm } from './useAlarm'
 export { useCurrentTime } from './useCurrentTime'
 export { useUserData } from './useUserData'
 export { useMonthEvents } from './useMonthEvents'

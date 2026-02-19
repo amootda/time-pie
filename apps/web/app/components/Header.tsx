@@ -17,13 +17,13 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
   const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(today)
   const day = today.getDate()
 
-  // 주간 날짜 생성 (월~금)
+  // 주간 날짜 생성 (일~토)
   const getWeekDates = () => {
     const dates = []
     const currentDay = today.getDay() // 0=일, 1=월, ..., 6=토
-    const diff = currentDay === 0 ? -6 : 1 - currentDay // 월요일까지의 차이
+    const diff = -currentDay // 일요일까지의 차이
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 7; i++) {
       const date = new Date(today)
       date.setDate(today.getDate() + diff + i)
       dates.push(date)
@@ -41,15 +41,15 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
 
   const isSameDay = (d1: Date, d2: Date) => {
     return d1.getDate() === d2.getDate() &&
-           d1.getMonth() === d2.getMonth() &&
-           d1.getFullYear() === d2.getFullYear()
+      d1.getMonth() === d2.getMonth() &&
+      d1.getFullYear() === d2.getFullYear()
   }
 
   return (
     <header className="sticky top-0 z-10 bg-background pt-6 pb-4">
       <div className="max-w-lg mx-auto px-6">
         {/* 날짜와 설정 */}
-        <div className="flex items-start justify-between mb-6">
+        <div className={`flex items-start justify-between ${showDate ? 'mb-6' : ''}`}>
           <div>
             <div className="text-muted-foreground text-sm font-medium mb-1">{weekday}</div>
             <div className="text-foreground text-4xl font-bold tracking-tight">
@@ -79,11 +79,10 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
                 <button
                   key={index}
                   onClick={() => handleDateClick(date)}
-                  className={`flex-1 py-3 px-2 rounded-2xl transition-all ${
-                    isSelected
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-card text-muted-foreground hover:bg-muted'
-                  }`}
+                  className={`flex-1 py-3 px-2 rounded-2xl transition-all ${isSelected
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-card text-muted-foreground hover:bg-muted'
+                    }`}
                 >
                   <div className={`text-xs font-medium mb-1 ${isSelected ? 'text-white' : 'text-muted-foreground'}`}>
                     {dayShort}

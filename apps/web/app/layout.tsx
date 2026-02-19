@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
 import { Outfit, Noto_Sans_KR } from 'next/font/google'
 import { AuthProvider, ThemeProvider, QueryProvider } from './providers'
 import { Analytics } from '@vercel/analytics/next'
@@ -50,16 +51,27 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const cookieStore = await cookies()
+  const themeCookie = cookieStore.get('theme')?.value as 'light' | 'dark' | 'system' | undefined
+  const theme = themeCookie || 'system'
+
+  // 서버에서 dark class 결정: 'dark'일 때만 적용, 'system'은 클라이언트에서 처리
+  const isDark = theme === 'dark'
+
   return (
-    <html lang="ko" suppressHydrationWarning className={`${outfit.variable} ${notoSansKr.variable}`}>
+    <html
+      lang="ko"
+      suppressHydrationWarning
+      className={`${outfit.variable} ${notoSansKr.variable} ${isDark ? 'dark' : ''}`}
+    >
       <body>
         <QueryProvider>
-          <ThemeProvider>
+          <ThemeProvider initialTheme={theme}>
             <AuthProvider>{children}</AuthProvider>
           </ThemeProvider>
         </QueryProvider>
@@ -68,3 +80,4 @@ export default function RootLayout({
     </html>
   )
 }
+
