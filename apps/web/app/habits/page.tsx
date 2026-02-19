@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { PieChart } from 'lucide-react'
-import { useHabitsQuery, useHabitLogsQuery, useLogHabitMutation, useCreateHabitMutation, toDateString } from '@time-pie/core'
-import { Header, BottomNav, FloatingAddButton, HabitModal } from '../components'
-import { useAuth } from '../providers'
+import { toDateString, useCreateHabitMutation, useHabitLogsQuery, useHabitsQuery, useLogHabitMutation } from '@time-pie/core'
 import type { HabitInsert } from '@time-pie/supabase'
+import { Check, Flame, PieChart, Sparkles } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { BottomNav, FloatingAddButton, HabitModal, Header } from '../components'
+import { useAuth } from '../providers'
 
 export default function HabitsPage() {
   const { user } = useAuth()
@@ -119,132 +119,118 @@ export default function HabitsPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-6">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-16 h-16 border-4 border-gray-200 border-t-primary rounded-full animate-spin" />
+          <div className="absolute w-16 h-16 border-4 border-muted border-t-primary rounded-full animate-spin" />
           <PieChart className="w-8 h-8 text-primary/80" />
         </div>
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="w-2 h-2 rounded-full bg-primary opacity-70"
-              style={{
-                animation: 'loading-dot 1.2s ease-in-out infinite',
-                animationDelay: `${i * 0.2}s`,
-              }}
-            />
-          ))}
-        </div>
-        <style jsx global>{`
-          @keyframes loading-dot {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-          }
-        `}</style>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <Header title="습관" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Today's Progress */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold dark:text-white">오늘의 진행률</h2>
+        <div className="bg-card p-5 rounded-2xl shadow-sm border border-border/50 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-foreground">오늘의 진행률</h2>
             <span className="text-2xl font-bold text-primary">{completionRate}%</span>
           </div>
-          <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-primary to-success transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-500 ease-out"
               style={{ width: `${completionRate}%` }}
             />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            {progress.completed}/{progress.total} 완료
+          <p className="text-sm text-muted-foreground mt-3 font-medium text-right">
+            {progress.total}개 중 {progress.completed}개 완료
           </p>
         </div>
 
         {/* Habits List */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {habitsWithStreak.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-2">⭐</p>
-              <p className="text-gray-500 dark:text-gray-400">습관을 추가해보세요</p>
+            <div className="text-center py-16 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 bg-muted/30 rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="w-10 h-10 text-yellow-500 fill-yellow-500/20" />
+              </div>
+              <p className="text-foreground font-semibold mb-1">습관이 없습니다</p>
+              <p className="text-muted-foreground text-sm mb-6">새로운 습관을 만들어보세요!</p>
               <button
                 onClick={() => setModalOpen(true)}
-                className="mt-4 px-4 py-2 bg-success text-white rounded-lg text-sm font-medium"
+                className="px-6 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
               >
-                습관 추가
+                습관 추가하기
               </button>
             </div>
           ) : (
             habitsWithStreak.map((habit) => (
-              <div key={habit.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
+              <div key={habit.id} className="bg-card p-5 rounded-2xl shadow-sm border border-border/50 hover:border-primary/20 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
                     {/* Toggle Button */}
                     <button
                       onClick={() => handleToggleHabit(habit.id)}
                       disabled={togglingId === habit.id}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${habit.todayCompleted
-                        ? 'scale-110'
-                        : 'border-2 hover:scale-105'
-                        } ${togglingId === habit.id ? 'opacity-50' : ''}`}
+                      className={`cursor-pointer w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${habit.todayCompleted
+                        ? 'scale-105 shadow-md'
+                        : 'border-2  bg-background'
+                        } ${togglingId === habit.id ? 'opacity-50 cursor-wait' : ''}`}
                       style={{
-                        backgroundColor: habit.todayCompleted ? habit.color : 'transparent',
+                        backgroundColor: habit.todayCompleted ? habit.color : undefined,
                         borderColor: habit.color,
+                        boxShadow: habit.todayCompleted ? `0 4px 12px ${habit.color}40` : undefined,
                       }}
                     >
                       {habit.todayCompleted ? (
-                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-6 h-6 text-white" strokeWidth={3} />
                       ) : (
-                        <span className="text-lg" style={{ color: habit.color }}>+</span>
+                        <span className="text-2xl font-light mb-0.5" style={{ color: habit.color }}>+</span>
                       )}
                     </button>
                     <div>
-                      <p className="font-medium dark:text-white">{habit.title}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {habit.frequency === 'daily' ? '매일' : '매주'}
-                      </p>
+                      <h3 className="font-bold text-foreground text-lg mb-0.5">{habit.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">
+                          {habit.frequency === 'daily' ? '매일' : '매주'}
+                        </span>
+                        {habit.streak > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-md">
+                            <Flame className="w-3 h-3 fill-orange-500" />
+                            <span>{habit.streak}일 연속</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    {habit.streak > 0 && (
-                      <p className="text-lg font-bold text-primary flex items-center gap-1">
-                        <span>🔥</span> {habit.streak}일
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 {/* Weekly Progress */}
-                <div className="flex justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-end bg-muted/20 p-3 rounded-xl">
                   {last7Days.map((date) => {
                     const completed = getHabitLogForDate(habit.id, date)
                     const isToday = date === todayStr
                     const dayOfWeek = new Date(date).getDay()
                     return (
-                      <div key={date} className="flex flex-col items-center">
-                        <span className="text-xs text-gray-400 mb-1">
+                      <div key={date} className="flex flex-col items-center gap-2">
+                        <span className={`text-[10px] font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'
+                          }`}>
                           {dayLabels[dayOfWeek]}
                         </span>
                         <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${completed
-                            ? 'text-white'
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${completed
+                            ? 'text-white shadow-sm scale-110'
                             : isToday
-                              ? 'border-2 border-dashed'
-                              : 'bg-gray-100 dark:bg-gray-700'
+                              ? 'border-2 border-dashed bg-background'
+                              : 'bg-muted/50'
                             }`}
                           style={{
                             backgroundColor: completed ? habit.color : undefined,
                             borderColor: isToday && !completed ? habit.color : undefined,
                           }}
                         >
-                          {completed && '✓'}
+                          {completed && <Check className="w-4 h-4" strokeWidth={3} />}
                         </div>
                       </div>
                     )
