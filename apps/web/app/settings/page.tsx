@@ -9,6 +9,7 @@ import {
   Monitor,
   Moon,
   Sun,
+  Trophy,
   User
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -228,7 +229,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30" />
+                  <Trophy className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">습관 리마인더</p>
                 </div>
               </div>

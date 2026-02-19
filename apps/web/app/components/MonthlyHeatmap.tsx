@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
 import type { Event, EventMonthMeta } from '@time-pie/supabase'
 import dayjs from 'dayjs'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface MonthlyHeatmapProps {
   events: (Event | EventMonthMeta)[]
@@ -146,33 +147,29 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
     <div className="w-full">
       {/* Month Header */}
       <div className="flex items-center justify-between mb-6 px-1">
-        <h2 className="text-foreground text-lg font-semibold">
+        <h2 className="text-foreground text-lg font-bold">
           {monthYearText}
         </h2>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevMonth}
-            className="p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
             aria-label="이전 월"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={handleToday}
-            className="px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 transition-colors"
+            className="px-3 py-1.5 text-xs font-bold text-primary border border-primary/30 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
           >
             오늘
           </button>
           <button
             onClick={handleNextMonth}
-            className="p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
+            className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
             aria-label="다음 월"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>

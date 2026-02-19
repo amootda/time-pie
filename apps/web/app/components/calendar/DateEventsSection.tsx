@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { toDateString } from '@time-pie/core'
+import type { EventMonthMeta, Todo } from '@time-pie/supabase'
+import { Calendar } from 'lucide-react'
 import { EventListItem } from './EventListItem'
 import { TodoListSection } from './TodoListSection'
-import type { EventMonthMeta, Todo } from '@time-pie/supabase'
 
 interface DateEventsSectionProps {
   selectedDate: Date
@@ -27,18 +27,20 @@ export function DateEventsSection({
 
   return (
     <div className="mt-4">
-      <h3 className="font-medium mb-3 flex items-center gap-2 dark:text-white">
-        <span>📅</span>
-        {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
+      <h3 className="font-bold mb-3 flex items-center gap-2 dark:text-white text-lg">
+        <Calendar className="w-5 h-5 text-primary" />
+        <span>
+          {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일
+        </span>
         {isToday && (
-          <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">오늘</span>
+          <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full font-medium ml-1">오늘</span>
         )}
       </h3>
 
       {/* Events */}
       <div className="space-y-2">
         {displayEvents.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center bg-white dark:bg-gray-800 rounded-xl">
+          <p className="text-sm text-muted-foreground py-6 text-center bg-card rounded-xl border border-border/50">
             일정이 없습니다
           </p>
         ) : (
