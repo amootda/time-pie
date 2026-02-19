@@ -11,14 +11,6 @@ interface EventCardProps {
 
 const getTypeStyles = (eventType: EventType) => {
   switch (eventType) {
-    case 'hard':
-      return {
-        label: 'HARD TASK',
-        borderColor: 'border-l-blue-500',
-        bgColor: 'bg-[#1A2B3F]',
-        labelColor: 'text-blue-400',
-        accentColor: 'bg-blue-500',
-      }
     case 'anchor':
       return {
         label: 'ANCHOR',
@@ -27,21 +19,14 @@ const getTypeStyles = (eventType: EventType) => {
         labelColor: 'text-gray-400',
         accentColor: 'bg-gray-500',
       }
-    case 'soft':
-      return {
-        label: 'SOFT TASK',
-        borderColor: 'border-l-yellow-500',
-        bgColor: 'bg-[#1A2B3F]',
-        labelColor: 'text-yellow-400',
-        accentColor: 'bg-yellow-500',
-      }
+    case 'task':
     default:
       return {
         label: 'TASK',
-        borderColor: 'border-l-gray-500',
+        borderColor: 'border-l-blue-500',
         bgColor: 'bg-[#1A2B3F]',
-        labelColor: 'text-gray-400',
-        accentColor: 'bg-gray-500',
+        labelColor: 'text-blue-400',
+        accentColor: 'bg-blue-500',
       }
   }
 }
@@ -52,7 +37,7 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
 
   const startTime = event.start_at.split('T')[1]?.slice(0, 5) || ''
   const endTime = event.end_at.split('T')[1]?.slice(0, 5) || ''
-  const isSoftEvent = event.event_type === 'soft'
+  const isTaskEvent = event.event_type === 'task'
 
   const handleStartClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -83,11 +68,6 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
               {event.description}
             </p>
           )}
-          {event.location && (
-            <p className="text-gray-500 text-xs mt-1 truncate">
-              {event.location}
-            </p>
-          )}
         </button>
 
         {/* 우측: 시간 + 시작 버튼 */}
@@ -101,8 +81,8 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
             </div>
           </div>
 
-          {/* Soft 이벤트만 시작 버튼 표시 */}
-          {isSoftEvent && onStartExecution && (
+          {/* Task 이벤트만 시작 버튼 표시 */}
+          {isTaskEvent && onStartExecution && (
             <button
               onClick={handleStartClick}
               className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"

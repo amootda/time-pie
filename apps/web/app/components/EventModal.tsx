@@ -7,8 +7,8 @@ import { AddModal } from './AddModal'
 import { EventTypeTab } from './event-form/EventTypeTab'
 import { QuickEventForm } from './event-form/QuickEventForm'
 import { DetailedEventOptions } from './event-form/DetailedEventOptions'
-import { toDateString, getPurposeInfo } from '@time-pie/core'
-import type { Event, EventType, EventPurpose } from '@time-pie/supabase'
+import { toDateString, getPurposeInfo, ANCHOR_DEFAULT_COLOR } from '@time-pie/core'
+import type { Event, EventType } from '@time-pie/supabase'
 
 dayjs.extend(customParseFormat)
 
@@ -23,7 +23,7 @@ interface EventModalProps {
 
 /**
  * Refactored EventModal - Orchestrator pattern
- * Reduced from 629 lines to ~200 lines using modular components
+ * 2 types: anchor | task
  */
 export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, selectedDate }: EventModalProps) {
   const defaultDate = selectedDate || new Date()
@@ -32,26 +32,20 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
   // Core state
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [scheduleType, setScheduleType] = useState<EventType>('hard')
-  const [purpose, setPurpose] = useState<EventPurpose | null>(null)
+  const [scheduleType, setScheduleType] = useState<EventType>('task')
+  const [purpose, setPurpose] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  // Hard/Soft fields
+  // Shared time fields
   const [startDate, setStartDate] = useState(dateStr)
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
   const [repeatDays, setRepeatDays] = useState<number[]>([])
-  const [isLocked, setIsLocked] = useState(false)
-  const [location, setLocation] = useState('')
 
   // Anchor fields
   const [baseTime, setBaseTime] = useState('07:00')
   const [anchorEndTime, setAnchorEndTime] = useState('08:00')
   const [bufferMin, setBufferMin] = useState(15)
-
-  // Soft fields
-  const [weeklyGoal, setWeeklyGoal] = useState(3)
-  const [priority, setPriority] = useState(3)
 
   // Alarm
   const [reminderMin, setReminderMin] = useState<number | null>(null)
@@ -70,18 +64,16 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
 
       setTitle(initialData?.title || '')
       setDescription(initialData?.description || '')
-      setScheduleType(initialData?.event_type || 'hard')
+      setScheduleType(initialData?.event_type || 'task')
       setPurpose(initialData?.purpose || null)
-      setShowAdvanced(false) // Always start collapsed
+      setShowAdvanced(false)
 
-      // Hard/Soft fields
-      const isRecurring = initialData?.event_type === 'anchor' || initialData?.event_type === 'soft'
+      // Time fields
+      const isRecurring = initialData?.event_type === 'anchor'
       setStartDate(isRecurring ? dateStr : (initialData?.start_at?.split('T')[0] || dateStr))
       setStartTime(initialData?.start_at?.split('T')[1]?.slice(0, 5) || '09:00')
       setEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
       setRepeatDays(initialData?.repeat_days || [])
-      setIsLocked(initialData?.is_locked || false)
-      setLocation(initialData?.location || '')
 
       // Anchor fields
       setBaseTime(initialData?.base_time || '07:00')
@@ -95,10 +87,6 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
         setAnchorEndTime('08:00')
       }
       setBufferMin(initialData?.buffer_min || 15)
-
-      // Soft fields
-      setWeeklyGoal(initialData?.weekly_goal || 3)
-      setPriority(initialData?.priority || 3)
 
       // Alarm
       setReminderMin(initialData?.reminder_min ?? null)
@@ -155,7 +143,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           end_at: endDateTime.format('YYYY-MM-DDTHH:mm:ss'),
           is_all_day: false,
           event_type: 'anchor',
-          color: purposeInfo?.color ?? '#4A90D9',
+          color: ANCHOR_DEFAULT_COLOR,
           purpose,
           category_id: null,
           reminder_min: reminderMin,
@@ -163,38 +151,9 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           target_duration_min: targetDurationMin,
           buffer_min: bufferMin,
           repeat_days: repeatDays.length > 0 ? repeatDays : null,
-          is_locked: false,
-          location: null,
-          weekly_goal: null,
-          preferred_window: null,
-          priority: null,
-        }
-      } else if (scheduleType === 'hard') {
-        const startAt = `${startDate}T${startTime}:00`
-        const endAt = `${startDate}T${endTime}:00`
-
-        eventData = {
-          title: title.trim(),
-          description: description.trim() || null,
-          start_at: startAt,
-          end_at: endAt,
-          is_all_day: false,
-          event_type: 'hard',
-          color: purposeInfo?.color ?? '#4A90D9',
-          purpose,
-          category_id: null,
-          reminder_min: reminderMin,
-          repeat_days: repeatDays.length > 0 ? repeatDays : null,
-          is_locked: isLocked,
-          location: location.trim() || null,
-          base_time: null,
-          target_duration_min: null,
-          buffer_min: null,
-          weekly_goal: null,
-          preferred_window: null,
-          priority: null,
         }
       } else {
+        // task
         const startAt = `${startDate}T${startTime}:00`
         const endAt = `${startDate}T${endTime}:00`
 
@@ -204,20 +163,15 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           start_at: startAt,
           end_at: endAt,
           is_all_day: false,
-          event_type: 'soft',
+          event_type: 'task',
           color: purposeInfo?.color ?? '#4A90D9',
           purpose,
           category_id: null,
           reminder_min: reminderMin,
-          weekly_goal: weeklyGoal,
-          preferred_window: null,
-          priority,
           base_time: null,
           target_duration_min: null,
           buffer_min: null,
           repeat_days: repeatDays.length > 0 ? repeatDays : null,
-          is_locked: false,
-          location: null,
         }
       }
 
@@ -244,7 +198,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           selectedType={scheduleType}
           onSelect={(type) => {
             setScheduleType(type)
-            setPurpose(null) // Reset purpose when type changes
+            setPurpose(null)
           }}
         />
 
@@ -276,16 +230,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
             setDescription={setDescription}
             repeatDays={repeatDays}
             setRepeatDays={setRepeatDays}
-            isLocked={isLocked}
-            setIsLocked={setIsLocked}
-            location={location}
-            setLocation={setLocation}
             bufferMin={bufferMin}
             setBufferMin={setBufferMin}
-            weeklyGoal={weeklyGoal}
-            setWeeklyGoal={setWeeklyGoal}
-            priority={priority}
-            setPriority={setPriority}
             reminderMin={reminderMin}
             setReminderMin={setReminderMin}
           />

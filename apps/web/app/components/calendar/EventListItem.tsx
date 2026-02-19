@@ -1,7 +1,7 @@
 'use client'
 
 import type { EventMonthMeta } from '@time-pie/supabase'
-import { Anchor, Cloud, Lock } from 'lucide-react'
+import { Anchor, ClipboardList } from 'lucide-react'
 
 interface EventListItemProps {
   event: EventMonthMeta
@@ -24,17 +24,13 @@ export function EventListItem({ event, onClick }: EventListItemProps) {
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 uppercase tracking-tight ${event.event_type === 'anchor'
               ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300'
-              : event.event_type === 'soft'
-                ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
-                : 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
               }`}
           >
             {event.event_type === 'anchor' ? (
               <><Anchor className="w-3 h-3" /> 앵커</>
-            ) : event.event_type === 'soft' ? (
-              <><Cloud className="w-3 h-3" /> 소프트</>
             ) : (
-              <><Lock className="w-3 h-3" /> 하드</>
+              <><ClipboardList className="w-3 h-3" /> 할일</>
             )}
           </span>
         </div>

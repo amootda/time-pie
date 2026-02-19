@@ -45,23 +45,10 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
           return false
         }
 
-        // Hard events: check repeat_days or one-time event
-        if (e.event_type === 'hard') {
-          if (!e.repeat_days || e.repeat_days.length === 0) {
-            return e.start_at.startsWith(dateStr)
-          }
+        // Task events: check repeat_days or one-time event
+        if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
         }
-
-        // Soft events: check repeat_days or one-time event
-        if (e.event_type === 'soft') {
-          if (e.repeat_days && e.repeat_days.length > 0) {
-            return e.repeat_days.includes(dayOfWeek)
-          }
-          return e.start_at.startsWith(dateStr)
-        }
-
-        // Fallback
         return e.start_at.startsWith(dateStr)
       })
     }

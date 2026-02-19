@@ -5,7 +5,7 @@ export interface Event {
   end_at: string
   color: string
   category?: string
-  event_type?: 'anchor' | 'hard' | 'soft'
+  event_type?: 'anchor' | 'task'
 }
 
 export interface TimeSlice {
@@ -14,7 +14,7 @@ export interface TimeSlice {
   event?: Event
   color: string
   isEmpty: boolean
-  eventType?: 'anchor' | 'hard' | 'soft'
+  eventType?: 'anchor' | 'task'
 }
 
 export interface PieChartProps {

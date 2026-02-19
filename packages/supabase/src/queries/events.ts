@@ -18,12 +18,12 @@ export async function getEventsByDate(
     .lte('start_at', endOfDay)
     .order('start_at', { ascending: true })
 
-  // 2) anchor/soft/hard 반복 이벤트 (repeat_days가 설정된 것들)
+  // 2) anchor/task 반복 이벤트 (repeat_days가 설정된 것들)
   const recurringEventsPromise = supabase
     .from('events')
     .select('*')
     .eq('user_id', userId)
-    .in('event_type', ['anchor', 'soft', 'hard'])
+    .in('event_type', ['anchor', 'task'])
     .not('repeat_days', 'is', null)
 
   const [dateResult, recurringResult] = await Promise.all([
@@ -104,12 +104,12 @@ export async function getEventsByMonth(
     .lte('start_at', end)
     .order('start_at', { ascending: true })
 
-  // 2) anchor/soft/hard 반복 이벤트 (repeat_days가 설정된 것들)
+  // 2) anchor/task 반복 이벤트 (repeat_days가 설정된 것들)
   const recurringEventsPromise = supabase
     .from('events')
     .select(selectFields)
     .eq('user_id', userId)
-    .in('event_type', ['anchor', 'soft', 'hard'])
+    .in('event_type', ['anchor', 'task'])
     .not('repeat_days', 'is', null)
 
   const [monthResult, recurringResult] = await Promise.all([

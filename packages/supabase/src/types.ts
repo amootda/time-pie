@@ -1,8 +1,7 @@
 // 수동 타입 정의 (Supabase 연결 후 자동 생성으로 대체 가능)
 
-export type EventType = 'anchor' | 'hard' | 'soft'
-export type EventPurpose = 'work' | 'meeting' | 'appointment' | 'personal' | 'exercise' | 'study' | 'meal' | 'sleep' | 'commute' | 'hobby' | 'other'
-export type PreferredWindow = 'morning' | 'afternoon' | 'evening' | 'night'
+export type EventType = 'anchor' | 'task'
+export type EventPurpose = 'work' | 'appointment' | 'exercise' | 'study' | 'other'
 export type ExecutionStatus = 'planned' | 'in_progress' | 'completed' | 'skipped' | 'partial'
 export type SuggestionType = 'time_adjustment' | 'unrealistic_warning' | 'pattern_insight'
 
@@ -34,22 +33,15 @@ export interface Event {
   is_all_day: boolean
   event_type: EventType
   color: string
-  purpose: EventPurpose | null
+  purpose: string | null
   category_id: string | null
   reminder_min: number | null
   // Anchor-specific
   base_time: string | null
   target_duration_min: number | null
   buffer_min: number | null
-  // Anchor/Hard-specific
+  // Shared
   repeat_days: number[] | null
-  // Hard-specific
-  is_locked: boolean
-  location: string | null
-  // Soft-specific
-  weekly_goal: number | null
-  preferred_window: PreferredWindow | null
-  priority: number | null
   created_at: string
   updated_at: string
 }
