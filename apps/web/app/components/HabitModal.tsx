@@ -1,8 +1,9 @@
 'use client'
 
+import type { Habit } from '@time-pie/supabase'
 import { useState } from 'react'
 import { AddModal } from './AddModal'
-import type { Habit } from '@time-pie/supabase'
+import { TimePicker } from './ui/time-picker'
 
 interface HabitModalProps {
   isOpen: boolean
@@ -79,8 +80,8 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
                 type="button"
                 onClick={() => setFrequency(f.value)}
                 className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${frequency === f.value
-                    ? 'bg-success text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-success text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
               >
                 {f.label}
@@ -132,11 +133,9 @@ export function HabitModal({ isOpen, onClose, onSave, initialData }: HabitModalP
         {/* Reminder */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">리마인더 시간 (선택)</label>
-          <input
-            type="time"
+          <TimePicker
             value={reminderTime}
-            onChange={(e) => setReminderTime(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-success/50 focus:border-success"
+            onChange={setReminderTime}
           />
         </div>
 

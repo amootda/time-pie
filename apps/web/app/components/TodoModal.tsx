@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { AddModal } from './AddModal'
 import type { Todo } from '@time-pie/supabase'
+import { format, parse } from 'date-fns'
+import { useEffect, useState } from 'react'
+import { AddModal } from './AddModal'
+import { DatePicker } from './ui/date-picker'
 
 interface TodoModalProps {
   isOpen: boolean
@@ -82,11 +84,10 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
         {/* Due Date */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">마감일 (선택)</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
+          <DatePicker
+            date={dueDate ? parse(dueDate, 'yyyy-MM-dd', new Date()) : undefined}
+            setDate={(date) => setDueDate(date ? format(date, 'yyyy-MM-dd') : '')}
+            placeholder="마감일 선택"
           />
         </div>
 
@@ -100,8 +101,8 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
                 type="button"
                 onClick={() => setPriority(p.value)}
                 className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${priority === p.value
-                    ? `${p.color} ring-2 ring-offset-2 ring-gray-400`
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? `${p.color} ring-2 ring-offset-2 ring-gray-400`
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
               >
                 {p.label}
