@@ -1,7 +1,7 @@
 'use client'
 
-import type { EventType } from '@time-pie/supabase'
 import { getPurposesByType } from '@time-pie/core'
+import type { EventType } from '@time-pie/supabase'
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
@@ -106,8 +106,8 @@ function ReminderSelector({ reminderMin, setReminderMin }: ReminderSelectorProps
             type="button"
             onClick={() => setReminderMin(opt.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2 ${reminderMin === opt.value
-                ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-                : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+              ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
               }`}
           >
             {opt.label}
@@ -200,8 +200,7 @@ function TaskEventOptions({
   reminderMin, setReminderMin,
 }: TaskEventOptionsProps) {
   return (
-    <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <PurposeSelector type="task" purpose={purpose} setPurpose={setPurpose} />
+    <div className="space-y-4 pt-4 dark:border-gray-700">
       <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />

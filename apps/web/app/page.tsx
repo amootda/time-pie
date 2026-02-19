@@ -1,23 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { PieChart, Spinner } from '@time-pie/ui'
 import {
-  useEventStore,
-  useCurrentTime,
-  useExecutionStore,
-  useEventsQuery,
-  useCreateEventMutation,
-  useUpdateEventMutation,
-  useDeleteEventMutation,
-  useCreateExecutionMutation,
-  useCompleteExecutionMutation,
-  useSkipExecutionMutation,
   useAlarm,
+  useCompleteExecutionMutation,
+  useCreateEventMutation,
+  useCreateExecutionMutation,
+  useCurrentTime,
+  useDeleteEventMutation,
+  useEventsQuery,
+  useEventStore,
+  useExecutionStore,
+  useSkipExecutionMutation,
+  useUpdateEventMutation,
 } from '@time-pie/core'
-import { Header, FloatingAddButton, EventModal, EventCard, ExecutionTimer, BottomNav } from './components'
 import type { Event, EventInsert } from '@time-pie/supabase'
 import { getUserSettings } from '@time-pie/supabase'
+import { PieChart, Spinner } from '@time-pie/ui'
+import { useEffect, useState } from 'react'
+import { BottomNav, EventCard, EventModal, ExecutionTimer, Header } from './components'
 import { useAuth } from './providers'
 
 export default function HomePage() {
@@ -269,12 +269,6 @@ export default function HomePage() {
           )}
         </div>
       </main>
-
-      <FloatingAddButton
-        onAddEvent={() => setEventModalOpen(true)}
-        onAddTodo={() => { }}
-        onAddHabit={() => { }}
-      />
 
       {/* Execution Timer */}
       {activeExecution && (
