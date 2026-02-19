@@ -42,7 +42,7 @@ export default function CalendarPage() {
     const eventsToUse = monthEventsData?.events ?? storeEvents
 
     return eventsToUse.filter((e) => {
-      // Anchor: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성(start_at 날짜) 표시
+      // Anchor: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성
       if (e.event_type === 'anchor') {
         if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
@@ -50,22 +50,10 @@ export default function CalendarPage() {
         return e.start_at.startsWith(dateStr)
       }
 
-      // Hard: repeat_days 체크
-      if (e.event_type === 'hard') {
-        if (e.repeat_days && e.repeat_days.length > 0) {
-          return e.repeat_days.includes(dayOfWeek)
-        }
-        return e.start_at.startsWith(dateStr)
+      // Task: repeat_days 체크, 없으면 일회성
+      if (e.repeat_days && e.repeat_days.length > 0) {
+        return e.repeat_days.includes(dayOfWeek)
       }
-
-      // Soft: repeat_days 체크, 없으면 일회성(start_at 날짜) 표시
-      if (e.event_type === 'soft') {
-        if (e.repeat_days && e.repeat_days.length > 0) {
-          return e.repeat_days.includes(dayOfWeek)
-        }
-        return e.start_at.startsWith(dateStr)
-      }
-
       return e.start_at.startsWith(dateStr)
     })
   }

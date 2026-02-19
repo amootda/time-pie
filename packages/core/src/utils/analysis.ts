@@ -47,7 +47,7 @@ export function detectUnrealisticPlans(
 ): UnrealisticPlanWarning[] {
   const warnings: UnrealisticPlanWarning[] = []
 
-  const flexibleEvents = events.filter((e) => e.event_type === 'soft')
+  const flexibleEvents = events.filter((e) => e.event_type === 'task')
 
   for (const event of flexibleEvents) {
     const eventExecs = executions.filter((e) => e.event_id === event.id)
@@ -81,7 +81,7 @@ export function suggestTimeAdjustments(
 ): TimeAdjustmentSuggestion[] {
   const suggestions: TimeAdjustmentSuggestion[] = []
 
-  const flexibleEvents = events.filter((e) => e.event_type === 'soft')
+  const flexibleEvents = events.filter((e) => e.event_type === 'task')
 
   for (const event of flexibleEvents) {
     const completedExecs = executions.filter(

@@ -68,25 +68,20 @@ export function PieChart({
 
           // Determine style based on event type
           const isAnchor = slice.eventType === 'anchor'
-          const isHard = slice.eventType === 'hard'
-          const isSoft = slice.eventType === 'soft'
 
           return (
             <g key={index} onClick={() => handleSliceClick(slice, hour)} className={slice.isEmpty ? 'text-foreground' : ''}>
               <path
                 d={path}
                 fill={slice.color}
-                stroke={slice.isEmpty ? 'currentColor' : isSoft ? slice.color : 'currentColor'}
-                strokeWidth={slice.isEmpty ? 2 : isHard ? 3 : isSoft ? 2 : 1}
-                strokeDasharray={isSoft && !slice.isEmpty ? '6 3' : undefined}
+                stroke={slice.isEmpty ? 'currentColor' : 'currentColor'}
+                strokeWidth={slice.isEmpty ? 2 : isAnchor ? 1 : 3}
                 className={`transition-opacity ${
                   slice.isEmpty
                     ? 'opacity-30 hover:opacity-50'
                     : isAnchor
                       ? 'opacity-60 hover:opacity-75 cursor-pointer'
-                      : isSoft
-                        ? 'opacity-40 hover:opacity-60 cursor-pointer'
-                        : 'opacity-100 hover:opacity-90 cursor-pointer'
+                      : 'opacity-100 hover:opacity-90 cursor-pointer'
                 }`}
               />
             </g>

@@ -56,28 +56,17 @@ export default function HomePage() {
 
   const todayEvents = events.filter((e) => {
     const todayStr = selectedDate.toISOString().split('T')[0]
-    // Anchor events: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성(start_at 날짜) 표시
+    // Anchor events: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성
     if (e.event_type === 'anchor') {
       if (e.repeat_days && e.repeat_days.length > 0) {
         return e.repeat_days.includes(selectedDayOfWeek)
       }
       return e.start_at.startsWith(todayStr)
     }
-    // Hard events: show if no repeat_days set (one-time) OR if today's day is in repeat_days
-    if (e.event_type === 'hard') {
-      if (!e.repeat_days || e.repeat_days.length === 0) {
-        return e.start_at.startsWith(todayStr)
-      }
+    // Task events: repeat_days 체크, 없으면 일회성
+    if (e.repeat_days && e.repeat_days.length > 0) {
       return e.repeat_days.includes(selectedDayOfWeek)
     }
-    // Soft events: repeat_days 체크, 없으면 일회성(start_at 날짜) 표시
-    if (e.event_type === 'soft') {
-      if (e.repeat_days && e.repeat_days.length > 0) {
-        return e.repeat_days.includes(selectedDayOfWeek)
-      }
-      return e.start_at.startsWith(todayStr)
-    }
-    // Fallback
     return e.start_at.startsWith(todayStr)
   })
 
@@ -107,7 +96,7 @@ export default function HomePage() {
   // Convert to pie chart format
   // For anchor/soft events, extract time and apply to selectedDate
   const pieEvents = todayEvents.map((e) => {
-    const isRecurring = e.event_type === 'anchor' || e.event_type === 'soft'
+    const isRecurring = e.repeat_days && e.repeat_days.length > 0
 
     if (isRecurring) {
       // Extract time portion from stored timestamp
@@ -136,7 +125,7 @@ export default function HomePage() {
       }
     }
 
-    // Hard events: return complete object as-is
+    // Non-recurring events: return as-is
     return e
   })
 

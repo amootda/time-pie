@@ -74,29 +74,16 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
           return e.start_at.startsWith(dateStr)
         }
 
-        // Hard events: repeat_days check or one-time event
-        if (e.event_type === 'hard') {
-          if (!e.repeat_days || e.repeat_days.length === 0) {
-            return e.start_at.startsWith(dateStr)
-          }
+        // Task events: repeat_days check or one-time event
+        if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
         }
-
-        // Soft events: repeat_days check or one-time event
-        if (e.event_type === 'soft') {
-          if (e.repeat_days && e.repeat_days.length > 0) {
-            return e.repeat_days.includes(dayOfWeek)
-          }
-          return e.start_at.startsWith(dateStr)
-        }
-
-        // Fallback
         return e.start_at.startsWith(dateStr)
       })
 
       // Convert events to selected date format for PieChart
       const pieEvents = dayEvents.map((e) => {
-        const isRecurring = e.event_type === 'anchor' || e.event_type === 'soft' || (e.event_type === 'hard' && e.repeat_days && e.repeat_days.length > 0)
+        const isRecurring = e.repeat_days && e.repeat_days.length > 0
 
         if (isRecurring) {
           // Extract time portion from stored timestamp
@@ -124,7 +111,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
           }
         }
 
-        // Non-recurring hard events: return as-is
+        // Non-recurring events: return as-is
         return e
       })
 

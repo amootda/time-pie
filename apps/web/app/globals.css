@@ -26,6 +26,32 @@
   --muted-foreground: #9CA3AF;
 }
 
+/* react-day-picker v9 dark mode overrides */
+.dark .rdp-root {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-accent-background-color: var(--color-primary);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  color: var(--foreground);
+}
+
+.dark .rdp-root .rdp-month_caption,
+.dark .rdp-root .rdp-weekday,
+.dark .rdp-root .rdp-day {
+  color: var(--foreground);
+}
+
+.dark .rdp-root .rdp-button_next,
+.dark .rdp-root .rdp-button_previous {
+  color: var(--foreground);
+}
+
+.dark .rdp-root .rdp-day:hover:not(.rdp-selected) .rdp-day_button {
+  background-color: var(--muted);
+}
+
 /* Custom Theme */
 @theme {
   /* Fonts */

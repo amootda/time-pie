@@ -1,15 +1,14 @@
 'use client'
 
-import { useId } from 'react'
-import type { EventType, EventPurpose } from '@time-pie/supabase'
+import type { EventType } from '@time-pie/supabase'
 import { getPurposesByType } from '@time-pie/core'
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 interface PurposeSelectorProps {
   type: EventType
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
+  purpose: string | null
+  setPurpose: (value: string | null) => void
 }
 
 function PurposeSelector({ type, purpose, setPurpose }: PurposeSelectorProps) {
@@ -40,12 +39,11 @@ function PurposeSelector({ type, purpose, setPurpose }: PurposeSelectorProps) {
 }
 
 interface RepeatDaysSelectorProps {
-  type: EventType
   repeatDays: number[]
   setRepeatDays: (value: number[]) => void
 }
 
-function RepeatDaysSelector({ type, repeatDays, setRepeatDays }: RepeatDaysSelectorProps) {
+function RepeatDaysSelector({ repeatDays, setRepeatDays }: RepeatDaysSelectorProps) {
   const toggleRepeatDay = (dayIndex: number) => {
     setRepeatDays(
       repeatDays.includes(dayIndex)
@@ -57,7 +55,7 @@ function RepeatDaysSelector({ type, repeatDays, setRepeatDays }: RepeatDaysSelec
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        반복 요일 {type === 'soft' && <span className="text-xs text-gray-500">(선택)</span>}
+        반복 요일
       </label>
       <div className="flex gap-1">
         {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
@@ -74,11 +72,6 @@ function RepeatDaysSelector({ type, repeatDays, setRepeatDays }: RepeatDaysSelec
           </button>
         ))}
       </div>
-      {type === 'soft' && repeatDays.length === 0 && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          선택 안하면 매일 표시됩니다
-        </p>
-      )}
     </div>
   )
 }
@@ -149,67 +142,7 @@ function DescriptionField({ description, setDescription }: DescriptionFieldProps
 
 // ─── Type-specific variant components ────────────────────────────────────────
 
-interface HardEventOptionsProps {
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
-  description: string
-  setDescription: (value: string) => void
-  repeatDays: number[]
-  setRepeatDays: (value: number[]) => void
-  isLocked: boolean
-  setIsLocked: (value: boolean) => void
-  location: string
-  setLocation: (value: string) => void
-  reminderMin: number | null
-  setReminderMin: (value: number | null) => void
-}
-
-function HardEventOptions({
-  purpose, setPurpose,
-  description, setDescription,
-  repeatDays, setRepeatDays,
-  isLocked, setIsLocked,
-  location, setLocation,
-  reminderMin, setReminderMin,
-}: HardEventOptionsProps) {
-  const lockId = useId()
-  return (
-    <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <PurposeSelector type="hard" purpose={purpose} setPurpose={setPurpose} />
-      <RepeatDaysSelector type="hard" repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          장소/링크 (선택)
-        </label>
-        <input
-          type="text"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="오프라인 장소 또는 URL"
-          className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-        />
-      </div>
-      <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id={lockId}
-          checked={isLocked}
-          onChange={(e) => setIsLocked(e.target.checked)}
-          className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-        />
-        <label htmlFor={lockId} className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          다른 일정 잠금
-        </label>
-      </div>
-      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
-      <DescriptionField description={description} setDescription={setDescription} />
-    </div>
-  )
-}
-
 interface AnchorEventOptionsProps {
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
   description: string
   setDescription: (value: string) => void
   repeatDays: number[]
@@ -221,7 +154,6 @@ interface AnchorEventOptionsProps {
 }
 
 function AnchorEventOptions({
-  purpose, setPurpose,
   description, setDescription,
   repeatDays, setRepeatDays,
   bufferMin, setBufferMin,
@@ -229,8 +161,7 @@ function AnchorEventOptions({
 }: AnchorEventOptionsProps) {
   return (
     <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <PurposeSelector type="anchor" purpose={purpose} setPurpose={setPurpose} />
-      <RepeatDaysSelector type="anchor" repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
+      <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           유동 허용 (분)
@@ -251,73 +182,27 @@ function AnchorEventOptions({
   )
 }
 
-interface SoftEventOptionsProps {
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
+interface TaskEventOptionsProps {
+  purpose: string | null
+  setPurpose: (value: string | null) => void
   description: string
   setDescription: (value: string) => void
   repeatDays: number[]
   setRepeatDays: (value: number[]) => void
-  weeklyGoal: number
-  setWeeklyGoal: (value: number) => void
-  priority: number
-  setPriority: (value: number) => void
   reminderMin: number | null
   setReminderMin: (value: number | null) => void
 }
 
-function SoftEventOptions({
+function TaskEventOptions({
   purpose, setPurpose,
   description, setDescription,
   repeatDays, setRepeatDays,
-  weeklyGoal, setWeeklyGoal,
-  priority, setPriority,
   reminderMin, setReminderMin,
-}: SoftEventOptionsProps) {
+}: TaskEventOptionsProps) {
   return (
     <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-      <PurposeSelector type="soft" purpose={purpose} setPurpose={setPurpose} />
-      <RepeatDaysSelector type="soft" repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          주간 목표 (회)
-        </label>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setWeeklyGoal(n)}
-              className={`flex-1 h-10 rounded-full text-sm font-medium transition-all ${n === weeklyGoal
-                ? 'bg-primary text-white'
-                : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-                }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          우선순위
-        </label>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setPriority(n)}
-              className={`flex-1 h-10 rounded-full text-sm font-medium transition-all ${n === priority
-                ? 'bg-primary text-white'
-                : 'border-2 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-                }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PurposeSelector type="task" purpose={purpose} setPurpose={setPurpose} />
+      <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
@@ -328,75 +213,51 @@ function SoftEventOptions({
 
 interface DetailedEventOptionsProps {
   type: EventType
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
+  purpose: string | null
+  setPurpose: (value: string | null) => void
   description: string
   setDescription: (value: string) => void
   repeatDays: number[]
   setRepeatDays: (value: number[]) => void
-  // Hard
-  isLocked: boolean
-  setIsLocked: (value: boolean) => void
-  location: string
-  setLocation: (value: string) => void
   // Anchor
   bufferMin: number
   setBufferMin: (value: number) => void
-  // Soft
-  weeklyGoal: number
-  setWeeklyGoal: (value: number) => void
-  priority: number
-  setPriority: (value: number) => void
   // Alarm
   reminderMin: number | null
   setReminderMin: (value: number | null) => void
 }
 
 /**
- * Renders type-specific advanced options using explicit variant components.
- * Follows vercel-composition-patterns: no optional/undefined prop branching.
+ * Renders type-specific advanced options.
+ * anchor: repeat days, buffer, reminder, description
+ * task: full purpose selector, repeat days, reminder, description
  */
 export function DetailedEventOptions(props: DetailedEventOptionsProps) {
-  const common = {
-    purpose: props.purpose,
-    setPurpose: props.setPurpose,
-    description: props.description,
-    setDescription: props.setDescription,
-    repeatDays: props.repeatDays,
-    setRepeatDays: props.setRepeatDays,
-    reminderMin: props.reminderMin,
-    setReminderMin: props.setReminderMin,
-  }
-
-  if (props.type === 'hard') {
-    return (
-      <HardEventOptions
-        {...common}
-        isLocked={props.isLocked}
-        setIsLocked={props.setIsLocked}
-        location={props.location}
-        setLocation={props.setLocation}
-      />
-    )
-  }
-
   if (props.type === 'anchor') {
     return (
       <AnchorEventOptions
-        {...common}
+        description={props.description}
+        setDescription={props.setDescription}
+        repeatDays={props.repeatDays}
+        setRepeatDays={props.setRepeatDays}
         bufferMin={props.bufferMin}
         setBufferMin={props.setBufferMin}
+        reminderMin={props.reminderMin}
+        setReminderMin={props.setReminderMin}
       />
     )
   }
 
   return (
-    <SoftEventOptions
-      {...common}
-      weeklyGoal={props.weeklyGoal}
-      setWeeklyGoal={props.setWeeklyGoal}
-      priority={props.priority}
-      setPriority={props.setPriority}
+    <TaskEventOptions
+      purpose={props.purpose}
+      setPurpose={props.setPurpose}
+      description={props.description}
+      setDescription={props.setDescription}
+      repeatDays={props.repeatDays}
+      setRepeatDays={props.setRepeatDays}
+      reminderMin={props.reminderMin}
+      setReminderMin={props.setReminderMin}
     />
   )
 }

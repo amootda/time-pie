@@ -1,7 +1,10 @@
 'use client'
 
-import type { EventType, EventPurpose } from '@time-pie/supabase'
 import { toDateString } from '@time-pie/core'
+import type { EventType } from '@time-pie/supabase'
+import { format, parse } from 'date-fns'
+import { DatePicker } from '../ui/date-picker'
+import { TimePicker } from '../ui/time-picker'
 import { PurposeQuickSelector } from './PurposeQuickSelector'
 
 interface QuickEventFormProps {
@@ -12,8 +15,8 @@ interface QuickEventFormProps {
   // Form state passed from parent
   title: string
   setTitle: (value: string) => void
-  purpose: EventPurpose | null
-  setPurpose: (value: EventPurpose | null) => void
+  purpose: string | null
+  setPurpose: (value: string | null) => void
   startTime: string
   setStartTime: (value: string) => void
   endTime: string
@@ -80,31 +83,28 @@ export function QuickEventForm({
           <button
             type="button"
             onClick={() => setStartDate(today)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-              startDate === today
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${startDate === today
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
           >
             오늘
           </button>
           <button
             type="button"
             onClick={() => setStartDate(tomorrow)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-              startDate === tomorrow
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${startDate === tomorrow
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
           >
             내일
           </button>
         </div>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+        <DatePicker
+          date={startDate ? parse(startDate, 'yyyy-MM-dd', new Date()) : undefined}
+          setDate={(date) => setStartDate(date ? format(date, 'yyyy-MM-dd') : '')}
+          placeholder="날짜 선택"
         />
       </div>
 
@@ -114,22 +114,18 @@ export function QuickEventForm({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             시작
           </label>
-          <input
-            type="time"
+          <TimePicker
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            onChange={setStartTime}
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             종료
           </label>
-          <input
-            type="time"
+          <TimePicker
             value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            onChange={setEndTime}
           />
         </div>
       </div>
