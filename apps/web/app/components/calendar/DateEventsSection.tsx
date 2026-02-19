@@ -54,14 +54,6 @@ export function DateEventsSection({
 
       {/* Todos */}
       <TodoListSection todos={todos} selectedDate={selectedDate} />
-
-      {/* Link to Pie View */}
-      <Link
-        href="/"
-        className="mt-4 block text-center py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary/20 transition-colors"
-      >
-        파이 차트로 보기 →
-      </Link>
     </div>
   )
 }

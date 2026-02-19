@@ -26,7 +26,7 @@ interface TodoState {
 
 export const useTodoStore = create<TodoState>((set, get) => ({
   todos: [],
-  filter: 'all',
+  filter: 'today',
   isLoading: false,
   error: null,
 
@@ -54,12 +54,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
       todos: state.todos.map((t) =>
         t.id === id
           ? {
-              ...t,
-              is_completed: !t.is_completed,
-              completed_at: !t.is_completed
-                ? new Date().toISOString()
-                : null,
-            }
+            ...t,
+            is_completed: !t.is_completed,
+            completed_at: !t.is_completed
+              ? new Date().toISOString()
+              : null,
+          }
           : t
       ),
     })),

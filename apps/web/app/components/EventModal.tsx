@@ -53,6 +53,9 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
   const [weeklyGoal, setWeeklyGoal] = useState(3)
   const [priority, setPriority] = useState(3)
 
+  // Alarm
+  const [reminderMin, setReminderMin] = useState<number | null>(null)
+
   // UI state
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -96,6 +99,9 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       // Soft fields
       setWeeklyGoal(initialData?.weekly_goal || 3)
       setPriority(initialData?.priority || 3)
+
+      // Alarm
+      setReminderMin(initialData?.reminder_min ?? null)
 
       setIsSaving(false)
       setSaveError(null)
@@ -152,7 +158,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           color: purposeInfo?.color ?? '#4A90D9',
           purpose,
           category_id: null,
-          reminder_min: null,
+          reminder_min: reminderMin,
           base_time: baseTime,
           target_duration_min: targetDurationMin,
           buffer_min: bufferMin,
@@ -177,7 +183,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           color: purposeInfo?.color ?? '#4A90D9',
           purpose,
           category_id: null,
-          reminder_min: null,
+          reminder_min: reminderMin,
           repeat_days: repeatDays.length > 0 ? repeatDays : null,
           is_locked: isLocked,
           location: location.trim() || null,
@@ -202,7 +208,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           color: purposeInfo?.color ?? '#4A90D9',
           purpose,
           category_id: null,
-          reminder_min: null,
+          reminder_min: reminderMin,
           weekly_goal: weeklyGoal,
           preferred_window: null,
           priority,
@@ -280,6 +286,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
             setWeeklyGoal={setWeeklyGoal}
             priority={priority}
             setPriority={setPriority}
+            reminderMin={reminderMin}
+            setReminderMin={setReminderMin}
           />
         )}
 

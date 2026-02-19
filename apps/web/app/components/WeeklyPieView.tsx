@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { PieChart } from '@time-pie/ui'
 import type { Event, EventMonthMeta } from '@time-pie/supabase'
 import dayjs from 'dayjs'
@@ -24,6 +24,24 @@ interface DayData {
 }
 
 export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieViewProps) {
+  // Responsive pie chart size (mobile: 50, desktop: 80)
+  const [pieSize, setPieSize] = useState(50)
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 640px)')
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      setPieSize(e.matches ? 80 : 50)
+    }
+
+    // Set initial value
+    handleChange(mediaQuery)
+
+    // Listen for changes
+    mediaQuery.addEventListener('change', handleChange)
+
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
   // Get week start (Monday) and week end (Sunday)
   const weekStart = useMemo(() => dayjs(selectedDate).startOf('isoWeek').toDate(), [selectedDate])
   const weekEnd = useMemo(() => dayjs(selectedDate).endOf('isoWeek').toDate(), [selectedDate])
@@ -190,13 +208,13 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
             </div>
 
             {/* Mini Pie Chart */}
-            <div className="relative hover:scale-110 transition-transform duration-200">
+            <div className="relative w-[100px] h-[100px] sm:w-[130px] sm:h-[130px] flex items-center justify-center hover:scale-110 transition-transform duration-200">
               {day.dayEvents.length > 0 ? (
                 <PieChart
                   events={day.dayEvents}
                   currentTime={day.isToday ? today : undefined}
                   selectedDate={day.date}
-                  size={80}
+                  size={pieSize}
                   showLabels={false}
                   showCurrentTime={false}
                   showCenterInfo={false}
@@ -204,17 +222,10 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
                 />
               ) : (
                 // Empty state
-                <div className="w-[80px] h-[80px] flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                    <span className="text-muted-foreground/50 text-xs">비어있음</span>
-                  </div>
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                  <span className="text-muted-foreground/50 text-[10px] sm:text-xs">비어있음</span>
                 </div>
               )}
-            </div>
-
-            {/* Event Count */}
-            <div className="text-xs text-muted-foreground mt-3">
-              {day.eventCount > 0 ? `${day.eventCount}개` : '-'}
             </div>
           </div>
         ))}

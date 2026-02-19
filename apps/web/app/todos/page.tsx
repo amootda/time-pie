@@ -87,10 +87,10 @@ export default function TodosPage() {
   }
 
   const filters: { label: string; value: FilterType }[] = [
-    { label: '전체', value: 'all' },
     { label: '오늘', value: 'today' },
     { label: '완료', value: 'completed' },
     { label: '미완료', value: 'pending' },
+    { label: '전체', value: 'all' }
   ]
 
   const stats = {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PieChart, Spinner } from '@time-pie/ui'
 import {
   useEventStore,
@@ -13,9 +13,11 @@ import {
   useCreateExecutionMutation,
   useCompleteExecutionMutation,
   useSkipExecutionMutation,
+  useAlarm,
 } from '@time-pie/core'
 import { Header, FloatingAddButton, EventModal, EventCard, ExecutionTimer, BottomNav } from './components'
 import type { Event, EventInsert } from '@time-pie/supabase'
+import { getUserSettings } from '@time-pie/supabase'
 import { useAuth } from './providers'
 
 export default function HomePage() {
@@ -35,6 +37,15 @@ export default function HomePage() {
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+
+  // Load notification settings
+  useEffect(() => {
+    if (!user?.id) return
+    getUserSettings(user.id).then((settings) => {
+      if (settings) setNotificationsEnabled(settings.notifications_events)
+    }).catch(console.error)
+  }, [user?.id])
 
   // Use API data if available, otherwise fallback to store
   const events = eventsData && eventsData.length > 0 ? eventsData : storeEvents
@@ -84,6 +95,13 @@ export default function HomePage() {
     const startTime = event.start_at.split('T')[1]?.slice(0, 5) || '00:00'
     const [hour, minute] = startTime.split(':').map(Number)
     return hour > currentHour || (hour === currentHour && minute > currentMinute)
+  })
+
+  // Alarm scheduling
+  useAlarm({
+    events: sortedEvents,
+    enabled: notificationsEnabled,
+    selectedDate,
   })
 
   // Convert to pie chart format
@@ -195,14 +213,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+      {/* Header stays at the top */}
       <Header
         showDate
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
       />
 
-      <main className="max-w-lg mx-auto px-6 py-6">
+      {/* Main content area scrolls internally */}
+      <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar">
         {/* 파이 차트 */}
         <div className="relative flex flex-col items-center mb-8">
           {isLoading && (

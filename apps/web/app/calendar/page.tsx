@@ -135,7 +135,7 @@ export default function CalendarPage() {
       <Header title="캘린더" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
-        <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+        {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
 
         <CalendarView
           viewMode={viewMode}

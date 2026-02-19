@@ -16,6 +16,14 @@ export default function SettingsPage() {
     habits: true,
   })
   const [saving, setSaving] = useState(false)
+  const [notifPermission, setNotifPermission] = useState<string>('default')
+
+  // 브라우저 알림 권한 상태 초기화
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission)
+    }
+  }, [])
 
   // Load user settings from Supabase
   useEffect(() => {
@@ -43,6 +51,20 @@ export default function SettingsPage() {
   // Save notification setting to Supabase
   const handleNotificationChange = async (key: 'events' | 'todos' | 'habits') => {
     const newValue = !notifications[key]
+
+    // 일정 알림 활성화 시 브라우저 권한 요청
+    if (key === 'events' && newValue && typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        const result = await Notification.requestPermission()
+        setNotifPermission(result)
+        if (result === 'denied') {
+          return // 권한 거부 시 토글하지 않음
+        }
+      } else if (Notification.permission === 'denied') {
+        return // 이미 차단된 경우 토글하지 않음
+      }
+    }
+
     setNotifications((prev) => ({ ...prev, [key]: newValue }))
 
     if (!user?.id) return
@@ -150,13 +172,17 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">일정 알림</p>
-                <p className="text-sm text-muted-foreground">일정 시작 전 알림</p>
+                <p className="text-sm text-muted-foreground">
+                  {notifPermission === 'denied'
+                    ? '브라우저 알림이 차단되어 있습니다'
+                    : '일정 시작 전 알림'}
+                </p>
               </div>
               <button
                 onClick={() => handleNotificationChange('events')}
-                disabled={!user}
+                disabled={!user || notifPermission === 'denied'}
                 className={`w-12 h-7 rounded-full transition-colors relative ${notifications.events ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div
                   className={`absolute top-1 w-5 h-5 bg-card rounded-full shadow transition-transform ${notifications.events ? 'translate-x-6' : 'translate-x-1'
