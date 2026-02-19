@@ -13,11 +13,12 @@ import {
 import { Header, BottomNav, FloatingAddButton, TodoModal } from '../components'
 import { useAuth } from '../providers'
 import type { Todo, TodoInsert } from '@time-pie/supabase'
+import { Check, Trash2, Inbox, Calendar, AlertCircle } from 'lucide-react'
 
 const PRIORITY_COLORS = {
-  high: 'bg-error',
-  medium: 'bg-warning',
-  low: 'bg-gray-400',
+  high: 'bg-error/10 text-error ring-1 ring-error/20',
+  medium: 'bg-warning/10 text-warning ring-1 ring-warning/20',
+  low: 'bg-muted text-muted-foreground ring-1 ring-border',
 }
 
 const PRIORITY_LABELS = {
@@ -88,8 +89,8 @@ export default function TodosPage() {
 
   const filters: { label: string; value: FilterType }[] = [
     { label: '오늘', value: 'today' },
-    { label: '완료', value: 'completed' },
     { label: '미완료', value: 'pending' },
+    { label: '완료', value: 'completed' },
     { label: '전체', value: 'all' }
   ]
 
@@ -100,35 +101,35 @@ export default function TodosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       <Header title="투두" />
 
       <main className="max-w-lg mx-auto px-4 py-4">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
-            <p className="text-2xl font-bold text-secondary">{stats.total}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">전체</p>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+            <p className="text-xs text-muted-foreground mt-1">전체</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
+          <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
             <p className="text-2xl font-bold text-success">{stats.completed}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">완료</p>
+            <p className="text-xs text-muted-foreground mt-1">완료</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-3 rounded-xl text-center shadow-sm">
+          <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
             <p className="text-2xl font-bold text-primary">{stats.today}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">오늘</p>
+            <p className="text-xs text-muted-foreground mt-1">오늘</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-1 no-scrollbar">
           {filters.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === f.value
-                ? 'bg-secondary text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${filter === f.value
+                ? 'bg-foreground text-background shadow-md'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
             >
               {f.label}
@@ -137,16 +138,19 @@ export default function TodosPage() {
         </div>
 
         {/* Todo List */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {displayTodos.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-4xl mb-2">✅</p>
-              <p className="text-gray-500 dark:text-gray-400">할 일이 없습니다</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                <Inbox className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-lg font-medium text-foreground mb-1">할 일이 없습니다</p>
+              <p className="text-sm text-muted-foreground mb-6">새로운 할 일을 추가해보세요!</p>
               <button
                 onClick={() => setModalOpen(true)}
-                className="mt-4 px-4 py-2 bg-secondary text-white rounded-lg text-sm font-medium"
+                className="px-5 py-2.5 bg-primary text-white rounded-full text-sm font-bold shadow-lg shadow-primary/30 hover:bg-primary-600 transition-colors active:scale-95"
               >
-                할 일 추가
+                할 일 추가하기
               </button>
             </div>
           ) : (
@@ -163,24 +167,20 @@ export default function TodosPage() {
               .map((todo) => (
                 <div
                   key={todo.id}
-                  className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm transition-opacity ${todo.is_completed ? 'opacity-60' : ''
+                  className={`group bg-card p-4 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 ${todo.is_completed ? 'opacity-60 bg-muted/30' : ''
                     }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-4">
                     {/* Checkbox */}
                     <button
                       onClick={() => toggleTodoMutation.mutate({ id: todo.id, currentIsCompleted: todo.is_completed })}
                       aria-label={todo.is_completed ? '완료 취소' : '완료로 표시'}
-                      className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors ${todo.is_completed
-                        ? 'bg-success border-success'
-                        : 'border-gray-300 hover:border-success'
+                      className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${todo.is_completed
+                        ? 'bg-success border-success scale-100'
+                        : 'border-muted-foreground/30 hover:border-success/50 hover:bg-success/5'
                         }`}
                     >
-                      {todo.is_completed && (
-                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                          <path d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
+                      <Check className={`w-3.5 h-3.5 text-white transition-opacity duration-200 ${todo.is_completed ? 'opacity-100' : 'opacity-0'}`} strokeWidth={3} />
                     </button>
 
                     {/* Content - Clickable for edit */}
@@ -188,41 +188,50 @@ export default function TodosPage() {
                       onClick={() => openEditModal(todo)}
                       className="flex-1 min-w-0 text-left"
                     >
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center flex-wrap gap-2 mb-1.5">
                         <span
-                          className={`px-2 py-0.5 rounded text-xs text-white ${PRIORITY_COLORS[todo.priority]
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${PRIORITY_COLORS[todo.priority]
                             }`}
                         >
                           {PRIORITY_LABELS[todo.priority]}
                         </span>
                         {todo.due_date && (
-                          <span className={`text-xs ${todo.due_date < todayStr ? 'text-error' :
-                            todo.due_date === todayStr ? 'text-primary' : 'text-gray-500'
+                          <div className={`flex items-center gap-1 text-xs font-medium ${todo.due_date < todayStr ? 'text-error' :
+                            todo.due_date === todayStr ? 'text-primary' : 'text-muted-foreground'
                             }`}>
-                            {todo.due_date === todayStr ? '오늘' : todo.due_date}
-                          </span>
+                            {todo.due_date === todayStr ? <AlertCircle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                            <span>{todo.due_date === todayStr ? '오늘 마감' : todo.due_date}</span>
+                          </div>
                         )}
                       </div>
                       <p
-                        className={`font-medium dark:text-white ${todo.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''
+                        className={`font-medium text-[15px] leading-snug transition-colors ${todo.is_completed
+                          ? 'line-through text-muted-foreground'
+                          : 'text-foreground'
                           }`}
                       >
                         {todo.title}
                       </p>
                       {todo.description && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{todo.description}</p>
+                        <p className={`text-sm mt-1 transition-colors ${todo.is_completed ? 'text-muted-foreground/50' : 'text-muted-foreground'
+                          }`}>
+                          {todo.description}
+                        </p>
                       )}
                     </button>
 
                     {/* Delete */}
                     <button
-                      onClick={() => deleteTodoMutation.mutate(todo.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (confirm('정말 삭제하시겠습니까?')) {
+                          deleteTodoMutation.mutate(todo.id)
+                        }
+                      }}
                       aria-label={`${todo.title} 삭제`}
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                      className="p-2 -mr-2 text-muted-foreground/50 hover:text-error hover:bg-error/10 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                     >
-                      <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Trash2 className="w-4.5 h-4.5" />
                     </button>
                   </div>
                 </div>
@@ -247,3 +256,4 @@ export default function TodosPage() {
     </div>
   )
 }
+
