@@ -1,6 +1,7 @@
 'use client'
 
 import type { EventMonthMeta } from '@time-pie/supabase'
+import dayjs from 'dayjs'
 import { Anchor, ClipboardList } from 'lucide-react'
 
 interface EventListItemProps {
@@ -35,8 +36,8 @@ export function EventListItem({ event, onClick }: EventListItemProps) {
           </span>
         </div>
         <p className="text-sm text-muted-foreground font-medium">
-          {event.start_at.split('T')[1].slice(0, 5)} -{' '}
-          {event.end_at.split('T')[1].slice(0, 5)}
+          {dayjs(event.start_at).format('HH:mm')} -{' '}
+          {dayjs(event.end_at).format('HH:mm')}
         </p>
       </div>
     </button>

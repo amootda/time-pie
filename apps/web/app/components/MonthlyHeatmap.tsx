@@ -1,5 +1,6 @@
 'use client'
 
+import { isSameLocalDate } from '@time-pie/core'
 import type { Event, EventMonthMeta } from '@time-pie/supabase'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -49,7 +50,7 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
         if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
         }
-        return e.start_at.startsWith(dateStr)
+        return isSameLocalDate(e.start_at, dateStr)
       })
     }
   }, [events])

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import type { Event } from '@time-pie/supabase'
+import dayjs from 'dayjs'
+import { toDateString } from '../utils/date'
 
 type NotificationPermissionState = 'default' | 'granted' | 'denied'
 
@@ -68,8 +70,8 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
 
         const checkAlarms = () => {
             const now = new Date()
-            const todayStr = selectedDate.toISOString().split('T')[0]
-            const nowStr = now.toISOString().split('T')[0]
+            const todayStr = toDateString(selectedDate)
+            const nowStr = toDateString(now)
 
             // 오늘이 아닌 날짜의 이벤트는 알림하지 않음
             if (todayStr !== nowStr) return
@@ -83,8 +85,9 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                 if (sentAlarmsRef.current.has(alarmKey)) continue
 
                 // 이벤트 시작 시간 파싱
-                const startTimePart = event.start_at.split('T')[1]?.slice(0, 5) || '00:00'
-                const [startHour, startMin] = startTimePart.split(':').map(Number)
+                const eventStart = dayjs(event.start_at)
+                const startHour = eventStart.hour()
+                const startMin = eventStart.minute()
 
                 // 알림 시간 계산 (이벤트 시작 - reminder_min)
                 const eventStartMs = new Date(

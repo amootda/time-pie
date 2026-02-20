@@ -37,7 +37,7 @@ export default function Error({
                         className="flex-1 px-5 py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-600 transition-colors flex items-center justify-center gap-2"
                     >
                         <RefreshCw className="w-4 h-4" />
-                        다시 시도
+                        다시시도
                     </button>
                     <Link
                         href="/"

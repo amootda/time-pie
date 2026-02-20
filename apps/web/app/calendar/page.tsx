@@ -1,18 +1,17 @@
 'use client'
 
+import { isSameLocalDate, toDateString, useCreateEventMutation, useDeleteEventMutation, useEventStore, useMonthEvents, useTodoStore, useUIStore, useUpdateEventMutation } from '@time-pie/core'
+import type { Event, EventInsert, EventMonthMeta } from '@time-pie/supabase'
+import { getEventById } from '@time-pie/supabase'
 import { useState } from 'react'
-import { useEventStore, useTodoStore, useUIStore, useMonthEvents, useCreateEventMutation, useUpdateEventMutation, useDeleteEventMutation, toDateString } from '@time-pie/core'
 import {
-  Header,
   BottomNav,
-  FloatingAddButton,
-  EventModal,
-  CalendarViewToggle,
   CalendarView,
   DateEventsSection,
+  EventModal,
+  FloatingAddButton,
+  Header
 } from '../components'
-import { getEventById } from '@time-pie/supabase'
-import type { EventInsert, EventMonthMeta, Event } from '@time-pie/supabase'
 import { useAuth } from '../providers'
 
 export default function CalendarPage() {
@@ -47,14 +46,14 @@ export default function CalendarPage() {
         if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
         }
-        return e.start_at.startsWith(dateStr)
+        return isSameLocalDate(e.start_at, dateStr)
       }
 
       // Task: repeat_days 체크, 없으면 일회성
       if (e.repeat_days && e.repeat_days.length > 0) {
         return e.repeat_days.includes(dayOfWeek)
       }
-      return e.start_at.startsWith(dateStr)
+      return isSameLocalDate(e.start_at, dateStr)
     })
   }
 

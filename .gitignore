@@ -43,3 +43,6 @@ coverage
 # oh-my-claudecode
 .omc/
 .claude/
+
+# agent
+.agent/
