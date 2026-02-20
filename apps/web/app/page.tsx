@@ -1,6 +1,9 @@
 'use client'
 
 import {
+  getLocalTimeFromISO,
+  isSameLocalDate,
+  toDateString,
   useAlarm,
   useCompleteExecutionMutation,
   useCreateEventMutation,
@@ -55,25 +58,25 @@ export default function HomePage() {
   const selectedDayOfWeek = selectedDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
 
   const todayEvents = events.filter((e) => {
-    const todayStr = selectedDate.toISOString().split('T')[0]
+    const todayStr = toDateString(selectedDate)
     // Anchor events: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성
     if (e.event_type === 'anchor') {
       if (e.repeat_days && e.repeat_days.length > 0) {
         return e.repeat_days.includes(selectedDayOfWeek)
       }
-      return e.start_at.startsWith(todayStr)
+      return isSameLocalDate(e.start_at, todayStr)
     }
     // Task events: repeat_days 체크, 없으면 일회성
     if (e.repeat_days && e.repeat_days.length > 0) {
       return e.repeat_days.includes(selectedDayOfWeek)
     }
-    return e.start_at.startsWith(todayStr)
+    return isSameLocalDate(e.start_at, todayStr)
   })
 
   // Sort events by start time
   const sortedEvents = [...todayEvents].sort((a, b) => {
-    const timeA = a.start_at.split('T')[1] || '00:00'
-    const timeB = b.start_at.split('T')[1] || '00:00'
+    const timeA = getLocalTimeFromISO(a.start_at)
+    const timeB = getLocalTimeFromISO(b.start_at)
     return timeA.localeCompare(timeB)
   })
 
@@ -81,7 +84,7 @@ export default function HomePage() {
   const currentHour = currentTime.getHours()
   const currentMinute = currentTime.getMinutes()
   const upcomingEvents = sortedEvents.filter((event) => {
-    const startTime = event.start_at.split('T')[1]?.slice(0, 5) || '00:00'
+    const startTime = getLocalTimeFromISO(event.start_at)
     const [hour, minute] = startTime.split(':').map(Number)
     return hour > currentHour || (hour === currentHour && minute > currentMinute)
   })
@@ -100,7 +103,7 @@ export default function HomePage() {
 
     if (isRecurring) {
       // Extract time portion from stored timestamp
-      const startTime = e.start_at.split('T')[1] || '00:00:00'
+      const startTime = getLocalTimeFromISO(e.start_at, 'HH:mm:ss')
 
       // For anchor events, calculate end time from base_time + target_duration_min
       let endTime: string
@@ -111,11 +114,11 @@ export default function HomePage() {
         const endMinutes = totalMinutes % 60
         endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`
       } else {
-        endTime = e.end_at.split('T')[1] || '23:59:59'
+        endTime = getLocalTimeFromISO(e.end_at, 'HH:mm:ss')
       }
 
       // Apply to selected date
-      const selectedDateStr = selectedDate.toISOString().split('T')[0]
+      const selectedDateStr = toDateString(selectedDate)
 
       // Return full Event object with updated timestamps
       return {
@@ -155,7 +158,7 @@ export default function HomePage() {
     if (!user) return
 
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0]
+      const dateStr = toDateString(selectedDate)
       await createExecutionMutation.mutateAsync({
         event_id: event.id,
         user_id: user.id,
@@ -202,85 +205,90 @@ export default function HomePage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
-      {/* Header stays at the top */}
-      <Header
-        showDate
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
+    <>
+      <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        {/* Header stays at the top */}
+        <Header
+          showDate
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
 
-      {/* Main content area scrolls internally */}
-      <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar">
-        {/* 파이 차트 */}
-        <div className="relative flex flex-col items-center mb-8">
-          {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 rounded-xl backdrop-blur-sm">
-              <Spinner size="md" />
-            </div>
-          )}
-          <PieChart
-            events={pieEvents}
-            currentTime={currentTime}
-            selectedDate={selectedDate}
-            size={320}
-            showLabels
-            showCurrentTime
-            onEventClick={(pieEvent) => {
-              const event = todayEvents.find((e) => e.id === pieEvent.id)
-              if (event) {
-                setSelectedEvent(event)
+        {/* Main content area scrolls internally */}
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar">
+          {/* 파이 차트 */}
+          <div className="relative flex flex-col items-center mb-8">
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 rounded-xl backdrop-blur-sm">
+                <Spinner size="md" />
+              </div>
+            )}
+            <PieChart
+              events={pieEvents}
+              currentTime={currentTime}
+              selectedDate={selectedDate}
+              size={320}
+              showLabels
+              showCurrentTime
+              onEventClick={(pieEvent) => {
+                const event = todayEvents.find((e) => e.id === pieEvent.id)
+                if (event) {
+                  setSelectedEvent(event)
+                  setEventModalOpen(true)
+                }
+              }}
+              onTimeSlotClick={() => {
                 setEventModalOpen(true)
-              }
-            }}
-            onTimeSlotClick={() => {
-              setEventModalOpen(true)
-            }}
-          />
-        </div>
-
-        {/* Up Next 섹션 */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-foreground text-2xl font-bold">Up Next</h2>
-            <span className="text-muted-foreground text-sm">
-              {upcomingEvents.length} task{upcomingEvents.length !== 1 ? 's' : ''} remaining
-            </span>
+              }}
+            />
           </div>
 
-          {upcomingEvents.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">No upcoming events</p>
+          {/* Up Next 섹션 */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-foreground text-2xl font-bold">Up Next</h2>
+              <span className="text-muted-foreground text-sm">
+                {upcomingEvents.length} task{upcomingEvents.length !== 1 ? 's' : ''} remaining
+              </span>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onClick={() => {
-                    setSelectedEvent(event)
-                    setEventModalOpen(true)
-                  }}
-                  onStartExecution={() => handleStartExecution(event)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
 
-      {/* Execution Timer */}
-      {activeExecution && (
-        <ExecutionTimer
-          eventTitle={activeEventTitle}
-          startTime={new Date(activeExecution.actual_start || activeExecution.planned_start)}
-          onStop={handleStopExecution}
-          onSkip={handleSkipExecution}
-        />
-      )}
+            {upcomingEvents.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-sm">No upcoming events</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {upcomingEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onClick={() => {
+                      setSelectedEvent(event)
+                      setEventModalOpen(true)
+                    }}
+                    onStartExecution={() => handleStartExecution(event)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
 
-      {/* Modals */}
+        {/* Execution Timer */}
+        {activeExecution && (
+          <ExecutionTimer
+            eventTitle={activeEventTitle}
+            startTime={new Date(activeExecution.actual_start || activeExecution.planned_start)}
+            onStop={handleStopExecution}
+            onSkip={handleSkipExecution}
+          />
+        )}
+
+        {/* Bottom Navigation */}
+        <BottomNav />
+      </div>
+
+      {/* Modals - Moved outside fixed container for backdrop blur */}
       <EventModal
         isOpen={eventModalOpen}
         onClose={() => {
@@ -292,9 +300,6 @@ export default function HomePage() {
         selectedDate={selectedDate}
         initialData={selectedEvent}
       />
-
-      {/* Bottom Navigation */}
-      <BottomNav />
-    </div>
+    </>
   )
 }

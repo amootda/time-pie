@@ -2,6 +2,8 @@
 
 import { getPurposesByType } from '@time-pie/core'
 import type { EventType } from '@time-pie/supabase'
+import { Bell } from 'lucide-react'
+import { PURPOSE_ICONS } from './constants'
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
@@ -19,20 +21,23 @@ function PurposeSelector({ type, purpose, setPurpose }: PurposeSelectorProps) {
         전체 약속 유형
       </label>
       <div className="grid grid-cols-3 gap-2">
-        {allPurposes.map((p) => (
-          <button
-            key={p.key}
-            type="button"
-            onClick={() => setPurpose(p.key)}
-            className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${purpose === p.key
-              ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-              }`}
-          >
-            <span className="text-lg mb-0.5">{p.emoji}</span>
-            <span>{p.label}</span>
-          </button>
-        ))}
+        {allPurposes.map((p) => {
+          const Icon = PURPOSE_ICONS[p.key]
+          return (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPurpose(p.key)}
+              className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${purpose === p.key
+                ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+                : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                }`}
+            >
+              {Icon && <Icon className="w-5 h-5 mb-1.5" />}
+              <span>{p.label}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -96,8 +101,9 @@ interface ReminderSelectorProps {
 function ReminderSelector({ reminderMin, setReminderMin }: ReminderSelectorProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        🔔 알림
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+        <Bell className="w-4 h-4" />
+        알림
       </label>
       <div className="flex flex-wrap gap-2">
         {REMINDER_OPTIONS.map((opt) => (

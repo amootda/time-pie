@@ -71,14 +71,14 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
           if (e.repeat_days && e.repeat_days.length > 0) {
             return e.repeat_days.includes(dayOfWeek)
           }
-          return e.start_at.startsWith(dateStr)
+          return dayjs(e.start_at).format('YYYY-MM-DD') === dateStr
         }
 
         // Task events: repeat_days check or one-time event
         if (e.repeat_days && e.repeat_days.length > 0) {
           return e.repeat_days.includes(dayOfWeek)
         }
-        return e.start_at.startsWith(dateStr)
+        return dayjs(e.start_at).format('YYYY-MM-DD') === dateStr
       })
 
       // Convert events to selected date format for PieChart
@@ -87,7 +87,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
 
         if (isRecurring) {
           // Extract time portion from stored timestamp
-          const startTime = e.start_at.split('T')[1] || '00:00:00'
+          const startTime = dayjs(e.start_at).format('HH:mm:ss')
 
           // For anchor events, calculate end time from base_time + target_duration_min
           let endTime: string
@@ -98,7 +98,7 @@ export function WeeklyPieView({ events, selectedDate, onDateSelect }: WeeklyPieV
             const endMinutes = totalMinutes % 60
             endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`
           } else {
-            endTime = e.end_at.split('T')[1] || '23:59:59'
+            endTime = dayjs(e.end_at).format('HH:mm:ss')
           }
 
           // Apply to this day's date

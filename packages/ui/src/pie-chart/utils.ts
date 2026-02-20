@@ -2,18 +2,10 @@ import type { Event, TimeSlice } from './types'
 
 /**
  * ISO 문자열을 로컬 시간으로 파싱
- * "2024-02-16T12:00:00" 또는 "2024-02-16T12:00:00.000Z"을 UTC가 아닌 로컬 시간으로 해석
+ * 타임존이 포함된 경우 로컬 시간으로 자동 변환
  */
 function parseLocalDateTime(isoString: string): Date {
-  // Remove milliseconds and timezone suffix (.000Z, +00:00, etc.)
-  const cleanDatetime = isoString.replace(/(\.\d+)?(Z|[+-]\d{2}:\d{2})$/, '')
-  const [date, time] = cleanDatetime.split('T')
-  const [year, month, day] = date.split('-').map(Number)
-  const [hours, minutes, seconds = 0] = time.split(':').map(Number)
-  const result = new Date(year, month - 1, day, hours, minutes, seconds)
-
-
-  return result
+  return new Date(isoString)
 }
 
 /**

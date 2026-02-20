@@ -1,7 +1,7 @@
 'use client'
 
+import { getLocalTimeFromISO, getPurposeInfo } from '@time-pie/core'
 import type { Event, EventType } from '@time-pie/supabase'
-import { getPurposeInfo, getScheduleTypeInfo } from '@time-pie/core'
 
 interface EventCardProps {
   event: Event
@@ -35,8 +35,8 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
   const typeStyles = getTypeStyles(event.event_type)
   const purposeInfo = getPurposeInfo(event.purpose)
 
-  const startTime = event.start_at.split('T')[1]?.slice(0, 5) || ''
-  const endTime = event.end_at.split('T')[1]?.slice(0, 5) || ''
+  const startTime = getLocalTimeFromISO(event.start_at)
+  const endTime = getLocalTimeFromISO(event.end_at)
   const isTaskEvent = event.event_type === 'task'
 
   const handleStartClick = (e: React.MouseEvent) => {
@@ -80,16 +80,6 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
               {endTime}
             </div>
           </div>
-
-          {/* Task 이벤트만 시작 버튼 표시 */}
-          {isTaskEvent && onStartExecution && (
-            <button
-              onClick={handleStartClick}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-            >
-              시작
-            </button>
-          )}
         </div>
       </div>
     </div>

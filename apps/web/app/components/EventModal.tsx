@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { ANCHOR_DEFAULT_COLOR, getPurposeInfo, toDateString } from '@time-pie/core'
+import type { Event, EventType } from '@time-pie/supabase'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import { useEffect, useState } from 'react'
 import { AddModal } from './AddModal'
+import { DetailedEventOptions } from './event-form/DetailedEventOptions'
 import { EventTypeTab } from './event-form/EventTypeTab'
 import { QuickEventForm } from './event-form/QuickEventForm'
-import { DetailedEventOptions } from './event-form/DetailedEventOptions'
-import { toDateString, getPurposeInfo, ANCHOR_DEFAULT_COLOR } from '@time-pie/core'
-import type { Event, EventType } from '@time-pie/supabase'
 
 dayjs.extend(customParseFormat)
 
@@ -70,9 +70,9 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
 
       // Time fields
       const isRecurring = initialData?.event_type === 'anchor'
-      setStartDate(isRecurring ? dateStr : (initialData?.start_at?.split('T')[0] || dateStr))
-      setStartTime(initialData?.start_at?.split('T')[1]?.slice(0, 5) || '09:00')
-      setEndTime(initialData?.end_at?.split('T')[1]?.slice(0, 5) || '10:00')
+      setStartDate(isRecurring ? dateStr : (initialData?.start_at ? dayjs(initialData.start_at).format('YYYY-MM-DD') : dateStr))
+      setStartTime(initialData?.start_at ? dayjs(initialData.start_at).format('HH:mm') : '09:00')
+      setEndTime(initialData?.end_at ? dayjs(initialData.end_at).format('HH:mm') : '10:00')
       setRepeatDays(initialData?.repeat_days || [])
 
       // Anchor fields
@@ -139,8 +139,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
         eventData = {
           title: title.trim(),
           description: description.trim() || null,
-          start_at: startDateTime.format('YYYY-MM-DDTHH:mm:ss'),
-          end_at: endDateTime.format('YYYY-MM-DDTHH:mm:ss'),
+          start_at: startDateTime.format('YYYY-MM-DDTHH:mm:ssZ'),
+          end_at: endDateTime.format('YYYY-MM-DDTHH:mm:ssZ'),
           is_all_day: false,
           event_type: 'anchor',
           color: ANCHOR_DEFAULT_COLOR,
@@ -154,8 +154,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
         }
       } else {
         // task
-        const startAt = `${startDate}T${startTime}:00`
-        const endAt = `${startDate}T${endTime}:00`
+        const startAt = dayjs(`${startDate}T${startTime}`, 'YYYY-MM-DDTHH:mm').format('YYYY-MM-DDTHH:mm:ssZ')
+        const endAt = dayjs(`${startDate}T${endTime}`, 'YYYY-MM-DDTHH:mm').format('YYYY-MM-DDTHH:mm:ssZ')
 
         eventData = {
           title: title.trim(),

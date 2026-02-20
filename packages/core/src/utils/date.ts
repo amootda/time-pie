@@ -74,3 +74,20 @@ export function isToday(date: Date): boolean {
 export function toDateString(date: Date = new Date()): string {
   return dayjs(date).format('YYYY-MM-DD')
 }
+
+/**
+ * DB의 UTC ISO 문자열에서 로컬 타임존 기준 시간(HH:mm 혹은 직접 포맷)을 추출합니다.
+ */
+export function getLocalTimeFromISO(isoString: string, format: string = 'HH:mm'): string {
+  if (!isoString) return ''
+  return dayjs(isoString).format(format)
+}
+
+/**
+ * DB의 UTC ISO 문자열 시간과 특정 날짜 문자열(YYYY-MM-DD)이
+ * 사용자 로컬 타임존 기준으로 같은 날짜인지 확인합니다.
+ */
+export function isSameLocalDate(isoString: string, dateString: string): boolean {
+  if (!isoString || !dateString) return false
+  return dayjs(isoString).format('YYYY-MM-DD') === dateString
+}

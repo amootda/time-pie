@@ -1,3 +1,4 @@
-export { formatDate, formatTime, formatRelativeDate, toDateString, getDayName, isToday } from './date'
-export { isWebView, sendToNative, getPlatform } from './platform'
 export * from './analysis'
+export { formatDate, formatRelativeDate, formatTime, getDayName, getLocalTimeFromISO, isSameLocalDate, isToday, toDateString } from './date'
+export { getPlatform, isWebView, sendToNative } from './platform'
+
