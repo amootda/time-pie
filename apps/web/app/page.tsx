@@ -60,7 +60,7 @@ export default function HomePage() {
   }, [user?.id])
 
   // Use API data if available, otherwise fallback to store
-  const events = eventsData && eventsData.length > 0 ? eventsData : storeEvents
+  const events = eventsData ?? storeEvents
   const isLoading = eventsLoading || createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending
 
   // Filter events for selected date
