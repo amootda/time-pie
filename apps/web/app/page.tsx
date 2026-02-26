@@ -1,33 +1,42 @@
 'use client'
 
 import {
-  getLocalTimeFromISO,
-  isSameLocalDate,
-  toDateString,
-  useAlarm,
-  useCompleteExecutionMutation,
-  useCreateEventMutation,
-  useCreateExecutionMutation,
-  useCurrentTime,
-  useDeleteEventMutation,
-  useEventsQuery,
-  useEventStore,
-  useExecutionStore,
-  useSkipExecutionMutation,
-  useUpdateEventMutation,
+    getLocalTimeFromISO,
+    isSameLocalDate,
+    toDateString,
+    useCompleteExecutionMutation,
+    useCreateEventMutation,
+    useCreateExecutionMutation,
+    useDeleteEventMutation,
+    useEventsQuery,
+    useEventStore,
+    useExecutionStore,
+    useSkipExecutionMutation,
+    useUpdateEventMutation,
 } from '@time-pie/core'
 import type { Event, EventInsert } from '@time-pie/supabase'
 import { getUserSettings } from '@time-pie/supabase'
-import { PieChart, Spinner } from '@time-pie/ui'
-import { useEffect, useState } from 'react'
-import { BottomNav, EventCard, EventModal, ExecutionTimer, Header } from './components'
+import { Spinner } from '@time-pie/ui'
+import dynamic from 'next/dynamic'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { BottomNav, ExecutionTimer, Header } from './components'
+import { PieChartSection } from './components/PieChartSection'
+import { TodayEventsSection } from './components/TodayEventsSection'
 import { useAuth } from './providers'
+
+const EventModal = dynamic(
+  () => import('./components/EventModal').then((m) => ({ default: m.EventModal })),
+  { loading: () => null }
+)
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
-  const currentTime = useCurrentTime()
-  const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
-  const { activeExecution } = useExecutionStore()
+
+  // ✅ Zustand Selector: 필요한 값만 개별 구독
+  const selectedDate = useEventStore((s) => s.selectedDate)
+  const setSelectedDate = useEventStore((s) => s.setSelectedDate)
+  const storeEvents = useEventStore((s) => s.events)
+  const activeExecution = useExecutionStore((s) => s.activeExecution)
 
   // React Query hooks
   const { data: eventsData, isLoading: eventsLoading } = useEventsQuery(user?.id, selectedDate)
@@ -55,149 +64,152 @@ export default function HomePage() {
   const isLoading = eventsLoading || createEventMutation.isPending || updateEventMutation.isPending || deleteEventMutation.isPending
 
   // Filter events for selected date
-  const selectedDayOfWeek = selectedDate.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
-
-  const todayEvents = events.filter((e) => {
+  const todayEvents = useMemo(() => {
+    const selectedDayOfWeek = selectedDate.getDay()
     const todayStr = toDateString(selectedDate)
-    // Anchor events: repeat_days가 설정되어 있으면 해당 요일만, 없으면 일회성
-    if (e.event_type === 'anchor') {
+    return events.filter((e) => {
+      if (e.event_type === 'anchor') {
+        if (e.repeat_days && e.repeat_days.length > 0) {
+          return e.repeat_days.includes(selectedDayOfWeek)
+        }
+        return isSameLocalDate(e.start_at, todayStr)
+      }
       if (e.repeat_days && e.repeat_days.length > 0) {
         return e.repeat_days.includes(selectedDayOfWeek)
       }
       return isSameLocalDate(e.start_at, todayStr)
-    }
-    // Task events: repeat_days 체크, 없으면 일회성
-    if (e.repeat_days && e.repeat_days.length > 0) {
-      return e.repeat_days.includes(selectedDayOfWeek)
-    }
-    return isSameLocalDate(e.start_at, todayStr)
-  })
+    })
+  }, [events, selectedDate])
 
   // Sort events by start time
-  const sortedEvents = [...todayEvents].sort((a, b) => {
-    const timeA = getLocalTimeFromISO(a.start_at)
-    const timeB = getLocalTimeFromISO(b.start_at)
-    return timeA.localeCompare(timeB)
-  })
-
-  // Get upcoming events (현재 시간 이후의 이벤트들)
-  const currentHour = currentTime.getHours()
-  const currentMinute = currentTime.getMinutes()
-  const upcomingEvents = sortedEvents.filter((event) => {
-    const startTime = getLocalTimeFromISO(event.start_at)
-    const [hour, minute] = startTime.split(':').map(Number)
-    return hour > currentHour || (hour === currentHour && minute > currentMinute)
-  })
-
-  // Alarm scheduling
-  useAlarm({
-    events: sortedEvents,
-    enabled: notificationsEnabled,
-    selectedDate,
-  })
+  const sortedEvents = useMemo(
+    () =>
+      [...todayEvents].sort((a, b) => {
+        const timeA = getLocalTimeFromISO(a.start_at)
+        const timeB = getLocalTimeFromISO(b.start_at)
+        return timeA.localeCompare(timeB)
+      }),
+    [todayEvents]
+  )
 
   // Convert to pie chart format
-  // For anchor/soft events, extract time and apply to selectedDate
-  const pieEvents = todayEvents.map((e) => {
-    const isRecurring = e.repeat_days && e.repeat_days.length > 0
+  const pieEvents = useMemo(
+    () =>
+      todayEvents.map((e) => {
+        const isRecurring = e.repeat_days && e.repeat_days.length > 0
 
-    if (isRecurring) {
-      // Extract time portion from stored timestamp
-      const startTime = getLocalTimeFromISO(e.start_at, 'HH:mm:ss')
+        if (isRecurring) {
+          const startTime = getLocalTimeFromISO(e.start_at, 'HH:mm:ss')
 
-      // For anchor events, calculate end time from base_time + target_duration_min
-      let endTime: string
-      if (e.event_type === 'anchor' && e.base_time && e.target_duration_min) {
-        const [hours, minutes] = e.base_time.split(':').map(Number)
-        const totalMinutes = hours * 60 + minutes + e.target_duration_min
-        const endHours = Math.floor(totalMinutes / 60) % 24
-        const endMinutes = totalMinutes % 60
-        endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`
+          let endTime: string
+          if (e.event_type === 'anchor' && e.base_time && e.target_duration_min) {
+            const [hours, minutes] = e.base_time.split(':').map(Number)
+            const totalMinutes = hours * 60 + minutes + e.target_duration_min
+            const endHours = Math.floor(totalMinutes / 60) % 24
+            const endMinutes = totalMinutes % 60
+            endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}:00`
+          } else {
+            endTime = getLocalTimeFromISO(e.end_at, 'HH:mm:ss')
+          }
+
+          const selectedDateStr = toDateString(selectedDate)
+          return {
+            ...e,
+            start_at: `${selectedDateStr}T${startTime}`,
+            end_at: `${selectedDateStr}T${endTime}`,
+          }
+        }
+        return e
+      }),
+    [todayEvents, selectedDate]
+  )
+
+  // Handlers
+  const handleAddEvent = useCallback(
+    async (event: Omit<EventInsert, 'user_id'>) => {
+      if (!user) return
+      if (selectedEvent) {
+        await updateEventMutation.mutateAsync({ id: selectedEvent.id, updates: event })
       } else {
-        endTime = getLocalTimeFromISO(e.end_at, 'HH:mm:ss')
+        await createEventMutation.mutateAsync({ ...event, user_id: user.id })
       }
-
-      // Apply to selected date
-      const selectedDateStr = toDateString(selectedDate)
-
-      // Return full Event object with updated timestamps
-      return {
-        ...e,
-        start_at: `${selectedDateStr}T${startTime}`,
-        end_at: `${selectedDateStr}T${endTime}`,
-      }
-    }
-
-    // Non-recurring events: return as-is
-    return e
-  })
-
-
-  const handleAddEvent = async (event: Omit<EventInsert, 'user_id'>) => {
-    if (!user) return
-
-    if (selectedEvent) {
-      await updateEventMutation.mutateAsync({ id: selectedEvent.id, updates: event })
-    } else {
-      await createEventMutation.mutateAsync({ ...event, user_id: user.id })
-    }
-    setSelectedEvent(undefined)
-  }
-
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await deleteEventMutation.mutateAsync(eventId)
-      setEventModalOpen(false)
       setSelectedEvent(undefined)
-    } catch (error) {
-      console.error('Failed to delete event:', error)
-    }
-  }
+    },
+    [user, selectedEvent, updateEventMutation, createEventMutation]
+  )
 
-  const handleStartExecution = async (event: Event) => {
-    if (!user) return
+  const handleDeleteEvent = useCallback(
+    async (eventId: string) => {
+      try {
+        await deleteEventMutation.mutateAsync(eventId)
+        setEventModalOpen(false)
+        setSelectedEvent(undefined)
+      } catch (error) {
+        console.error('Failed to delete event:', error)
+      }
+    },
+    [deleteEventMutation]
+  )
 
-    try {
-      const dateStr = toDateString(selectedDate)
-      await createExecutionMutation.mutateAsync({
-        event_id: event.id,
-        user_id: user.id,
-        planned_start: event.start_at,
-        planned_end: event.end_at,
-        actual_start: new Date().toISOString(),
-        actual_end: null,
-        status: 'in_progress',
-        completion_rate: 0,
-        date: dateStr,
-        notes: null,
-      })
-    } catch (error) {
-      console.error('Failed to start execution:', error)
-    }
-  }
+  const handleStartExecution = useCallback(
+    async (event: Event) => {
+      if (!user) return
+      try {
+        const dateStr = toDateString(selectedDate)
+        await createExecutionMutation.mutateAsync({
+          event_id: event.id,
+          user_id: user.id,
+          planned_start: event.start_at,
+          planned_end: event.end_at,
+          actual_start: new Date().toISOString(),
+          actual_end: null,
+          status: 'in_progress',
+          completion_rate: 0,
+          date: dateStr,
+          notes: null,
+        })
+      } catch (error) {
+        console.error('Failed to start execution:', error)
+      }
+    },
+    [user, selectedDate, createExecutionMutation]
+  )
 
-  const handleStopExecution = async () => {
+  const handleStopExecution = useCallback(async () => {
     if (!activeExecution) return
     try {
       await completeExecutionMutation.mutateAsync(activeExecution.id)
     } catch (error) {
       console.error('Failed to stop execution:', error)
     }
-  }
+  }, [activeExecution, completeExecutionMutation])
 
-  const handleSkipExecution = async () => {
+  const handleSkipExecution = useCallback(async () => {
     if (!activeExecution) return
     try {
       await skipExecutionMutation.mutateAsync(activeExecution.id)
     } catch (error) {
       console.error('Failed to skip execution:', error)
     }
-  }
+  }, [activeExecution, skipExecutionMutation])
+
+  const handleEventClick = useCallback((event: Event) => {
+    setSelectedEvent(event)
+    setEventModalOpen(true)
+  }, [])
+
+  const handleTimeSlotClick = useCallback(() => {
+    setEventModalOpen(true)
+  }, [])
 
   // Get event title for active execution
-  const activeEventTitle = activeExecution
-    ? todayEvents.find(e => e.id === activeExecution.event_id)?.title || 'Unknown Event'
-    : ''
+  const activeEventTitle = useMemo(
+    () =>
+      activeExecution
+        ? todayEvents.find((e) => e.id === activeExecution.event_id)?.title || 'Unknown Event'
+        : '',
+    [activeExecution, todayEvents]
+  )
 
   // Loading state
   if (authLoading) {
@@ -216,62 +228,24 @@ export default function HomePage() {
 
         {/* Main content area scrolls internally */}
         <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar">
-          {/* 파이 차트 */}
-          <div className="relative flex flex-col items-center mb-8">
-            {isLoading && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 rounded-xl backdrop-blur-sm">
-                <Spinner size="md" />
-              </div>
-            )}
-            <PieChart
-              events={pieEvents}
-              currentTime={currentTime}
-              selectedDate={selectedDate}
-              size={320}
-              showLabels
-              showCurrentTime
-              onEventClick={(pieEvent) => {
-                const event = todayEvents.find((e) => e.id === pieEvent.id)
-                if (event) {
-                  setSelectedEvent(event)
-                  setEventModalOpen(true)
-                }
-              }}
-              onTimeSlotClick={() => {
-                setEventModalOpen(true)
-              }}
-            />
-          </div>
+          {/* ⚡ PieChart — useCurrentTime은 이 컴포넌트 내부에서만 사용 */}
+          <PieChartSection
+            pieEvents={pieEvents}
+            todayEvents={todayEvents}
+            selectedDate={selectedDate}
+            isLoading={isLoading}
+            notificationsEnabled={notificationsEnabled}
+            sortedEvents={sortedEvents}
+            onEventClick={handleEventClick}
+            onTimeSlotClick={handleTimeSlotClick}
+          />
 
-          {/* Up Next 섹션 */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-foreground text-2xl font-bold">Up Next</h2>
-              <span className="text-muted-foreground text-sm">
-                {upcomingEvents.length} task{upcomingEvents.length !== 1 ? 's' : ''} remaining
-              </span>
-            </div>
-
-            {upcomingEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-sm">No upcoming events</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    onClick={() => {
-                      setSelectedEvent(event)
-                      setEventModalOpen(true)
-                    }}
-                    onStartExecution={() => handleStartExecution(event)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {/* ⚡ 오늘의 일정 — 현재 시간 기준으로 지난 일정과 예정된 일정으로 구분 */}
+          <TodayEventsSection
+            sortedEvents={sortedEvents}
+            onEventClick={handleEventClick}
+            onStartExecution={handleStartExecution}
+          />
         </main>
 
         {/* Execution Timer */}
