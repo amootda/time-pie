@@ -261,6 +261,9 @@ importers:
       '@radix-ui/react-hover-card':
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@18.3.7)(@types/react@18.3.27)(react-dom@19.2.4)(react@19.2.4)
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.19
       framer-motion:
         specifier: ^12.34.0
         version: 12.34.0(react-dom@19.2.4)(react@19.2.4)

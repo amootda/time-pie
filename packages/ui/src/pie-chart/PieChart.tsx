@@ -1,6 +1,7 @@
 'use client'
 
 import * as HoverCard from '@radix-ui/react-hover-card'
+import dayjs from 'dayjs'
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import type { PieChartProps } from './types'
@@ -166,13 +167,21 @@ export function PieChart({
               </text>
               {/* 현재 진행 중인 이벤트 표시 */}
               {(() => {
-                const currentHour = currentTime.getHours()
-                const currentMinute = currentTime.getMinutes()
                 const currentSlice = slices.find((slice) => {
                   if (!slice.event) return false
-                  const startHour = Math.floor((slice.startAngle / 360) * 24)
-                  const endHour = Math.floor((slice.endAngle / 360) * 24)
-                  return currentHour >= startHour && currentHour < endHour
+
+                  const startTime = dayjs(slice.event.start_at)
+                  const endTime = dayjs(slice.event.end_at)
+                  const now = dayjs(currentTime)
+
+                  // 자정을 넘어가는 경우 처리 (end < start)
+                  if (endTime.isBefore(startTime)) {
+                    // 현재 시간이 시작 시간 이후이거나 종료 시간 이전이면 진행 중
+                    return now.isAfter(startTime) || now.isBefore(endTime)
+                  }
+
+                  // 일반적인 경우: start <= current < end
+                  return (now.isAfter(startTime) || now.isSame(startTime)) && now.isBefore(endTime)
                 })
                 return currentSlice?.event ? (
                   <text
