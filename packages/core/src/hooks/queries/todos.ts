@@ -1,12 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getTodos,
-  createTodo as createTodoApi,
-  updateTodo as updateTodoApi,
-  deleteTodo as deleteTodoApi,
-  toggleTodoComplete as toggleTodoCompleteApi,
-  type Todo,
-  type TodoInsert,
+    createTodo as createTodoApi,
+    deleteTodo as deleteTodoApi,
+    getTodos,
+    toggleTodoComplete as toggleTodoCompleteApi,
+    updateTodo as updateTodoApi,
+    type Todo,
+    type TodoInsert,
 } from '@time-pie/supabase'
 
 // Query Keys
@@ -79,7 +79,7 @@ export function useDeleteTodoMutation() {
 }
 
 /**
- * 할 일 완료/미완료 토글
+ * 할 일 완료/미완료 토글 (Optimistic Update)
  * currentIsCompleted를 받아서 waterfall 없이 단일 UPDATE
  */
 export function useToggleTodoMutation() {
@@ -89,7 +89,27 @@ export function useToggleTodoMutation() {
     mutationFn: async ({ id, currentIsCompleted }: { id: string; currentIsCompleted: boolean }) => {
       return toggleTodoCompleteApi(id, currentIsCompleted)
     },
-    onSuccess: () => {
+    onMutate: async ({ id, currentIsCompleted }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: todoKeys.all })
+
+      // Snapshot the previous value
+      const previousQueries = queryClient.getQueriesData<Todo[]>({ queryKey: todoKeys.all })
+
+      // Optimistically update all matching queries
+      queryClient.setQueriesData<Todo[]>({ queryKey: todoKeys.all }, (old) =>
+        old?.map((t) => (t.id === id ? { ...t, is_completed: !currentIsCompleted } : t))
+      )
+
+      return { previousQueries }
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      context?.previousQueries.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data)
+      })
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: todoKeys.all })
     },
   })

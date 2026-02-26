@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { memo, useMemo } from 'react'
 
 interface HeaderProps {
   title?: string
@@ -9,19 +10,21 @@ interface HeaderProps {
   onDateChange?: (date: Date) => void
 }
 
-export function Header({ title = 'Time Pie', showDate = false, selectedDate, onDateChange }: HeaderProps) {
+export const Header = memo(function Header({ title = 'Time Pie', showDate = false, selectedDate, onDateChange }: HeaderProps) {
   const today = selectedDate || new Date()
 
-  // 요일과 날짜 포맷
-  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(today)
-  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(today)
-  const day = today.getDate()
+  // 요일과 날짜 포맷 (메모이제이션)
+  const { weekday, month, day } = useMemo(() => ({
+    weekday: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(today),
+    month: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(today),
+    day: today.getDate(),
+  }), [today])
 
-  // 주간 날짜 생성 (일~토)
-  const getWeekDates = () => {
+  // 주간 날짜 생성 (일~토, 메모이제이션)
+  const weekDates = useMemo(() => {
     const dates = []
-    const currentDay = today.getDay() // 0=일, 1=월, ..., 6=토
-    const diff = -currentDay // 일요일까지의 차이
+    const currentDay = today.getDay()
+    const diff = -currentDay
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(today)
@@ -29,9 +32,7 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
       dates.push(date)
     }
     return dates
-  }
-
-  const weekDates = getWeekDates()
+  }, [today])
 
   const handleDateClick = (date: Date) => {
     if (onDateChange) {
@@ -98,4 +99,4 @@ export function Header({ title = 'Time Pie', showDate = false, selectedDate, onD
       </div>
     </header>
   )
-}
+})

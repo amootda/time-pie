@@ -1,19 +1,25 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import {
-  useTodoStore,
-  useTodosQuery,
-  useCreateTodoMutation,
-  useUpdateTodoMutation,
-  useToggleTodoMutation,
-  useDeleteTodoMutation,
-  toDateString,
+    toDateString,
+    useCreateTodoMutation,
+    useDeleteTodoMutation,
+    useTodoStore,
+    useTodosQuery,
+    useToggleTodoMutation,
+    useUpdateTodoMutation,
 } from '@time-pie/core'
-import { Header, BottomNav, FloatingAddButton, TodoModal } from '../components'
-import { useAuth } from '../providers'
 import type { Todo, TodoInsert } from '@time-pie/supabase'
-import { Check, Trash2, Inbox, Calendar, AlertCircle } from 'lucide-react'
+import { AlertCircle, Calendar, Check, Inbox, Trash2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { useCallback, useMemo, useState } from 'react'
+import { BottomNav, FloatingAddButton, Header } from '../components'
+import { useAuth } from '../providers'
+
+const TodoModal = dynamic(
+  () => import('../components/TodoModal').then((m) => ({ default: m.TodoModal })),
+  { loading: () => null }
+)
 
 const PRIORITY_COLORS = {
   high: 'bg-error/10 text-error ring-1 ring-error/20',
@@ -31,7 +37,10 @@ type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
 export default function TodosPage() {
   const { user } = useAuth()
-  const { todos: storeTodos, filter, setFilter } = useTodoStore()
+  // ✅ Zustand Selector: 필요한 값만 개별 구독
+  const storeTodos = useTodoStore((s) => s.todos)
+  const filter = useTodoStore((s) => s.filter)
+  const setFilter = useTodoStore((s) => s.setFilter)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
@@ -61,31 +70,37 @@ export default function TodosPage() {
     }
   }, [todos, filter, todayStr])
 
-  const handleAddTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
-    if (!user) return
-    try {
-      await createTodoMutation.mutateAsync({ ...todo, user_id: user.id })
-      setModalOpen(false)
-    } catch (error) {
-      console.error('Failed to create todo:', error)
-    }
-  }
+  const handleAddTodo = useCallback(
+    async (todo: Omit<TodoInsert, 'user_id'>) => {
+      if (!user) return
+      try {
+        await createTodoMutation.mutateAsync({ ...todo, user_id: user.id })
+        setModalOpen(false)
+      } catch (error) {
+        console.error('Failed to create todo:', error)
+      }
+    },
+    [user, createTodoMutation]
+  )
 
-  const handleEditTodo = async (todo: Omit<TodoInsert, 'user_id'>) => {
-    if (!editingTodo) return
-    try {
-      await updateTodoMutation.mutateAsync({ id: editingTodo.id, updates: todo })
-      setModalOpen(false)
-      setEditingTodo(null)
-    } catch (error) {
-      console.error('Failed to update todo:', error)
-    }
-  }
+  const handleEditTodo = useCallback(
+    async (todo: Omit<TodoInsert, 'user_id'>) => {
+      if (!editingTodo) return
+      try {
+        await updateTodoMutation.mutateAsync({ id: editingTodo.id, updates: todo })
+        setModalOpen(false)
+        setEditingTodo(null)
+      } catch (error) {
+        console.error('Failed to update todo:', error)
+      }
+    },
+    [editingTodo, updateTodoMutation]
+  )
 
-  const openEditModal = (todo: Todo) => {
+  const openEditModal = useCallback((todo: Todo) => {
     setEditingTodo(todo)
     setModalOpen(true)
-  }
+  }, [])
 
   const filters: { label: string; value: FilterType }[] = [
     { label: '오늘', value: 'today' },
@@ -94,11 +109,27 @@ export default function TodosPage() {
     { label: '전체', value: 'all' }
   ]
 
-  const stats = {
-    total: todos.length,
-    completed: todos.filter((t) => t.is_completed).length,
-    today: todos.filter((t) => t.due_date === todayStr).length,
-  }
+  const stats = useMemo(
+    () => ({
+      total: todos.length,
+      completed: todos.filter((t) => t.is_completed).length,
+      today: todos.filter((t) => t.due_date === todayStr).length,
+    }),
+    [todos, todayStr]
+  )
+
+  // Pre-sort display todos to avoid sorting in render
+  const sortedDisplayTodos = useMemo(
+    () =>
+      [...displayTodos].sort((a, b) => {
+        if (a.is_completed !== b.is_completed) {
+          return a.is_completed ? 1 : -1
+        }
+        const priorityOrder = { high: 0, medium: 1, low: 2 }
+        return priorityOrder[a.priority] - priorityOrder[b.priority]
+      }),
+    [displayTodos]
+  )
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -154,17 +185,7 @@ export default function TodosPage() {
               </button>
             </div>
           ) : (
-            displayTodos
-              .sort((a, b) => {
-                // Primary: incomplete todos first (false before true)
-                if (a.is_completed !== b.is_completed) {
-                  return a.is_completed ? 1 : -1
-                }
-                // Secondary: priority (high → medium → low)
-                const priorityOrder = { high: 0, medium: 1, low: 2 }
-                return priorityOrder[a.priority] - priorityOrder[b.priority]
-              })
-              .map((todo) => (
+            sortedDisplayTodos.map((todo) => (
                 <div
                   key={todo.id}
                   className={`group bg-card p-4 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-200 ${todo.is_completed ? 'opacity-60 bg-muted/30' : ''

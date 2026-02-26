@@ -1,8 +1,9 @@
 'use client'
 
+import { CalendarDays, ListTodo, PieChart, Settings, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { PieChart, CalendarDays, ListTodo, Trophy, Settings } from 'lucide-react'
+import { memo } from 'react'
 
 const navItems = [
   { href: '/', label: 'Home', icon: PieChart },
@@ -12,7 +13,7 @@ const navItems = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export function BottomNav() {
+export const BottomNav = memo(function BottomNav() {
   const pathname = usePathname()
 
   return (
@@ -47,4 +48,4 @@ export function BottomNav() {
       </div>
     </nav>
   )
-}
+})

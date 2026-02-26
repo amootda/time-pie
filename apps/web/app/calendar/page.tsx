@@ -5,20 +5,24 @@ import type { Event, EventInsert, EventMonthMeta } from '@time-pie/supabase'
 import { getEventById } from '@time-pie/supabase'
 import { useState } from 'react'
 import {
-  BottomNav,
-  CalendarView,
-  DateEventsSection,
-  EventModal,
-  FloatingAddButton,
-  Header
+    BottomNav,
+    CalendarView,
+    DateEventsSection,
+    EventModal,
+    FloatingAddButton,
+    Header
 } from '../components'
 import { useAuth } from '../providers'
 
 export default function CalendarPage() {
   const { user } = useAuth()
-  const { events: storeEvents, selectedDate, setSelectedDate } = useEventStore()
-  const { todos } = useTodoStore()
-  const { calendarViewMode: viewMode, setCalendarViewMode: setViewMode } = useUIStore()
+  // ✅ Zustand Selector: 필요한 값만 개별 구독
+  const storeEvents = useEventStore((s) => s.events)
+  const selectedDate = useEventStore((s) => s.selectedDate)
+  const setSelectedDate = useEventStore((s) => s.setSelectedDate)
+  const todos = useTodoStore((s) => s.todos)
+  const viewMode = useUIStore((s) => s.calendarViewMode)
+  const setViewMode = useUIStore((s) => s.setCalendarViewMode)
   const createEventMutation = useCreateEventMutation()
   const updateEventMutation = useUpdateEventMutation()
   const deleteEventMutation = useDeleteEventMutation()

@@ -2,6 +2,7 @@
 
 import { getLocalTimeFromISO, getPurposeInfo } from '@time-pie/core'
 import type { Event, EventType } from '@time-pie/supabase'
+import { memo } from 'react'
 
 interface EventCardProps {
   event: Event
@@ -31,7 +32,7 @@ const getTypeStyles = (eventType: EventType) => {
   }
 }
 
-export function EventCard({ event, onClick, onStartExecution }: EventCardProps) {
+export const EventCard = memo(function EventCard({ event, onClick, onStartExecution }: EventCardProps) {
   const typeStyles = getTypeStyles(event.event_type)
   const purposeInfo = getPurposeInfo(event.purpose)
 
@@ -84,4 +85,4 @@ export function EventCard({ event, onClick, onStartExecution }: EventCardProps) 
       </div>
     </div>
   )
-}
+})

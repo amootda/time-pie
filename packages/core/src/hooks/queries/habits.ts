@@ -1,14 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getHabits,
-  getHabitLogs,
-  createHabit as createHabitApi,
-  updateHabit as updateHabitApi,
-  deleteHabit as deleteHabitApi,
-  logHabitCompletion as logHabitCompletionApi,
-  type Habit,
-  type HabitInsert,
-  type HabitLog,
+    createHabit as createHabitApi,
+    deleteHabit as deleteHabitApi,
+    getHabitLogs,
+    getHabits,
+    logHabitCompletion as logHabitCompletionApi,
+    updateHabit as updateHabitApi,
+    type Habit,
+    type HabitInsert,
+    type HabitLog,
 } from '@time-pie/supabase'
 
 // Query Keys
@@ -107,7 +107,7 @@ export function useDeleteHabitMutation() {
 }
 
 /**
- * 습관 완료 로그 (낙관적 업데이트 포함)
+ * 습관 완료 로그 (Optimistic Update 포함)
  */
 export function useLogHabitMutation() {
   const queryClient = useQueryClient()
@@ -116,8 +116,33 @@ export function useLogHabitMutation() {
     mutationFn: async ({ habitId, date }: { habitId: string; date: string }) => {
       await logHabitCompletionApi(habitId, date)
     },
-    onSuccess: () => {
-      // 모든 습관 로그 쿼리 무효화
+    onMutate: async ({ habitId, date }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: habitKeys.logs })
+
+      // Snapshot previous logs
+      const previousQueries = queryClient.getQueriesData<HabitLog[]>({ queryKey: habitKeys.logs })
+
+      // Optimistically add the log entry
+      queryClient.setQueriesData<HabitLog[]>({ queryKey: habitKeys.logs }, (old) => {
+        if (!old) return old
+        const alreadyLogged = old.some((l) => l.habit_id === habitId && l.date === date)
+        if (alreadyLogged) {
+          // Toggle off: remove the log
+          return old.filter((l) => !(l.habit_id === habitId && l.date === date))
+        }
+        // Toggle on: add a temporary log
+        return [...old, { habit_id: habitId, date, id: `temp-${Date.now()}`, created_at: new Date().toISOString() } as HabitLog]
+      })
+
+      return { previousQueries }
+    },
+    onError: (_err, _vars, context) => {
+      context?.previousQueries.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data)
+      })
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: habitKeys.logs })
     },
   })

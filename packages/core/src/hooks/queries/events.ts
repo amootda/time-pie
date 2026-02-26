@@ -1,11 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  getEventsByDate,
-  createEvent as createEventApi,
-  updateEvent as updateEventApi,
-  deleteEvent as deleteEventApi,
-  type Event,
-  type EventInsert,
+    createEvent as createEventApi,
+    deleteEvent as deleteEventApi,
+    getEventsByDate,
+    updateEvent as updateEventApi,
+    type Event,
+    type EventInsert,
 } from '@time-pie/supabase'
 import { toDateString } from '../../utils/date'
 
@@ -17,8 +17,14 @@ export const eventKeys = {
 
 /**
  * 특정 날짜의 이벤트 조회
+ * select 옵션을 통해 쿼리 레벨에서 데이터 변환 가능
+ * (structural sharing으로 결과가 같으면 이전 참조 재사용)
  */
-export function useEventsQuery(userId: string | undefined, date: Date) {
+export function useEventsQuery<TData = Event[]>(
+  userId: string | undefined,
+  date: Date,
+  options?: { select?: (data: Event[]) => TData }
+) {
   return useQuery({
     queryKey: eventKeys.byDate(date),
     queryFn: async () => {
@@ -27,6 +33,7 @@ export function useEventsQuery(userId: string | undefined, date: Date) {
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // 5분
+    select: options?.select,
   })
 }
 
