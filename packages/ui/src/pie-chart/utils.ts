@@ -66,10 +66,22 @@ export function describeArc(
   startAngle: number,
   endAngle: number
 ): string {
+  // 이벤트가 자정을 넘어가는 경우 (endAngle < startAngle), 각도 차이를 보정
+  let angleDiff = endAngle - startAngle
+  if (angleDiff < 0) {
+    angleDiff += 360
+  }
+
+  // 각도 차이가 360도에 수렴하는 경우, 완벽한 원/타원일 때 SVG Path가 그려지지 않는 현상 방지
+  if (angleDiff >= 359.9) {
+    endAngle = startAngle + 359.99
+    angleDiff = 359.99
+  }
+
   const start = polarToCartesian(x, y, radius, endAngle)
   const end = polarToCartesian(x, y, radius, startAngle)
 
-  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
+  const largeArcFlag = angleDiff <= 180 ? '0' : '1'
 
   return [
     'M',
