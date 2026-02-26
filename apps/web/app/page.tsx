@@ -156,11 +156,17 @@ export default function HomePage() {
       if (!user) return
       try {
         const dateStr = toDateString(selectedDate)
+        // 선택된 날짜 + 이벤트의 시간을 조합하여 planned_start/planned_end 생성
+        const startTime = getLocalTimeFromISO(event.start_at, 'HH:mm:ss')
+        const endTime = getLocalTimeFromISO(event.end_at, 'HH:mm:ss')
+        const plannedStart = `${dateStr}T${startTime}`
+        const plannedEnd = `${dateStr}T${endTime}`
+
         await createExecutionMutation.mutateAsync({
           event_id: event.id,
           user_id: user.id,
-          planned_start: event.start_at,
-          planned_end: event.end_at,
+          planned_start: plannedStart,
+          planned_end: plannedEnd,
           actual_start: new Date().toISOString(),
           actual_end: null,
           status: 'in_progress',
@@ -243,6 +249,7 @@ export default function HomePage() {
           {/* ⚡ 오늘의 일정 — 현재 시간 기준으로 지난 일정과 예정된 일정으로 구분 */}
           <TodayEventsSection
             sortedEvents={sortedEvents}
+            selectedDate={selectedDate}
             onEventClick={handleEventClick}
             onStartExecution={handleStartExecution}
           />

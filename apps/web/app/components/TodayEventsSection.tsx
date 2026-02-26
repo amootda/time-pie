@@ -1,22 +1,24 @@
 'use client'
 
-import { getLocalTimeFromISO, useCurrentTime } from '@time-pie/core'
+import { getLocalTimeFromISO, toDateString, useCurrentTime } from '@time-pie/core'
 import type { Event } from '@time-pie/supabase'
 import { memo, useMemo } from 'react'
 import { EventCard } from './EventCard'
 
 interface TodayEventsSectionProps {
   sortedEvents: Event[]
+  selectedDate: Date
   onEventClick: (event: Event) => void
   onStartExecution: (event: Event) => void
 }
 
 /**
- * TodayEventsSection — 오늘의 모든 일정을 현재 시간 기준으로 지난 일정과 예정된 일정으로 구분하여 표시
+ * TodayEventsSection — 선택된 날짜의 모든 일정을 현재 시간 기준으로 지난 일정과 예정된 일정으로 구분하여 표시
  * useCurrentTime()을 사용하여 1분마다 자동 업데이트
  */
 export const TodayEventsSection = memo(function TodayEventsSection({
   sortedEvents,
+  selectedDate,
   onEventClick,
   onStartExecution,
 }: TodayEventsSectionProps) {
@@ -24,13 +26,29 @@ export const TodayEventsSection = memo(function TodayEventsSection({
   //    1분마다 이 컴포넌트만 리렌더링
   const currentTime = useCurrentTime()
 
-  // 현재 시간 기준으로 지난 일정과 예정된 일정으로 분리
+  // 선택된 날짜 기준으로 지난 일정과 예정된 일정으로 분리
   const { pastEvents, futureEvents } = useMemo(() => {
-    const currentHour = currentTime.getHours()
-    const currentMinute = currentTime.getMinutes()
-
     const past: Event[] = []
     const future: Event[] = []
+
+    // 오늘 날짜와 선택된 날짜 비교
+    const today = new Date()
+    const todayStr = toDateString(today)
+    const selectedDateStr = toDateString(selectedDate)
+
+    // 선택된 날짜가 오늘보다 이전이면 모든 일정을 Past로
+    if (selectedDateStr < todayStr) {
+      return { pastEvents: sortedEvents, futureEvents: [] }
+    }
+
+    // 선택된 날짜가 오늘보다 미래면 모든 일정을 Future로
+    if (selectedDateStr > todayStr) {
+      return { pastEvents: [], futureEvents: sortedEvents }
+    }
+
+    // 선택된 날짜가 오늘이면 현재 시간으로 비교
+    const currentHour = currentTime.getHours()
+    const currentMinute = currentTime.getMinutes()
 
     sortedEvents.forEach((event) => {
       const startTime = getLocalTimeFromISO(event.start_at)
@@ -45,7 +63,7 @@ export const TodayEventsSection = memo(function TodayEventsSection({
     })
 
     return { pastEvents: past, futureEvents: future }
-  }, [sortedEvents, currentTime])
+  }, [sortedEvents, selectedDate, currentTime])
 
   return (
     <div className="mb-6 space-y-8">
