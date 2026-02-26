@@ -160,7 +160,17 @@ export default function HomePage() {
         const startTime = getLocalTimeFromISO(event.start_at, 'HH:mm:ss')
         const endTime = getLocalTimeFromISO(event.end_at, 'HH:mm:ss')
         const plannedStart = `${dateStr}T${startTime}`
-        const plannedEnd = `${dateStr}T${endTime}`
+
+        // overnight 이벤트 처리: endTime이 startTime보다 이전이면 다음 날로 설정
+        let plannedEnd: string
+        if (endTime <= startTime) {
+          const nextDay = new Date(selectedDate)
+          nextDay.setDate(nextDay.getDate() + 1)
+          const nextDayStr = toDateString(nextDay)
+          plannedEnd = `${nextDayStr}T${endTime}`
+        } else {
+          plannedEnd = `${dateStr}T${endTime}`
+        }
 
         await createExecutionMutation.mutateAsync({
           event_id: event.id,
