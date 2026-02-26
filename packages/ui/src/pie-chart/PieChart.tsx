@@ -82,12 +82,29 @@ export function PieChart({
             return (
               <HoverCard.Root key={`${slice.event?.id || index}-${slice.startAngle}`} openDelay={0} closeDelay={50}>
                 <HoverCard.Trigger asChild>
-                  <motion.g 
-                    onClick={() => handleSliceClick(slice, hour)} 
+                  <motion.g
+                    onClick={() => handleSliceClick(slice, hour)}
                     className={slice.isEmpty ? 'text-foreground' : 'cursor-pointer'}
                     onMouseEnter={() => setHoveredSliceIndex(index)}
                     onMouseLeave={() => setHoveredSliceIndex(null)}
-                    style={{ transformOrigin: `${center}px ${center}px` }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSliceClick(slice, hour)
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-disabled={slice.isEmpty}
+                    aria-label={
+                      slice.event
+                        ? `${slice.event.title} event`
+                        : `Empty time slot at ${hour}:00`
+                    }
+                    style={{
+                      transformOrigin: `${center}px ${center}px`,
+                      outline: 'none'
+                    }}
                   >
                     <motion.path
                       d={path}
@@ -101,6 +118,7 @@ export function PieChart({
                         filter: isHovered && !slice.isEmpty ? 'drop-shadow(0px 4px 12px rgba(0,0,0,0.3))' : 'none'
                       }}
                       transition={{ duration: 0.3 }}
+                      className="focus-visible:stroke-4"
                     />
                   </motion.g>
                 </HoverCard.Trigger>
@@ -170,17 +188,21 @@ export function PieChart({
                 const currentSlice = slices.find((slice) => {
                   if (!slice.event) return false
 
-                  const startTime = dayjs(slice.event.start_at)
-                  const endTime = dayjs(slice.event.end_at)
-                  const now = dayjs(currentTime)
+                  let startTime = dayjs(slice.event.start_at)
+                  let endTime = dayjs(slice.event.end_at)
+                  let now = dayjs(currentTime)
 
                   // 자정을 넘어가는 경우 처리 (end < start)
                   if (endTime.isBefore(startTime)) {
-                    // 현재 시간이 시작 시간 이후이거나 종료 시간 이전이면 진행 중
-                    return now.isAfter(startTime) || now.isBefore(endTime)
+                    // endTime에 1일 추가하여 다음 날로 정규화
+                    endTime = endTime.add(1, 'day')
+                    // now가 startTime보다 이전이면 now도 1일 추가
+                    if (now.isBefore(startTime)) {
+                      now = now.add(1, 'day')
+                    }
                   }
 
-                  // 일반적인 경우: start <= current < end
+                  // 일반적인 범위 체크: start <= current < end
                   return (now.isAfter(startTime) || now.isSame(startTime)) && now.isBefore(endTime)
                 })
                 return currentSlice?.event ? (
