@@ -1,6 +1,6 @@
 'use client'
 
-import { ANCHOR_DEFAULT_COLOR, getPurposeInfo, toDateString } from '@time-pie/core'
+import { getPurposeInfo, toDateString } from '@time-pie/core'
 import type { Event, EventType } from '@time-pie/supabase'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -34,6 +34,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
   const [description, setDescription] = useState('')
   const [scheduleType, setScheduleType] = useState<EventType>('task')
   const [purpose, setPurpose] = useState<string | null>(null)
+  const [selectedColor, setSelectedColor] = useState<string>('#4A90D9')
+  const [hasManuallySelectedColor, setHasManuallySelectedColor] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   // Shared time fields
@@ -66,6 +68,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       setDescription(initialData?.description || '')
       setScheduleType(initialData?.event_type || 'task')
       setPurpose(initialData?.purpose || null)
+      setSelectedColor(initialData?.color || '#4A90D9')
+      setHasManuallySelectedColor(!!initialData?.color)
       setShowAdvanced(false)
 
       // Time fields
@@ -96,6 +100,24 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       setShowDeleteConfirm(false)
     }
   }, [isOpen, initialData, selectedDate])
+
+  // Smart purpose handler: auto-update color when purpose changes
+  const handlePurposeChange = (newPurpose: string | null) => {
+    setPurpose(newPurpose)
+    // Auto-update color if user hasn't manually selected a color
+    if (newPurpose && !hasManuallySelectedColor) {
+      const purposeInfo = getPurposeInfo(newPurpose)
+      if (purposeInfo) {
+        setSelectedColor(purposeInfo.color)
+      }
+    }
+  }
+
+  // Color change handler: track manual selection
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color)
+    setHasManuallySelectedColor(true)
+  }
 
   const handleDelete = async () => {
     if (!initialData?.id || !onDelete || isDeleting) return
@@ -143,7 +165,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           end_at: endDateTime.format('YYYY-MM-DDTHH:mm:ssZ'),
           is_all_day: false,
           event_type: 'anchor',
-          color: ANCHOR_DEFAULT_COLOR,
+          color: selectedColor,
           purpose,
           category_id: null,
           reminder_min: reminderMin,
@@ -164,7 +186,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           end_at: endAt,
           is_all_day: false,
           event_type: 'task',
-          color: purposeInfo?.color ?? '#4A90D9',
+          color: selectedColor,
           purpose,
           category_id: null,
           reminder_min: reminderMin,
@@ -176,6 +198,14 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       }
 
       await onSave(eventData)
+
+      // 일정 저장 시 (알림이 켜져있고 브라우저 권한이 아직 default인 경우) 권한 요청
+      if (reminderMin !== null && typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().catch(console.error)
+        }
+      }
+
       setTitle('')
       setDescription('')
       onClose()
@@ -211,7 +241,9 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           title={title}
           setTitle={setTitle}
           purpose={purpose}
-          setPurpose={setPurpose}
+          setPurpose={handlePurposeChange}
+          selectedColor={selectedColor}
+          onColorChange={handleColorChange}
           startTime={scheduleType === 'anchor' ? baseTime : startTime}
           setStartTime={scheduleType === 'anchor' ? setBaseTime : setStartTime}
           endTime={scheduleType === 'anchor' ? anchorEndTime : endTime}

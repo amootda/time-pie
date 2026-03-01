@@ -5,6 +5,7 @@ import type { EventType } from '@time-pie/supabase'
 import { format, parse } from 'date-fns'
 import { DatePicker } from '../ui/date-picker'
 import { TimePicker } from '../ui/time-picker'
+import { ColorPicker } from './ColorPicker'
 import { PurposeQuickSelector } from './PurposeQuickSelector'
 
 interface QuickEventFormProps {
@@ -17,6 +18,8 @@ interface QuickEventFormProps {
   setTitle: (value: string) => void
   purpose: string | null
   setPurpose: (value: string | null) => void
+  selectedColor: string
+  onColorChange: (value: string) => void
   startTime: string
   setStartTime: (value: string) => void
   endTime: string
@@ -38,6 +41,8 @@ export function QuickEventForm({
   setTitle,
   purpose,
   setPurpose,
+  selectedColor,
+  onColorChange,
   startTime,
   setStartTime,
   endTime,
@@ -129,6 +134,13 @@ export function QuickEventForm({
           />
         </div>
       </div>
+
+      {/* Color Picker */}
+      <ColorPicker
+        selectedColor={selectedColor}
+        onColorChange={onColorChange}
+        showLabel={true}
+      />
 
       {/* Expand Button */}
       {!isExpanded && (
