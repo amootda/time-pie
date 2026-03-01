@@ -1,6 +1,6 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
 import type { Event } from '@time-pie/supabase'
 import dayjs from 'dayjs'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toDateString } from '../utils/date'
 
 type NotificationPermissionState = 'default' | 'granted' | 'denied'
@@ -101,8 +101,9 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                 // 30초 간격 체크이므로 ±30초 윈도우 적용
                 const isInAlarmWindow = nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000
 
-                // 이벤트 시작 시간이 이미 지난 경우는 알림하지 않음
-                if (nowMs >= eventStartMs) continue
+                // 이벤트 시작 시간이 이미 지난 경우는 완전히 무시하는 것이 아니라
+                // isInAlarmWindow가 [alarmTimeMs, alarmTimeMs + 60초) 범위를 알아서 필터링하므로
+                // 별도의 nowMs >= eventStartMs 검사(reminder_min=0일 때 무조건 스킵되는 버그 유발)를 제거합니다.
 
                 if (isInAlarmWindow) {
                     const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
