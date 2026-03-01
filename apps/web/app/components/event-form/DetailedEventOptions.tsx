@@ -207,6 +207,7 @@ function TaskEventOptions({
 }: TaskEventOptionsProps) {
   return (
     <div className="space-y-4 pt-4 dark:border-gray-700">
+      <PurposeSelector type="task" purpose={purpose} setPurpose={setPurpose} />
       <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />

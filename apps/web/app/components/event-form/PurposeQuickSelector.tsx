@@ -12,9 +12,9 @@ interface PurposeQuickSelectorProps {
 }
 
 /**
- * Purpose selector with dual mode:
- * - anchor: free-text input for custom purpose
- * - task: predefined 5 purpose buttons
+ * Purpose selector for task events only.
+ * - anchor: no purpose selector (anchors have no predefined purpose)
+ * - task: predefined 5 purpose buttons (compact grid)
  */
 export function PurposeQuickSelector({
   selectedPurpose,
