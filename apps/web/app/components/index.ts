@@ -16,7 +16,6 @@ export { MonthlyHeatmap } from './MonthlyHeatmap'
 export {
   CalendarViewToggle,
   CalendarView,
-  EventListItem,
   TodoListSection,
   DateEventsSection,
 } from './calendar'

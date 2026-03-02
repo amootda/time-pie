@@ -1,6 +1,10 @@
 'use client'
 
-import { getLocalTimeFromISO, toDateString, useCurrentTime } from '@time-pie/core'
+import {
+  getLocalTimeFromISO,
+  toDateString,
+  useCurrentTime,
+} from '@time-pie/core'
 import type { Event } from '@time-pie/supabase'
 import { memo, useMemo } from 'react'
 import { EventCard } from './EventCard'
@@ -55,7 +59,10 @@ export const TodayEventsSection = memo(function TodayEventsSection({
       const [hour, minute] = startTime.split(':').map(Number)
 
       // 시작 시간이 현재 시간 이하면 지난 일정 (이미 시작된 일정)
-      if (hour < currentHour || (hour === currentHour && minute <= currentMinute)) {
+      if (
+        hour < currentHour ||
+        (hour === currentHour && minute <= currentMinute)
+      ) {
         past.push(event)
       } else {
         future.push(event)
@@ -70,8 +77,11 @@ export const TodayEventsSection = memo(function TodayEventsSection({
       {/* 지난 일정 섹션 */}
       {pastEvents.length > 0 && (
         <div role="region" aria-label="Past Events">
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="past-events-heading" className="text-muted-foreground text-2xl font-bold">
+          <div className="mb-4 flex items-center justify-between">
+            <h2
+              id="past-events-heading"
+              className="text-muted-foreground text-2xl font-bold"
+            >
               Past
             </h2>
             <span
@@ -85,11 +95,7 @@ export const TodayEventsSection = memo(function TodayEventsSection({
           <div aria-labelledby="past-events-heading" className="space-y-3">
             {pastEvents.map((event) => (
               <div key={event.id} className="opacity-60">
-                <EventCard
-                  event={event}
-                  onClick={() => onEventClick(event)}
-                  // 지난 일정에는 시작 버튼 없음
-                />
+                <EventCard event={event} onClick={() => onEventClick(event)} />
               </div>
             ))}
           </div>
@@ -98,8 +104,11 @@ export const TodayEventsSection = memo(function TodayEventsSection({
 
       {/* 예정된 일정 섹션 */}
       <div role="region" aria-label="Upcoming Events">
-        <div className="flex items-center justify-between mb-4">
-          <h2 id="upcoming-events-heading" className="text-foreground text-2xl font-bold">
+        <div className="mb-4 flex items-center justify-between">
+          <h2
+            id="upcoming-events-heading"
+            className="text-foreground text-2xl font-bold"
+          >
             Upcoming
           </h2>
           <span
@@ -113,8 +122,10 @@ export const TodayEventsSection = memo(function TodayEventsSection({
 
         <div aria-labelledby="upcoming-events-heading">
           {futureEvents.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">No upcoming events today</p>
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground text-sm">
+                No upcoming events today
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
