@@ -2,8 +2,8 @@
 
 import { toDateString } from '@time-pie/core'
 import type { EventMonthMeta, Todo } from '@time-pie/supabase'
+import { EventCard } from '../EventCard'
 import { Calendar } from 'lucide-react'
-import { EventListItem } from './EventListItem'
 import { TodoListSection } from './TodoListSection'
 
 interface DateEventsSectionProps {
@@ -45,7 +45,7 @@ export function DateEventsSection({
           </p>
         ) : (
           displayEvents.map((event) => (
-            <EventListItem
+            <EventCard
               key={event.id}
               event={event}
               onClick={() => onEventClick(event)}

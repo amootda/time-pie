@@ -1,88 +1,81 @@
 'use client'
 
-import { getLocalTimeFromISO, getPurposeInfo } from '@time-pie/core'
-import type { Event, EventType } from '@time-pie/supabase'
+import type { EventMonthMeta } from '@time-pie/supabase'
+import dayjs from 'dayjs'
+import { Anchor, ClipboardList } from 'lucide-react'
 import { memo } from 'react'
 
+// EventMonthMeta (캘린더용 경량 타입)와 Event (전체 타입) 모두 수용
+// Event는 EventMonthMeta의 상위 집합이므로 자동으로 호환됨
+type EventCardData = EventMonthMeta & { description?: string | null }
+
 interface EventCardProps {
-  event: Event
+  event: EventCardData
   onClick?: () => void
+  /** @deprecated 현재 미사용, 하위 호환성 유지용 */
   onStartExecution?: () => void
 }
 
-const getTypeStyles = (eventType: EventType) => {
-  switch (eventType) {
-    case 'anchor':
-      return {
-        label: 'ANCHOR',
-        borderColor: 'border-l-gray-500',
-        bgColor: 'bg-[#1A2B3F]',
-        labelColor: 'text-gray-400',
-        accentColor: 'bg-gray-500',
-      }
-    case 'task':
-    default:
-      return {
-        label: 'TASK',
-        borderColor: 'border-l-blue-500',
-        bgColor: 'bg-[#1A2B3F]',
-        labelColor: 'text-blue-400',
-        accentColor: 'bg-blue-500',
-      }
-  }
-}
-
-export const EventCard = memo(function EventCard({ event, onClick, onStartExecution }: EventCardProps) {
-  const typeStyles = getTypeStyles(event.event_type)
-  const purposeInfo = getPurposeInfo(event.purpose)
-
-  const startTime = getLocalTimeFromISO(event.start_at)
-  const endTime = getLocalTimeFromISO(event.end_at)
-  const isTaskEvent = event.event_type === 'task'
-
-  const handleStartClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onStartExecution?.()
-  }
+export const EventCard = memo(function EventCard({
+  event,
+  onClick,
+}: EventCardProps) {
+  const isAnchor = event.event_type === 'anchor'
 
   return (
-    <div
-      className={`w-full text-left p-4 rounded-2xl ${typeStyles.bgColor} border-l-4 ${typeStyles.borderColor} hover:bg-[#1F3347] transition-colors`}
+    <button
+      onClick={onClick}
+      className="bg-card border-border/40 group flex w-full cursor-pointer items-center gap-0 overflow-hidden rounded-xl border border-l-4 p-0 text-left shadow-sm transition-all duration-200 hover:shadow-md"
+      style={{ borderLeftColor: event.color }}
     >
-      <div className="flex items-start gap-4">
-        {/* 좌측 색상 바 */}
-        <div className={`w-1 h-16 rounded-full ${typeStyles.accentColor} flex-shrink-0`} />
-
-        {/* 내용 */}
-        <button
-          onClick={onClick}
-          className="flex-1 min-w-0 text-left"
-        >
-          <div className={`text-[10px] font-bold ${typeStyles.labelColor} uppercase tracking-wider mb-1`}>
-            {typeStyles.label}
-          </div>
-          <h3 className="text-white text-lg font-bold mb-1 truncate">
+      <div className="min-w-0 flex-1 px-4 py-3">
+        <div className="mb-1 flex items-center gap-2">
+          <p className="text-foreground group-hover:text-primary truncate text-sm font-semibold leading-tight transition-colors">
             {event.title}
-          </h3>
-          {event.description && (
-            <p className="text-gray-400 text-sm truncate">
-              {event.description}
-            </p>
-          )}
-        </button>
-
-        {/* 우측: 시간 + 시작 버튼 */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <div className="text-right">
-            <div className="text-white text-2xl font-bold">
-              {startTime}
-            </div>
-            <div className="text-gray-500 text-sm">
-              {endTime}
-            </div>
-          </div>
+          </p>
+          <span
+            className={`flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${
+              isAnchor
+                ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300'
+                : 'bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-300'
+            }`}
+          >
+            {isAnchor ? (
+              <>
+                <Anchor className="h-2.5 w-2.5" /> 앵커
+              </>
+            ) : (
+              <>
+                <ClipboardList className="h-2.5 w-2.5" /> 할일
+              </>
+            )}
+          </span>
         </div>
+        {event.description && (
+          <p className="text-muted-foreground mb-1 truncate text-xs">
+            {event.description}
+          </p>
+        )}
+        <p className="text-muted-foreground text-xs font-medium tabular-nums">
+          {dayjs(event.start_at).format('HH:mm')} –{' '}
+          {dayjs(event.end_at).format('HH:mm')}
+        </p>
       </div>
-    </div>
+
+      {/* 우측 시간 강조 (앵커 이벤트만) */}
+      {isAnchor && (
+        <div className="border-border/30 shrink-0 border-l px-4 py-3 text-right">
+          <p
+            className="text-lg font-bold tabular-nums"
+            style={{ color: event.color }}
+          >
+            {dayjs(event.start_at).format('HH:mm')}
+          </p>
+          <p className="text-muted-foreground text-[11px] tabular-nums">
+            {dayjs(event.end_at).format('HH:mm')}
+          </p>
+        </div>
+      )}
+    </button>
   )
 })

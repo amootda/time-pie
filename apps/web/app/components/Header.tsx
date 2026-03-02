@@ -15,8 +15,8 @@ export const Header = memo(function Header({ title = 'Time Pie', showDate = fals
 
   // 요일과 날짜 포맷 (메모이제이션)
   const { weekday, month, day } = useMemo(() => ({
-    weekday: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(today),
-    month: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(today),
+    weekday: new Intl.DateTimeFormat('ko-KR', { weekday: 'long' }).format(today),
+    month: new Intl.DateTimeFormat('ko-KR', { month: 'long' }).format(today),
     day: today.getDate(),
   }), [today])
 
@@ -54,7 +54,7 @@ export const Header = memo(function Header({ title = 'Time Pie', showDate = fals
           <div>
             <div className="text-muted-foreground text-sm font-medium mb-1">{weekday}</div>
             <div className="text-foreground text-4xl font-bold tracking-tight">
-              {month} {day}
+              {month} {day}일
             </div>
           </div>
           <Link
@@ -73,7 +73,7 @@ export const Header = memo(function Header({ title = 'Time Pie', showDate = fals
           <div className="flex gap-2">
             {weekDates.map((date, index) => {
               const isSelected = isSameDay(date, today)
-              const dayShort = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date)
+              const dayShort = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(date)
               const dayNum = date.getDate()
 
               return (

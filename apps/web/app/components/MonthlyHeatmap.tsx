@@ -22,10 +22,20 @@ interface DayCell {
   densityColor: string
 }
 
-export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHeatmapProps) {
+export function MonthlyHeatmap({
+  events,
+  selectedDate,
+  onDateSelect,
+}: MonthlyHeatmapProps) {
   // Get month start and end
-  const monthStart = useMemo(() => dayjs(selectedDate).startOf('month'), [selectedDate])
-  const monthEnd = useMemo(() => dayjs(selectedDate).endOf('month'), [selectedDate])
+  const monthStart = useMemo(
+    () => dayjs(selectedDate).startOf('month'),
+    [selectedDate]
+  )
+  const monthEnd = useMemo(
+    () => dayjs(selectedDate).endOf('month'),
+    [selectedDate]
+  )
 
   // Get today for highlighting
   const today = useMemo(() => {
@@ -98,7 +108,7 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
         isToday,
         eventCount,
         densityColor,
-        events: dateEvents
+        events: dateEvents,
       })
     }
 
@@ -134,40 +144,38 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
   return (
     <div className="w-full">
       {/* Month Header */}
-      <div className="flex items-center justify-between mb-6 px-1">
-        <h2 className="text-foreground text-lg font-bold">
-          {monthYearText}
-        </h2>
+      <div className="mb-6 flex items-center justify-between px-1">
+        <h2 className="text-foreground text-lg font-bold">{monthYearText}</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevMonth}
-            className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors"
             aria-label="이전 월"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={handleToday}
-            className="px-3 py-1.5 text-xs font-bold text-primary border border-primary/30 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+            className="text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors"
           >
             오늘
           </button>
           <button
             onClick={handleNextMonth}
-            className="p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg transition-colors"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-colors"
             aria-label="다음 월"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>
 
       {/* Weekday Headers */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="mb-2 grid grid-cols-7 gap-1">
         {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
           <div
             key={index}
-            className="text-center text-xs font-medium text-muted-foreground py-2"
+            className="text-muted-foreground py-2 text-center text-xs font-medium"
           >
             {day}
           </div>
@@ -175,25 +183,25 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 auto-rows-fr">
+      <div className="grid auto-rows-fr grid-cols-7 gap-1">
         {calendarDays.map((day, index) => (
           <button
             key={index}
             onClick={() => handleDayClick(day.date)}
             className={`
-              min-h-[80px] flex flex-col items-stretch justify-start pt-1 px-1
-              rounded-lg transition-all duration-200 overflow-hidden
+              flex min-h-[80px] flex-col items-stretch justify-start overflow-hidden rounded-lg
+              px-1 pt-1 transition-all duration-200
               ${day.densityColor}
               ${day.isCurrentMonth ? '' : 'opacity-40'}
-              ${day.isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
-              hover:ring-2 hover:ring-primary
-              cursor-pointer
+              ${day.isToday ? 'ring-primary ring-offset-background ring-2 ring-offset-2' : ''}
+              hover:ring-primary cursor-pointer
+              hover:ring-2
             `}
           >
             {/* Day Number */}
             <span
               className={`
-                text-xs font-semibold mb-1 self-center
+                mb-1 self-center text-xs font-semibold
                 ${day.isToday ? 'text-primary' : day.eventCount > 5 ? 'text-white' : 'text-foreground'}
               `}
             >
@@ -201,18 +209,19 @@ export function MonthlyHeatmap({ events, selectedDate, onDateSelect }: MonthlyHe
             </span>
 
             {/* Event Badges */}
-            <div className="flex flex-col gap-1 w-full flex-1">
+            <div className="flex w-full flex-1 flex-col gap-1">
               {day.events.slice(0, 2).map((event, i) => (
                 <span
                   key={i}
-                  className="text-[10px] bg-white/50 backdrop-blur-sm text-black dark:text-white dark:bg-black/30 px-1 py-0.5 rounded truncate text-left w-full"
+                  className="w-full truncate rounded border bg-white/50 px-1 py-0.5 text-left text-[10px] text-black backdrop-blur-sm dark:bg-black/30 dark:text-white"
+                  style={{ borderColor: event.color }}
                   title={event.title}
                 >
                   {event.title}
                 </span>
               ))}
               {day.events.length > 2 && (
-                <span className="text-[10px] text-center text-black/50 dark:text-white/50 -mt-1 tracking-widest">
+                <span className="-mt-1 text-center text-[10px] tracking-widest text-black/50 dark:text-white/50">
                   ...
                 </span>
               )}

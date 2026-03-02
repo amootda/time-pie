@@ -38,15 +38,15 @@ export const UpNextSection = memo(function UpNextSection({
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-foreground text-2xl font-bold">Up Next</h2>
+        <h2 className="text-foreground text-2xl font-bold">예정된 일정</h2>
         <span className="text-muted-foreground text-sm">
-          {upcomingEvents.length} task{upcomingEvents.length !== 1 ? 's' : ''} remaining
+          {upcomingEvents.length}개 남음
         </span>
       </div>
 
       {upcomingEvents.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground text-sm">No upcoming events</p>
+          <p className="text-muted-foreground text-sm">예정된 일정이 없습니다</p>
         </div>
       ) : (
         <div className="space-y-3">

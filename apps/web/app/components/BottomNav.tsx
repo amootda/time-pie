@@ -6,11 +6,11 @@ import { usePathname } from 'next/navigation'
 import { memo } from 'react'
 
 const navItems = [
-  { href: '/', label: 'Home', icon: PieChart },
-  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
-  { href: '/todos', label: 'Todos', icon: ListTodo },
-  { href: '/habits', label: 'Habits', icon: Trophy },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/', label: '홈', icon: PieChart },
+  { href: '/calendar', label: '캘린더', icon: CalendarDays },
+  { href: '/todos', label: '할일', icon: ListTodo },
+  { href: '/habits', label: '습관', icon: Trophy },
+  { href: '/settings', label: '설정', icon: Settings },
 ]
 
 export const BottomNav = memo(function BottomNav() {

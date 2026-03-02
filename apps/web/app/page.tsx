@@ -222,7 +222,7 @@ export default function HomePage() {
   const activeEventTitle = useMemo(
     () =>
       activeExecution
-        ? todayEvents.find((e) => e.id === activeExecution.event_id)?.title || 'Unknown Event'
+        ? todayEvents.find((e) => e.id === activeExecution.event_id)?.title || '알 수 없는 일정'
         : '',
     [activeExecution, todayEvents]
   )
