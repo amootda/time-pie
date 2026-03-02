@@ -27,7 +27,7 @@ export default function GlobalError({
 
                     {error.digest && (
                         <p className="text-xs text-muted-foreground mb-6 font-mono bg-muted py-1 px-2 rounded">
-                            Error ID: {error.digest}
+                            오류 ID: {error.digest}
                         </p>
                     )}
 

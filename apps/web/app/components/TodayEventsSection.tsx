@@ -76,20 +76,20 @@ export const TodayEventsSection = memo(function TodayEventsSection({
     <div className="mb-6 space-y-8">
       {/* 지난 일정 섹션 */}
       {pastEvents.length > 0 && (
-        <div role="region" aria-label="Past Events">
+        <div role="region" aria-label="지난 일정">
           <div className="mb-4 flex items-center justify-between">
             <h2
               id="past-events-heading"
               className="text-muted-foreground text-2xl font-bold"
             >
-              Past
+              지난 일정
             </h2>
             <span
               className="text-muted-foreground text-sm"
               aria-live="polite"
               aria-atomic="true"
             >
-              {pastEvents.length} completed
+              {pastEvents.length}개 완료
             </span>
           </div>
           <div aria-labelledby="past-events-heading" className="space-y-3">
@@ -103,20 +103,20 @@ export const TodayEventsSection = memo(function TodayEventsSection({
       )}
 
       {/* 예정된 일정 섹션 */}
-      <div role="region" aria-label="Upcoming Events">
+      <div role="region" aria-label="예정된 일정">
         <div className="mb-4 flex items-center justify-between">
           <h2
             id="upcoming-events-heading"
             className="text-foreground text-2xl font-bold"
           >
-            Upcoming
+            예정된 일정
           </h2>
           <span
             className="text-muted-foreground text-sm"
             aria-live="polite"
             aria-atomic="true"
           >
-            {futureEvents.length} remaining
+            {futureEvents.length}개 남음
           </span>
         </div>
 
@@ -124,7 +124,7 @@ export const TodayEventsSection = memo(function TodayEventsSection({
           {futureEvents.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-muted-foreground text-sm">
-                No upcoming events today
+                오늘 예정된 일정이 없습니다
               </p>
             </div>
           ) : (
