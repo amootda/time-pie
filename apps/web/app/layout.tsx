@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { Outfit, Noto_Sans_KR } from 'next/font/google'
 import { AuthProvider, ThemeProvider, QueryProvider } from './providers'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 const outfit = Outfit({
@@ -76,6 +77,7 @@ export default async function RootLayout({
           </ThemeProvider>
         </QueryProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
