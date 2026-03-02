@@ -122,31 +122,33 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
-      <Header title="캘린더" />
+    <>
+      <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        <Header title="캘린더" />
 
-      <main className="max-w-lg mx-auto px-4 py-4">
-        {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
+          {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
 
-        <CalendarView
-          viewMode={viewMode}
-          events={monthEventsData?.events ?? storeEvents}
-          selectedDate={selectedDate}
-          currentMonth={currentMonth}
-          onDateSelect={setSelectedDate}
-          onMonthChange={setCurrentMonth}
-        />
+          <CalendarView
+            viewMode={viewMode}
+            events={monthEventsData?.events ?? storeEvents}
+            selectedDate={selectedDate}
+            currentMonth={currentMonth}
+            onDateSelect={setSelectedDate}
+            onMonthChange={setCurrentMonth}
+          />
 
-        <DateEventsSection
-          selectedDate={selectedDate}
-          events={getEventsForDate(selectedDate)}
-          todos={getTodosForDate(selectedDate)}
-          onEventClick={handleOpenEventModal}
-        />
-      </main>
+          <DateEventsSection
+            selectedDate={selectedDate}
+            events={getEventsForDate(selectedDate)}
+            todos={getTodosForDate(selectedDate)}
+            onEventClick={handleOpenEventModal}
+          />
+        </main>
 
-      <FloatingAddButton onAddEvent={() => handleOpenEventModal()} />
-      <BottomNav />
+        <FloatingAddButton onAddEvent={() => handleOpenEventModal()} />
+        <BottomNav />
+      </div>
 
       <EventModal
         isOpen={eventModalOpen}
@@ -156,6 +158,6 @@ export default function CalendarPage() {
         initialData={selectedEvent || undefined}
         selectedDate={selectedDate}
       />
-    </div>
+    </>
   )
 }

@@ -135,10 +135,11 @@ export default function HabitsPage() {
     : 0
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Header title="습관" />
+    <>
+      <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        <Header title="습관" />
 
-      <main className="max-w-lg mx-auto px-4 py-4">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
         {isLoading ? (
           /* ✅ 인라인 스켈레톤: Header/BottomNav는 유지, 콘텐츠만 로딩 표시 */
           <div className="animate-pulse space-y-4">
@@ -285,16 +286,17 @@ export default function HabitsPage() {
             </div>
           </>
         )}
-      </main>
+        </main>
 
-      <FloatingAddButton onAddHabit={() => setModalOpen(true)} />
-      <BottomNav />
+        <FloatingAddButton onAddHabit={() => setModalOpen(true)} />
+        <BottomNav />
+      </div>
 
       <HabitModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleAddHabit}
       />
-    </div>
+    </>
   )
 }
