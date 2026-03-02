@@ -3,7 +3,7 @@
 import * as HoverCard from '@radix-ui/react-hover-card'
 import dayjs from 'dayjs'
 import { motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { PieChartProps } from './types'
 import {
   describeArc,
@@ -25,6 +25,7 @@ export function PieChart({
   showCenterInfo = true,
   onEventClick,
   onTimeSlotClick,
+  onSliceSelect,
   className = '',
 }: PieChartProps) {
   const center = size / 2
@@ -32,9 +33,13 @@ export function PieChart({
   const innerRadius = outerRadius * 0.35
   const labelRadius = outerRadius + 20
 
-  const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(
-    null
-  )
+  const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(null)
+  const [selectedSliceIndex, setSelectedSliceIndex] = useState<number | null>(null)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches)
+  }, [])
 
   const slices = useMemo(() => eventsToSlices(events), [events])
 
@@ -43,11 +48,23 @@ export function PieChart({
     [currentTime]
   )
 
-  const handleSliceClick = (slice: (typeof slices)[0], hour: number) => {
-    if (slice.event && onEventClick) {
-      onEventClick(slice.event)
-    } else if (slice.isEmpty && onTimeSlotClick) {
-      onTimeSlotClick(hour)
+  const handleSliceClick = (slice: (typeof slices)[0], hour: number, index: number) => {
+    if (isTouchDevice) {
+      if (!slice.isEmpty && slice.event) {
+        const newIndex = selectedSliceIndex === index ? null : index
+        setSelectedSliceIndex(newIndex)
+        onSliceSelect?.(newIndex !== null ? slice.event : null)
+      } else if (slice.isEmpty) {
+        setSelectedSliceIndex(null)
+        onSliceSelect?.(null)
+        onTimeSlotClick?.(hour)
+      }
+    } else {
+      if (slice.event && onEventClick) {
+        onEventClick(slice.event)
+      } else if (slice.isEmpty && onTimeSlotClick) {
+        onTimeSlotClick(hour)
+      }
     }
   }
 
@@ -71,9 +88,11 @@ export function PieChart({
           {/* 파이 조각들 */}
           {slices.map((slice, index) => {
             const isHovered = hoveredSliceIndex === index
-            // 호버 시 살짝 크기를 키우기 위해 반지름 증가
+            const isSelected = selectedSliceIndex === index
+            const isActive = isHovered || isSelected
+            // 활성(hover/select) 시 살짝 크기를 키우기 위해 반지름 증가
             const activeRadius =
-              isHovered && !slice.isEmpty ? outerRadius + 8 : outerRadius
+              isActive && !slice.isEmpty ? outerRadius + 8 : outerRadius
             const path = describeArc(
               center,
               center,
@@ -95,7 +114,7 @@ export function PieChart({
               >
                 <HoverCard.Trigger asChild>
                   <motion.g
-                    onClick={() => handleSliceClick(slice, hour)}
+                    onClick={() => handleSliceClick(slice, hour, index)}
                     className={
                       slice.isEmpty ? 'text-foreground' : 'cursor-pointer'
                     }
@@ -104,7 +123,7 @@ export function PieChart({
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        handleSliceClick(slice, hour)
+                        handleSliceClick(slice, hour, index)
                       }
                     }}
                     tabIndex={0}
@@ -132,11 +151,11 @@ export function PieChart({
                           ? 0.3
                           : isAnchor
                             ? 0.6
-                            : isHovered
+                            : isActive
                               ? 1
                               : 0.9,
                         filter:
-                          isHovered && !slice.isEmpty
+                          isActive && !slice.isEmpty
                             ? 'drop-shadow(0px 4px 12px rgba(0,0,0,0.3))'
                             : 'none',
                       }}
@@ -146,8 +165,8 @@ export function PieChart({
                   </motion.g>
                 </HoverCard.Trigger>
 
-                {/* HoverCard Content For Event Slices */}
-                {!slice.isEmpty && slice.event && (
+                {/* HoverCard Content For Event Slices - 터치 디바이스에서는 렌더링 안 함 */}
+                {!isTouchDevice && !slice.isEmpty && slice.event && (
                   <HoverCard.Portal>
                     <HoverCard.Content
                       side="top"
