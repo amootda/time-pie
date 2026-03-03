@@ -132,10 +132,11 @@ export default function TodosPage() {
   )
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Header title="투두" />
+    <>
+      <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        <Header title="투두" />
 
-      <main className="max-w-lg mx-auto px-4 py-4">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">
@@ -259,10 +260,11 @@ export default function TodosPage() {
               ))
           )}
         </div>
-      </main>
+        </main>
 
-      <FloatingAddButton onAddTodo={() => setModalOpen(true)} />
-      <BottomNav />
+        <FloatingAddButton onAddTodo={() => setModalOpen(true)} />
+        <BottomNav />
+      </div>
 
       <TodoModal
         isOpen={modalOpen}
@@ -274,7 +276,7 @@ export default function TodosPage() {
         initialData={editingTodo || undefined}
         mode={editingTodo ? 'edit' : 'create'}
       />
-    </div>
+    </>
   )
 }
 

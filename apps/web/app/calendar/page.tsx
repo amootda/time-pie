@@ -8,6 +8,7 @@ import {
     BottomNav,
     CalendarView,
     DateEventsSection,
+    EventDetailModal,
     EventModal,
     FloatingAddButton,
     Header
@@ -30,6 +31,8 @@ export default function CalendarPage() {
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null)
 
   // Load month events with React Query
   const { data: monthEventsData, isLoading: isLoadingMonth } = useMonthEvents(
@@ -87,33 +90,45 @@ export default function CalendarPage() {
     await deleteEventMutation.mutateAsync(id)
     setSelectedEvent(null)
     setEventModalOpen(false)
+    setDetailEvent(null)
+    setDetailModalOpen(false)
   }
 
-  const handleOpenEventModal = async (event?: Event | EventMonthMeta) => {
-    if (!event) {
-      // New event
-      setSelectedEvent(null)
-      setEventModalOpen(true)
-      return
-    }
-
-    // If event is EventMonthMeta (from month view), fetch full Event
+  // 이벤트 카드 클릭 → 상세 모달 열기
+  const handleOpenDetailModal = async (event: Event | EventMonthMeta) => {
     const isMonthMeta = !('description' in event)
     if (isMonthMeta) {
       try {
         const fullEvent = await getEventById(event.id)
         if (fullEvent) {
-          setSelectedEvent(fullEvent)
-          setEventModalOpen(true)
+          setDetailEvent(fullEvent)
+          setDetailModalOpen(true)
         }
       } catch (error) {
         console.error('Failed to fetch event details:', error)
       }
     } else {
-      // Already a full Event
-      setSelectedEvent(event as Event)
-      setEventModalOpen(true)
+      setDetailEvent(event as Event)
+      setDetailModalOpen(true)
     }
+  }
+
+  const handleCloseDetailModal = () => {
+    setDetailModalOpen(false)
+    setDetailEvent(null)
+  }
+
+  // 상세 모달 → 수정 버튼 클릭
+  const handleEditFromDetail = () => {
+    setDetailModalOpen(false)
+    setSelectedEvent(detailEvent)
+    setEventModalOpen(true)
+  }
+
+  // "+" 버튼 → 신규 생성 모달
+  const handleOpenEventModal = () => {
+    setSelectedEvent(null)
+    setEventModalOpen(true)
   }
 
   const handleCloseEventModal = () => {
@@ -122,31 +137,41 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 pb-20">
-      <Header title="캘린더" />
+    <>
+      <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
+        <Header title="캘린더" />
 
-      <main className="max-w-lg mx-auto px-4 py-4">
-        {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
+          {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
 
-        <CalendarView
-          viewMode={viewMode}
-          events={monthEventsData?.events ?? storeEvents}
-          selectedDate={selectedDate}
-          currentMonth={currentMonth}
-          onDateSelect={setSelectedDate}
-          onMonthChange={setCurrentMonth}
-        />
+          <CalendarView
+            viewMode={viewMode}
+            events={monthEventsData?.events ?? storeEvents}
+            selectedDate={selectedDate}
+            currentMonth={currentMonth}
+            onDateSelect={setSelectedDate}
+            onMonthChange={setCurrentMonth}
+          />
 
-        <DateEventsSection
-          selectedDate={selectedDate}
-          events={getEventsForDate(selectedDate)}
-          todos={getTodosForDate(selectedDate)}
-          onEventClick={handleOpenEventModal}
-        />
-      </main>
+          <DateEventsSection
+            selectedDate={selectedDate}
+            events={getEventsForDate(selectedDate)}
+            todos={getTodosForDate(selectedDate)}
+            onEventClick={handleOpenDetailModal}
+          />
+        </main>
 
-      <FloatingAddButton onAddEvent={() => handleOpenEventModal()} />
-      <BottomNav />
+        <FloatingAddButton onAddEvent={handleOpenEventModal} />
+        <BottomNav />
+      </div>
+
+      <EventDetailModal
+        isOpen={detailModalOpen}
+        event={detailEvent}
+        onClose={handleCloseDetailModal}
+        onEdit={handleEditFromDetail}
+        onDelete={handleDeleteEvent}
+      />
 
       <EventModal
         isOpen={eventModalOpen}
@@ -156,6 +181,6 @@ export default function CalendarPage() {
         initialData={selectedEvent || undefined}
         selectedDate={selectedDate}
       />
-    </div>
+    </>
   )
 }
