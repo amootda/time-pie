@@ -33,13 +33,22 @@ export function PieChart({
   const innerRadius = outerRadius * 0.35
   const labelRadius = outerRadius + 20
 
-  const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(null)
-  const [selectedSliceIndex, setSelectedSliceIndex] = useState<number | null>(null)
+  const [hoveredSliceIndex, setHoveredSliceIndex] = useState<number | null>(
+    null
+  )
+  const [selectedSliceIndex, setSelectedSliceIndex] = useState<number | null>(
+    null
+  )
   const [isTouchDevice, setIsTouchDevice] = useState(false)
 
   useEffect(() => {
     setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches)
   }, [])
+
+  useEffect(() => {
+    setSelectedSliceIndex(null)
+    onSliceSelect?.(null)
+  }, [events])
 
   const slices = useMemo(() => eventsToSlices(events), [events])
 
@@ -48,7 +57,11 @@ export function PieChart({
     [currentTime]
   )
 
-  const handleSliceClick = (slice: (typeof slices)[0], hour: number, index: number) => {
+  const handleSliceClick = (
+    slice: (typeof slices)[0],
+    hour: number,
+    index: number
+  ) => {
     if (isTouchDevice) {
       if (!slice.isEmpty && slice.event) {
         const newIndex = selectedSliceIndex === index ? null : index
