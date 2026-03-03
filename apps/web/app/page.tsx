@@ -29,6 +29,11 @@ const EventModal = dynamic(
   { loading: () => null }
 )
 
+const EventDetailModal = dynamic(
+  () => import('./components/EventDetailModal').then((m) => ({ default: m.EventDetailModal })),
+  { loading: () => null }
+)
+
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth()
 
@@ -49,6 +54,8 @@ export default function HomePage() {
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null)
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
   // Load notification settings
@@ -144,6 +151,8 @@ export default function HomePage() {
         await deleteEventMutation.mutateAsync(eventId)
         setEventModalOpen(false)
         setSelectedEvent(undefined)
+        setDetailModalOpen(false)
+        setDetailEvent(null)
       } catch (error) {
         console.error('Failed to delete event:', error)
       }
@@ -210,9 +219,20 @@ export default function HomePage() {
   }, [activeExecution, skipExecutionMutation])
 
   const handleEventClick = useCallback((event: Event) => {
-    setSelectedEvent(event)
-    setEventModalOpen(true)
+    setDetailEvent(event)
+    setDetailModalOpen(true)
   }, [])
+
+  const handleCloseDetailModal = useCallback(() => {
+    setDetailModalOpen(false)
+    setDetailEvent(null)
+  }, [])
+
+  const handleEditFromDetail = useCallback(() => {
+    setDetailModalOpen(false)
+    setSelectedEvent(detailEvent ?? undefined)
+    setEventModalOpen(true)
+  }, [detailEvent])
 
   const handleTimeSlotClick = useCallback(() => {
     setEventModalOpen(true)
@@ -280,6 +300,14 @@ export default function HomePage() {
       </div>
 
       {/* Modals - Moved outside fixed container for backdrop blur */}
+      <EventDetailModal
+        isOpen={detailModalOpen}
+        event={detailEvent}
+        onClose={handleCloseDetailModal}
+        onEdit={handleEditFromDetail}
+        onDelete={handleDeleteEvent}
+      />
+
       <EventModal
         isOpen={eventModalOpen}
         onClose={() => {
@@ -287,7 +315,7 @@ export default function HomePage() {
           setSelectedEvent(undefined)
         }}
         onSave={handleAddEvent}
-        onDelete={handleDeleteEvent}
+        onDelete={selectedEvent ? handleDeleteEvent : undefined}
         selectedDate={selectedDate}
         initialData={selectedEvent}
       />
