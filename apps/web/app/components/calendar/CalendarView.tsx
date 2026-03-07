@@ -12,6 +12,8 @@ interface CalendarViewProps {
   currentMonth: Date
   onDateSelect: (date: Date) => void
   onMonthChange: (date: Date) => void
+  weekStartDay?: 0 | 1
+  onWeekStartDayChange?: (day: 0 | 1) => void
 }
 
 export function CalendarView({
@@ -21,6 +23,8 @@ export function CalendarView({
   currentMonth,
   onDateSelect,
   onMonthChange,
+  weekStartDay,
+  onWeekStartDayChange,
 }: CalendarViewProps) {
   // if (viewMode === 'month') {
   return (
@@ -31,6 +35,8 @@ export function CalendarView({
         onMonthChange(date)
         onDateSelect(date)
       }}
+      weekStartDay={weekStartDay}
+      onWeekStartDayChange={onWeekStartDayChange}
     />
   )
   // }

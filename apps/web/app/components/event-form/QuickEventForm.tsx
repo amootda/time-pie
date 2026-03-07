@@ -121,7 +121,15 @@ export function QuickEventForm({
           </label>
           <TimePicker
             value={startTime}
-            onChange={setStartTime}
+            onChange={(newStartTime) => {
+              setStartTime(newStartTime)
+              // 종료 시간이 시작 시간 이하면 1시간 뒤로 자동 설정
+              if (endTime && endTime <= newStartTime) {
+                const [h, m] = newStartTime.split(':').map(Number)
+                const newEndHour = (h + 1) % 24
+                setEndTime(`${newEndHour.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
+              }
+            }}
           />
         </div>
         <div>
@@ -131,6 +139,7 @@ export function QuickEventForm({
           <TimePicker
             value={endTime}
             onChange={setEndTime}
+            minTime={startTime}
           />
         </div>
       </div>

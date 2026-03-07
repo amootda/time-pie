@@ -40,21 +40,21 @@ export function AddModal({ isOpen, onClose, title, children }: AddModalProps) {
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-lg bg-card rounded-t-2xl sm:rounded-2xl shadow-xl border border-border/50 max-h-[90vh] overflow-hidden animate-slide-up"
+        className="relative w-full max-w-lg bg-card rounded-t-2xl sm:rounded-2xl shadow-xl border border-border/50 max-h-[90dvh] overflow-hidden animate-slide-up flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50">
+        <div className="shrink-0 flex items-center justify-between p-4 border-b border-border/50">
           <h2 className="text-lg font-bold text-foreground">{title}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-full transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[calc(90vh-60px)]">
+        <div className="flex-1 p-4 overflow-y-auto">
           {children}
         </div>
       </div>
