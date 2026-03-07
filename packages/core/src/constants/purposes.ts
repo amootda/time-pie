@@ -3,21 +3,19 @@ import type { EventPurpose, EventType } from '@time-pie/supabase'
 export interface PurposeInfo {
   key: EventPurpose
   label: string
-  emoji: string
   color: string
 }
 
 export interface ScheduleTypeInfo {
   key: EventType
   label: string
-  emoji: string
   description: string
 }
 
 // Schedule type definitions
 export const SCHEDULE_TYPES: ScheduleTypeInfo[] = [
-  { key: 'anchor', label: '앵커', emoji: '⚓', description: '절대 움직이지 않는 고정 일정' },
-  { key: 'task',   label: '할일', emoji: '📋', description: '일반 일정 및 할일' },
+  { key: 'anchor', label: '앵커', description: '절대 움직이지 않는 고정 일정' },
+  { key: 'task',   label: '할일', description: '일반 일정 및 할일' },
 ]
 
 const SCHEDULE_TYPE_MAP = new Map(SCHEDULE_TYPES.map(t => [t.key, t]))
@@ -31,11 +29,11 @@ export const ANCHOR_DEFAULT_COLOR = '#34495E'
 
 // All purposes (Task type only - 5 presets)
 export const EVENT_PURPOSES: PurposeInfo[] = [
-  { key: 'work',        label: '업무', emoji: '💼', color: '#4A90D9' },
-  { key: 'appointment', label: '약속', emoji: '📅', color: '#E67E22' },
-  { key: 'exercise',    label: '운동', emoji: '🏃', color: '#E74C3C' },
-  { key: 'study',       label: '공부', emoji: '📚', color: '#3498DB' },
-  { key: 'other',       label: '기타', emoji: '📌', color: '#7F8C8D' },
+  { key: 'work',        label: '업무', color: '#4A90D9' },
+  { key: 'appointment', label: '약속', color: '#E67E22' },
+  { key: 'exercise',    label: '운동', color: '#E74C3C' },
+  { key: 'study',       label: '공부', color: '#3498DB' },
+  { key: 'other',       label: '기타', color: '#7F8C8D' },
 ]
 
 // Purpose grouped by schedule type

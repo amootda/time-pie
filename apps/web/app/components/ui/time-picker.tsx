@@ -8,9 +8,10 @@ interface TimePickerProps {
     value: string // HH:mm format
     onChange: (value: string) => void
     disabled?: boolean
+    minTime?: string // HH:mm format - 이 시간 이전은 선택 불가
 }
 
-export function TimePicker({ value, onChange, disabled }: TimePickerProps) {
+export function TimePicker({ value, onChange, disabled, minTime }: TimePickerProps) {
     const [isOpen, setIsOpen] = React.useState(false)
 
     const hourRef = React.useRef<HTMLDivElement>(null)
@@ -36,6 +37,33 @@ export function TimePicker({ value, onChange, disabled }: TimePickerProps) {
     const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
     const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'))
     const periods = ['오전', '오후'] as const
+
+    // minTime 파싱
+    const parsedMin = React.useMemo(() => {
+        if (!minTime) return null
+        const [h, m] = minTime.split(':').map(Number)
+        return { hour24: h, minute: m }
+    }, [minTime])
+
+    // 12h display → 24h 변환
+    const getHour24 = (displayHour: number, p: string) => {
+        if (p === '오전') return displayHour === 12 ? 0 : displayHour
+        return displayHour === 12 ? 12 : displayHour + 12
+    }
+
+    const isHourDisabled = (h: string) => {
+        if (!parsedMin) return false
+        const h24 = getHour24(parseInt(h), period)
+        return h24 < parsedMin.hour24
+    }
+
+    const isMinuteDisabled = (m: string) => {
+        if (!parsedMin) return false
+        const currentHour24 = getHour24(parseInt(hour), period)
+        if (currentHour24 > parsedMin.hour24) return false
+        if (currentHour24 < parsedMin.hour24) return true
+        return parseInt(m) <= parsedMin.minute
+    }
 
     // Auto-scroll to selected values when popover opens
     React.useEffect(() => {
@@ -122,9 +150,11 @@ export function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                                 key={h}
                                 type="button"
                                 onClick={() => handleTimeChange('hour', h)}
+                                disabled={isHourDisabled(h)}
                                 className={cn(
                                     "w-full px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-center shrink-0 cursor-pointer transition-colors min-h-[44px]",
-                                    h === hour && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md"
+                                    h === hour && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md",
+                                    isHourDisabled(h) && "opacity-30 cursor-not-allowed"
                                 )}
                             >
                                 {h}시
@@ -139,9 +169,11 @@ export function TimePicker({ value, onChange, disabled }: TimePickerProps) {
                                 key={m}
                                 type="button"
                                 onClick={() => handleTimeChange('minute', m)}
+                                disabled={isMinuteDisabled(m)}
                                 className={cn(
                                     "w-full px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-center shrink-0 cursor-pointer transition-colors min-h-[44px]",
-                                    m === minute && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md"
+                                    m === minute && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md",
+                                    isMinuteDisabled(m) && "opacity-30 cursor-not-allowed"
                                 )}
                             >
                                 {m}분

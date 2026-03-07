@@ -24,6 +24,8 @@ export default function CalendarPage() {
   const todos = useTodoStore((s) => s.todos)
   const viewMode = useUIStore((s) => s.calendarViewMode)
   const setViewMode = useUIStore((s) => s.setCalendarViewMode)
+  const weekStartDay = useUIStore((s) => s.weekStartDay)
+  const setWeekStartDay = useUIStore((s) => s.setWeekStartDay)
   const createEventMutation = useCreateEventMutation()
   const updateEventMutation = useUpdateEventMutation()
   const deleteEventMutation = useDeleteEventMutation()
@@ -151,6 +153,8 @@ export default function CalendarPage() {
             currentMonth={currentMonth}
             onDateSelect={setSelectedDate}
             onMonthChange={setCurrentMonth}
+            weekStartDay={weekStartDay}
+            onWeekStartDayChange={setWeekStartDay}
           />
 
           <DateEventsSection
