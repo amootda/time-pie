@@ -81,13 +81,13 @@ export function PieChart({
     }
   }
 
-  // 현재 시간 바늘 좌표
-  const needleEnd = polarToCartesian(
-    center,
-    center,
-    outerRadius - 5,
-    currentTimeAngle
-  )
+  // 시침 좌표 (전체 반지름의 65%)
+  const hourHandEnd = polarToCartesian(center, center, outerRadius * 0.65, currentTimeAngle)
+  // 시침 반대쪽 꼬리 (전체 반지름의 15%)
+  const hourHandTail = polarToCartesian(center, center, outerRadius * 0.15, currentTimeAngle + 180)
+  // 분침 각도 (분 기준 0~360도, 24h 눈금 위에서 회전)
+  const minuteAngle = (currentTime.getMinutes() / 60) * 360
+  const minuteHandEnd = polarToCartesian(center, center, outerRadius * 0.85, minuteAngle)
 
   return (
     <div className={`relative inline-block ${className}`}>
@@ -103,9 +103,7 @@ export function PieChart({
             const isHovered = hoveredSliceIndex === index
             const isSelected = selectedSliceIndex === index
             const isActive = isHovered || isSelected
-            // 활성(hover/select) 시 살짝 크기를 키우기 위해 반지름 증가
-            const activeRadius =
-              isActive && !slice.isEmpty ? outerRadius + 8 : outerRadius
+            const activeRadius = isActive && !slice.isEmpty ? outerRadius + 8 : outerRadius
             const path = describeArc(
               center,
               center,
@@ -133,6 +131,7 @@ export function PieChart({
                     }
                     onMouseEnter={() => setHoveredSliceIndex(index)}
                     onMouseLeave={() => setHoveredSliceIndex(null)}
+
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
@@ -167,10 +166,6 @@ export function PieChart({
                             : isActive
                               ? 1
                               : 0.9,
-                        filter:
-                          isActive && !slice.isEmpty
-                            ? 'drop-shadow(0px 4px 12px rgba(0,0,0,0.3))'
-                            : 'none',
                       }}
                       transition={{ duration: 0.3 }}
                       className="focus-visible:stroke-4"
@@ -296,31 +291,57 @@ export function PieChart({
             </g>
           )}
 
-          {/* 현재 시간 바늘 */}
+          {/* 24시간 눈금 (시계 틱 마크) */}
+          {Array.from({ length: 24 }, (_, hour) => {
+            const angle = (hour / 24) * 360
+            const isMajor = hour % 6 === 0
+            const tickInner = polarToCartesian(center, center, outerRadius + 3, angle)
+            const tickOuter = polarToCartesian(center, center, outerRadius + (isMajor ? 11 : 6), angle)
+            return (
+              <line
+                key={hour}
+                x1={tickInner.x}
+                y1={tickInner.y}
+                x2={tickOuter.x}
+                y2={tickOuter.y}
+                strokeWidth={isMajor ? 2 : 1}
+                strokeLinecap="round"
+                className={isMajor ? 'stroke-foreground/60' : 'stroke-muted-foreground/40'}
+              />
+            )
+          })}
+
+          {/* 시침/분침 */}
           {showCurrentTime && (
-            <g className="text-foreground pointer-events-none">
+            <g className="pointer-events-none">
+              {/* 분침 (길고 얇음) */}
               <motion.line
                 x1={center}
                 y1={center}
-                x2={needleEnd.x}
-                y2={needleEnd.y}
-                stroke="currentColor"
-                strokeWidth={4}
+                x2={minuteHandEnd.x}
+                y2={minuteHandEnd.y}
+                className="stroke-foreground/60"
+                strokeWidth={2}
                 strokeLinecap="round"
                 initial={false}
-                animate={{ x2: needleEnd.x, y2: needleEnd.y }}
+                animate={{ x2: minuteHandEnd.x, y2: minuteHandEnd.y }}
                 transition={{ type: 'spring', stiffness: 50, damping: 15 }}
               />
-              <circle cx={center} cy={center} r={8} fill="currentColor" />
-              <motion.circle
-                cx={needleEnd.x}
-                cy={needleEnd.y}
-                r={6}
-                fill="currentColor"
+              {/* 시침 몸통 */}
+              <motion.line
+                x1={hourHandTail.x}
+                y1={hourHandTail.y}
+                x2={hourHandEnd.x}
+                y2={hourHandEnd.y}
+                className="stroke-foreground"
+                strokeWidth={5}
+                strokeLinecap="round"
                 initial={false}
-                animate={{ cx: needleEnd.x, cy: needleEnd.y }}
+                animate={{ x2: hourHandEnd.x, y2: hourHandEnd.y, x1: hourHandTail.x, y1: hourHandTail.y }}
                 transition={{ type: 'spring', stiffness: 50, damping: 15 }}
               />
+              {/* 중심 피벗 */}
+              <circle cx={center} cy={center} r={6} className="fill-foreground" />
             </g>
           )}
 

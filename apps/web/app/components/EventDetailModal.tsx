@@ -4,6 +4,7 @@ import { getPurposeInfo, getScheduleTypeInfo } from '@time-pie/core'
 import type { Event } from '@time-pie/supabase'
 import dayjs from 'dayjs'
 import { useState } from 'react'
+import { PURPOSE_ICONS, SCHEDULE_TYPE_ICONS } from './event-form/constants'
 import { AddModal } from './AddModal'
 
 interface EventDetailModalProps {
@@ -68,12 +69,15 @@ export function EventDetailModal({
               <p className="text-foreground text-lg font-bold leading-snug">
                 {event.title}
               </p>
-              {typeInfo && (
-                <span className="text-muted-foreground mt-1 inline-flex items-center gap-1 text-xs">
-                  <span>{typeInfo.emoji}</span>
-                  <span>{typeInfo.label}</span>
-                </span>
-              )}
+              {typeInfo && (() => {
+                const TypeIcon = SCHEDULE_TYPE_ICONS[typeInfo.key]
+                return (
+                  <span className="text-muted-foreground mt-1 inline-flex items-center gap-1 text-xs">
+                    {TypeIcon && <TypeIcon className="h-3 w-3" />}
+                    <span>{typeInfo.label}</span>
+                  </span>
+                )
+              })()}
             </div>
           </div>
 
@@ -82,15 +86,18 @@ export function EventDetailModal({
           {/* Details */}
           <dl className="space-y-3 text-sm">
             {/* Purpose */}
-            {purposeInfo && (
-              <div className="flex items-center gap-3">
-                <dt className="text-muted-foreground w-16 shrink-0">유형</dt>
-                <dd className="text-foreground flex items-center gap-1.5">
-                  <span>{purposeInfo.emoji}</span>
-                  <span>{purposeInfo.label}</span>
-                </dd>
-              </div>
-            )}
+            {purposeInfo && (() => {
+                const PurposeIcon = PURPOSE_ICONS[purposeInfo.key]
+                return (
+                  <div className="flex items-center gap-3">
+                    <dt className="text-muted-foreground w-16 shrink-0">유형</dt>
+                    <dd className="text-foreground flex items-center gap-1.5">
+                      {PurposeIcon && <PurposeIcon className="h-4 w-4" />}
+                      <span>{purposeInfo.label}</span>
+                    </dd>
+                  </div>
+                )
+              })()}
 
             {/* Date */}
             <div className="flex items-center gap-3">

@@ -9,22 +9,22 @@ interface ColorPickerProps {
 }
 
 // 15 preset colors — rainbow order (ROYGBIV → neutrals)
-const PRESET_COLORS: { color: string; label?: string; emoji?: string }[] = [
-  { color: '#E74C3C', label: '운동', emoji: '🏃' },  // red
-  { color: '#FF5722' },                               // deep orange
-  { color: '#E67E22', label: '약속', emoji: '📅' },  // orange
-  { color: '#F1C40F' },                               // yellow
-  { color: '#2ECC71' },                               // green
-  { color: '#1ABC9C' },                               // teal
-  { color: '#4A90D9', label: '업무', emoji: '💼' },  // blue
-  { color: '#3498DB', label: '공부', emoji: '📚' },  // blue (lighter)
-  { color: '#9B59B6' },                               // purple
-  { color: '#E91E63' },                               // pink
-  { color: '#607D8B' },                               // blue-gray
-  { color: '#795548' },                               // brown
-  { color: '#7F8C8D', label: '기타', emoji: '📌' },  // gray
-  { color: '#95A5A6' },                               // light gray
-  { color: '#34495E' },                               // dark
+const PRESET_COLORS: { color: string; label?: string }[] = [
+  { color: '#E74C3C', label: '운동' },  // red
+  { color: '#FF5722' },                 // deep orange
+  { color: '#E67E22', label: '약속' },  // orange
+  { color: '#F1C40F' },                 // yellow
+  { color: '#2ECC71' },                 // green
+  { color: '#1ABC9C' },                 // teal
+  { color: '#4A90D9', label: '업무' },  // blue
+  { color: '#3498DB', label: '공부' },  // blue (lighter)
+  { color: '#9B59B6' },                 // purple
+  { color: '#E91E63' },                 // pink
+  { color: '#607D8B' },                 // blue-gray
+  { color: '#795548' },                 // brown
+  { color: '#7F8C8D', label: '기타' },  // gray
+  { color: '#95A5A6' },                 // light gray
+  { color: '#34495E' },                 // dark
 ]
 
 export function ColorPicker({
@@ -54,9 +54,9 @@ export function ColorPicker({
         aria-label="색상 선택"
         className="grid grid-cols-8 gap-1.5"
       >
-        {PRESET_COLORS.map(({ color, label, emoji }) => {
+        {PRESET_COLORS.map(({ color, label }) => {
           const isSelected = normalizedSelected === color.toUpperCase()
-          const ariaLabel = label ? `${emoji ?? ''} ${label}`.trim() : color
+          const ariaLabel = label ?? color
 
           return (
             <button
