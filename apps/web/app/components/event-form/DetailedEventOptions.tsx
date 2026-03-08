@@ -1,47 +1,9 @@
 'use client'
 
-import { getPurposesByType } from '@time-pie/core'
 import type { EventType } from '@time-pie/supabase'
 import { Bell } from 'lucide-react'
-import { PURPOSE_ICONS } from './constants'
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
-
-interface PurposeSelectorProps {
-  type: EventType
-  purpose: string | null
-  setPurpose: (value: string | null) => void
-}
-
-function PurposeSelector({ type, purpose, setPurpose }: PurposeSelectorProps) {
-  const allPurposes = getPurposesByType(type)
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        전체 약속 유형
-      </label>
-      <div className="grid grid-cols-3 gap-2">
-        {allPurposes.map((p) => {
-          const Icon = PURPOSE_ICONS[p.key]
-          return (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPurpose(p.key)}
-              className={`flex flex-col items-center py-2.5 px-1 rounded-xl text-xs font-medium transition-all border-2 ${purpose === p.key
-                ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-                : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-                }`}
-            >
-              {Icon && <Icon className="w-5 h-5 mb-1.5" />}
-              <span>{p.label}</span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 interface RepeatDaysSelectorProps {
   repeatDays: number[]
@@ -166,7 +128,7 @@ function AnchorEventOptions({
   reminderMin, setReminderMin,
 }: AnchorEventOptionsProps) {
   return (
-    <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div className="space-y-4 border-t border-gray-200 dark:border-gray-700">
       <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -206,8 +168,7 @@ function TaskEventOptions({
   reminderMin, setReminderMin,
 }: TaskEventOptionsProps) {
   return (
-    <div className="space-y-4 pt-4 dark:border-gray-700">
-      <PurposeSelector type="task" purpose={purpose} setPurpose={setPurpose} />
+    <div className="space-y-4 dark:border-gray-700">
       <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
       <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
       <DescriptionField description={description} setDescription={setDescription} />

@@ -1,187 +1,264 @@
 "use client"
 
-import { Clock } from "lucide-react"
 import * as React from "react"
-import { cn, Popover, PopoverContent, PopoverTrigger } from "./popover"
+import { cn } from "./popover"
 
 interface TimePickerProps {
-    value: string // HH:mm format
+    value: string // HH:mm (24h)
     onChange: (value: string) => void
     disabled?: boolean
-    minTime?: string // HH:mm format - 이 시간 이전은 선택 불가
+    minTime?: string // HH:mm — 이 시간 이하는 선택 불가
+}
+
+// 30분 단위 슬롯 00:00 ~ 23:30
+const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
+    const h = Math.floor(i / 2).toString().padStart(2, '0')
+    const m = i % 2 === 0 ? '00' : '30'
+    return `${h}:${m}`
+})
+
+function formatDisplay(timeStr: string): string {
+    if (!timeStr) return ''
+    const [h, m] = timeStr.split(':').map(Number)
+    const period = h >= 12 ? 'PM' : 'AM'
+    const displayHour = h > 12 ? h - 12 : h === 0 ? 12 : h
+    return `${period} ${displayHour}:${m.toString().padStart(2, '0')}`
+}
+
+/**
+ * 자유 텍스트 → HH:mm 파싱 (Google Calendar 스타일)
+ * 지원 형식: "9", "930", "9:30", "1430", "오전 9", "오후 2:30", "9am", "9pm"
+ */
+function parseInput(text: string): string | null {
+    const t = text.trim()
+    if (!t) return null
+
+    const isPM = t.includes('오후') || /pm/i.test(t)
+    const isAM = t.includes('오전') || /am/i.test(t)
+
+    const digits = t
+        .replace(/오전|오후|am|pm/gi, '')
+        .replace(/시간?/g, ':')
+        .replace(/분/g, '')
+        .replace(/\s+/g, '')
+
+    let h: number
+    let m = 0
+
+    if (digits.includes(':')) {
+        const [hStr, mStr] = digits.split(':')
+        h = parseInt(hStr, 10)
+        m = parseInt(mStr || '0', 10)
+    } else if (digits.length <= 2) {
+        h = parseInt(digits, 10)
+    } else if (digits.length === 3) {
+        h = parseInt(digits[0], 10)
+        m = parseInt(digits.slice(1), 10)
+    } else if (digits.length === 4) {
+        h = parseInt(digits.slice(0, 2), 10)
+        m = parseInt(digits.slice(2), 10)
+    } else {
+        return null
+    }
+
+    if (isNaN(h) || isNaN(m) || m < 0 || m > 59) return null
+    if (isPM && h < 12) h += 12
+    if (isAM && h === 12) h = 0
+    if (h < 0 || h > 23) return null
+
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
 }
 
 export function TimePicker({ value, onChange, disabled, minTime }: TimePickerProps) {
     const [isOpen, setIsOpen] = React.useState(false)
+    const [inputText, setInputText] = React.useState(formatDisplay(value))
+    const [highlightedIndex, setHighlightedIndex] = React.useState(-1)
 
-    const hourRef = React.useRef<HTMLDivElement>(null)
-    const minuteRef = React.useRef<HTMLDivElement>(null)
+    const inputRef = React.useRef<HTMLInputElement>(null)
+    const listRef = React.useRef<HTMLDivElement>(null)
+    const highlightedRef = React.useRef<HTMLButtonElement>(null)
+    const selectedRef = React.useRef<HTMLButtonElement>(null)
 
-    // Parse initial value
-    const parseTime = (timeStr: string) => {
-        if (!timeStr) return { hour: '09', minute: '00', period: '오전' as const }
-        const [h, m] = timeStr.split(':')
-        const hourInt = parseInt(h, 10)
-        const period = hourInt >= 12 ? '오후' as const : '오전' as const
-        const displayHour = hourInt > 12 ? hourInt - 12 : (hourInt === 0 ? 12 : hourInt)
-
-        return {
-            hour: displayHour.toString().padStart(2, '0'),
-            minute: m,
-            period
+    // value prop 외부 변경 시 동기화 (입력 중에는 덮어쓰지 않음)
+    React.useEffect(() => {
+        if (document.activeElement !== inputRef.current) {
+            setInputText(formatDisplay(value))
         }
-    }
+    }, [value])
 
-    const { hour, minute, period } = React.useMemo(() => parseTime(value), [value])
-
-    const hours = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
-    const minutes = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'))
-    const periods = ['오전', '오후'] as const
-
-    // minTime 파싱
+    // minTime을 총 분으로 환산
     const parsedMin = React.useMemo(() => {
         if (!minTime) return null
         const [h, m] = minTime.split(':').map(Number)
-        return { hour24: h, minute: m }
+        return h * 60 + m
     }, [minTime])
 
-    // 12h display → 24h 변환
-    const getHour24 = (displayHour: number, p: string) => {
-        if (p === '오전') return displayHour === 12 ? 0 : displayHour
-        return displayHour === 12 ? 12 : displayHour + 12
+    const isSlotDisabled = (slot: string): boolean => {
+        if (parsedMin === null) return false
+        const [h, m] = slot.split(':').map(Number)
+        return h * 60 + m <= parsedMin
     }
 
-    const isHourDisabled = (h: string) => {
-        if (!parsedMin) return false
-        const h24 = getHour24(parseInt(h), period)
-        return h24 < parsedMin.hour24
-    }
+    // 타이핑에 따른 슬롯 필터링
+    const filteredSlots = React.useMemo(() => {
+        const q = inputText.trim().toLowerCase().replace(/\s+/g, '')
+        const currentDisplay = formatDisplay(value).toLowerCase().replace(/\s+/g, '')
+        // 현재 값과 같거나 빈 경우 전체 표시
+        if (!q || q === currentDisplay) return TIME_SLOTS
+        return TIME_SLOTS.filter(slot => {
+            const display = formatDisplay(slot).toLowerCase().replace(/\s+/g, '')
+            const compact = slot.replace(':', '')
+            return display.includes(q) || compact.includes(q.replace(':', ''))
+        })
+    }, [inputText, value])
 
-    const isMinuteDisabled = (m: string) => {
-        if (!parsedMin) return false
-        const currentHour24 = getHour24(parseInt(hour), period)
-        if (currentHour24 > parsedMin.hour24) return false
-        if (currentHour24 < parsedMin.hour24) return true
-        return parseInt(m) <= parsedMin.minute
-    }
+    // highlightedIndex가 범위 벗어나면 초기화
+    React.useEffect(() => {
+        if (highlightedIndex >= filteredSlots.length) setHighlightedIndex(-1)
+    }, [filteredSlots.length, highlightedIndex])
 
-    // Auto-scroll to selected values when popover opens
+    // 드롭다운 열릴 때 선택된 슬롯으로 스크롤
     React.useEffect(() => {
         if (isOpen) {
-            const timer = setTimeout(() => {
-                const scrollToSelected = (container: HTMLDivElement | null, selectedValue: string, items: string[]) => {
-                    if (!container) return
-                    const index = items.indexOf(selectedValue)
-                    if (index === -1) return
-                    const buttons = container.querySelectorAll('button')
-                    if (buttons[index]) {
-                        buttons[index].scrollIntoView({ block: 'center', behavior: 'instant' })
-                    }
-                }
-                scrollToSelected(hourRef.current, hour, hours)
-                scrollToSelected(minuteRef.current, minute, minutes)
-            }, 50)
-            return () => clearTimeout(timer)
+            requestAnimationFrame(() => {
+                selectedRef.current?.scrollIntoView({ block: 'center' })
+            })
         }
-    }, [isOpen, hour, minute])
+    }, [isOpen])
 
-    const handleTimeChange = (type: 'hour' | 'minute' | 'period', newVal: string) => {
-        let newHour = parseInt(hour, 10)
-        let newMinute = parseInt(minute, 10)
-        let newPeriod = period
+    // 키보드 이동 시 하이라이트된 항목 스크롤
+    React.useEffect(() => {
+        highlightedRef.current?.scrollIntoView({ block: 'nearest' })
+    }, [highlightedIndex])
 
-        if (type === 'hour') newHour = parseInt(newVal, 10)
-        if (type === 'minute') newMinute = parseInt(newVal, 10)
-        if (type === 'period') newPeriod = newVal as typeof period
+    const commitInput = React.useCallback(() => {
+        const parsed = parseInput(inputText)
+        if (parsed && !isSlotDisabled(parsed)) {
+            onChange(parsed)
+            setInputText(formatDisplay(parsed))
+        } else {
+            setInputText(formatDisplay(value)) // 원복
+        }
+        setIsOpen(false)
+        setHighlightedIndex(-1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [inputText, value, parsedMin, onChange])
 
-        // Convert back to 24h format
-        let hour24 = newHour
-        if (newPeriod === '오후' && newHour !== 12) hour24 += 12
-        if (newPeriod === '오전' && newHour === 12) hour24 = 0
+    const selectSlot = (slot: string) => {
+        onChange(slot)
+        setInputText(formatDisplay(slot))
+        setIsOpen(false)
+        setHighlightedIndex(-1)
+    }
 
-        const timeStr = `${hour24.toString().padStart(2, '0')}:${newMinute.toString().padStart(2, '0')}`
-        onChange(timeStr)
+    const handleFocus = () => {
+        setIsOpen(true)
+        inputRef.current?.select() // Google Calendar처럼 포커스 시 전체 선택
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault()
+                if (!isOpen) setIsOpen(true)
+                setHighlightedIndex(prev => Math.min(prev + 1, filteredSlots.length - 1))
+                break
+            case 'ArrowUp':
+                e.preventDefault()
+                setHighlightedIndex(prev => Math.max(prev - 1, 0))
+                break
+            case 'Enter':
+                e.preventDefault()
+                if (highlightedIndex >= 0 && filteredSlots[highlightedIndex]) {
+                    selectSlot(filteredSlots[highlightedIndex])
+                } else {
+                    commitInput()
+                }
+                break
+            case 'Escape':
+                setInputText(formatDisplay(value))
+                setIsOpen(false)
+                setHighlightedIndex(-1)
+                inputRef.current?.blur()
+                break
+            case 'Tab':
+                commitInput()
+                break
+        }
     }
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    type="button"
+        <div className="relative w-full">
+            {/* 트리거: 텍스트 입력 필드 */}
+            <div className={cn(
+                "w-full flex items-center justify-center px-3 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700/50 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary transition-colors text-sm cursor-pointer",
+                disabled && "opacity-50 pointer-events-none"
+            )}
+            onClick={() => {
+                if (!disabled && !isOpen) {
+                    setIsOpen(true);
+                    inputRef.current?.focus();
+                }
+            }}>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputText}
                     disabled={disabled}
-                    className={cn(
-                        "w-full flex items-center justify-start text-left font-normal px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors cursor-pointer",
-                        !value && "text-muted-foreground"
-                    )}
+                    onFocus={handleFocus}
+                    onBlur={commitInput}
+                    onChange={e => {
+                        setInputText(e.target.value)
+                        setHighlightedIndex(-1)
+                        if (!isOpen) setIsOpen(true)
+                    }}
+                    readOnly={true} // 사용자가 직접 타이핑할 수 없도록 수정
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-transparent outline-none font-medium text-gray-900 dark:text-white placeholder:text-gray-400 cursor-pointer text-center"
+                    placeholder="시간 선택"
+                    autoComplete="off"
+                />
+            </div>
+
+            {/* 드롭다운 슬롯 리스트 */}
+            {isOpen && (
+                <div
+                    ref={listRef}
+                    onMouseDown={e => e.preventDefault()} // 슬롯 클릭 시 input blur 방지
+                    className="absolute top-full left-0 mt-1 w-36 max-h-56 overflow-y-auto z-60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-1"
                 >
-                    <Clock className="mr-2 h-4 w-4 opacity-50" />
-                    {value ? (
-                        <span>
-                            {period} {hour}:{minute}
-                        </span>
+                    {filteredSlots.length === 0 ? (
+                        <p className="px-3 py-2 text-sm text-gray-400 text-center">결과 없음</p>
                     ) : (
-                        <span>시간 선택</span>
+                        filteredSlots.map((slot, idx) => {
+                            const isSelected = value === slot
+                            const isDisabled = isSlotDisabled(slot)
+                            const isHighlighted = idx === highlightedIndex
+                            return (
+                                <button
+                                    key={slot}
+                                    // 하이라이트 우선, 없으면 선택된 항목에 ref
+                                    ref={isHighlighted ? highlightedRef : isSelected ? selectedRef : undefined}
+                                    type="button"
+                                    disabled={isDisabled}
+                                    onClick={() => !isDisabled && selectSlot(slot)}
+                                    className={cn(
+                                        "w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors",
+                                        isHighlighted
+                                            ? "bg-primary text-white font-medium"
+                                            : isSelected
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700",
+                                        isDisabled && "opacity-40 cursor-not-allowed pointer-events-none"
+                                    )}
+                                >
+                                    {formatDisplay(slot)}
+                                </button>
+                            )
+                        })
                     )}
-                </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-[60]" align="start">
-                <div className="flex h-[220px] divide-x divide-border">
-                    {/* Period (오전/오후) */}
-                    <div className="flex flex-col w-[64px] py-2">
-                        {periods.map((p) => (
-                            <button
-                                key={p}
-                                type="button"
-                                onClick={() => handleTimeChange('period', p)}
-                                className={cn(
-                                    "flex-1 px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-center flex items-center justify-center cursor-pointer transition-colors min-h-[44px]",
-                                    p === period && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md"
-                                )}
-                            >
-                                {p}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Hours */}
-                    <div ref={hourRef} className="flex flex-col overflow-y-auto w-[64px] no-scrollbar py-2">
-                        {hours.map((h) => (
-                            <button
-                                key={h}
-                                type="button"
-                                onClick={() => handleTimeChange('hour', h)}
-                                disabled={isHourDisabled(h)}
-                                className={cn(
-                                    "w-full px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-center shrink-0 cursor-pointer transition-colors min-h-[44px]",
-                                    h === hour && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md",
-                                    isHourDisabled(h) && "opacity-30 cursor-not-allowed"
-                                )}
-                            >
-                                {h}시
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Minutes */}
-                    <div ref={minuteRef} className="flex flex-col overflow-y-auto w-[64px] no-scrollbar py-2">
-                        {minutes.map((m) => (
-                            <button
-                                key={m}
-                                type="button"
-                                onClick={() => handleTimeChange('minute', m)}
-                                disabled={isMinuteDisabled(m)}
-                                className={cn(
-                                    "w-full px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-center shrink-0 cursor-pointer transition-colors min-h-[44px]",
-                                    m === minute && "bg-primary text-white hover:bg-primary hover:text-white font-bold rounded-md",
-                                    isMinuteDisabled(m) && "opacity-30 cursor-not-allowed"
-                                )}
-                            >
-                                {m}분
-                            </button>
-                        ))}
-                    </div>
                 </div>
-            </PopoverContent>
-        </Popover>
+            )}
+        </div>
     )
 }
