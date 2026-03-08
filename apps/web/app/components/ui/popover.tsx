@@ -3,14 +3,8 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 import * as React from "react"
 
-// Small utility to merge classes if not available in @time-pie/ui/src/utils
-// In case cn is not exported, we can define it locally or import from clsx/tailwind-merge
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs))
-}
+import { cn } from "./utils"
+export { cn }
 
 const Popover = PopoverPrimitive.Root
 

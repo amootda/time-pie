@@ -151,8 +151,6 @@ function AnchorEventOptions({
 }
 
 interface TaskEventOptionsProps {
-  purpose: string | null
-  setPurpose: (value: string | null) => void
   description: string
   setDescription: (value: string) => void
   repeatDays: number[]
@@ -162,7 +160,6 @@ interface TaskEventOptionsProps {
 }
 
 function TaskEventOptions({
-  purpose, setPurpose,
   description, setDescription,
   repeatDays, setRepeatDays,
   reminderMin, setReminderMin,
@@ -217,8 +214,6 @@ export function DetailedEventOptions(props: DetailedEventOptionsProps) {
 
   return (
     <TaskEventOptions
-      purpose={props.purpose}
-      setPurpose={props.setPurpose}
       description={props.description}
       setDescription={props.setDescription}
       repeatDays={props.repeatDays}

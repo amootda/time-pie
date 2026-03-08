@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "./popover"
+import { cn } from "./utils"
 
 interface TimePickerProps {
     value: string // HH:mm (24h)
@@ -25,54 +25,13 @@ function formatDisplay(timeStr: string): string {
     return `${period} ${displayHour}:${m.toString().padStart(2, '0')}`
 }
 
-/**
- * 자유 텍스트 → HH:mm 파싱 (Google Calendar 스타일)
- * 지원 형식: "9", "930", "9:30", "1430", "오전 9", "오후 2:30", "9am", "9pm"
- */
-function parseInput(text: string): string | null {
-    const t = text.trim()
-    if (!t) return null
-
-    const isPM = t.includes('오후') || /pm/i.test(t)
-    const isAM = t.includes('오전') || /am/i.test(t)
-
-    const digits = t
-        .replace(/오전|오후|am|pm/gi, '')
-        .replace(/시간?/g, ':')
-        .replace(/분/g, '')
-        .replace(/\s+/g, '')
-
-    let h: number
-    let m = 0
-
-    if (digits.includes(':')) {
-        const [hStr, mStr] = digits.split(':')
-        h = parseInt(hStr, 10)
-        m = parseInt(mStr || '0', 10)
-    } else if (digits.length <= 2) {
-        h = parseInt(digits, 10)
-    } else if (digits.length === 3) {
-        h = parseInt(digits[0], 10)
-        m = parseInt(digits.slice(1), 10)
-    } else if (digits.length === 4) {
-        h = parseInt(digits.slice(0, 2), 10)
-        m = parseInt(digits.slice(2), 10)
-    } else {
-        return null
-    }
-
-    if (isNaN(h) || isNaN(m) || m < 0 || m > 59) return null
-    if (isPM && h < 12) h += 12
-    if (isAM && h === 12) h = 0
-    if (h < 0 || h > 23) return null
-
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-}
-
 export function TimePicker({ value, onChange, disabled, minTime }: TimePickerProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const [inputText, setInputText] = React.useState(formatDisplay(value))
     const [highlightedIndex, setHighlightedIndex] = React.useState(-1)
+
+    // 같은 페이지에 여러 TimePicker가 있을 때 aria-controls 연결을 위한 고유 ID
+    const listboxId = React.useId()
 
     const inputRef = React.useRef<HTMLInputElement>(null)
     const listRef = React.useRef<HTMLDivElement>(null)
@@ -99,23 +58,8 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
         return h * 60 + m <= parsedMin
     }
 
-    // 타이핑에 따른 슬롯 필터링
-    const filteredSlots = React.useMemo(() => {
-        const q = inputText.trim().toLowerCase().replace(/\s+/g, '')
-        const currentDisplay = formatDisplay(value).toLowerCase().replace(/\s+/g, '')
-        // 현재 값과 같거나 빈 경우 전체 표시
-        if (!q || q === currentDisplay) return TIME_SLOTS
-        return TIME_SLOTS.filter(slot => {
-            const display = formatDisplay(slot).toLowerCase().replace(/\s+/g, '')
-            const compact = slot.replace(':', '')
-            return display.includes(q) || compact.includes(q.replace(':', ''))
-        })
-    }, [inputText, value])
-
-    // highlightedIndex가 범위 벗어나면 초기화
-    React.useEffect(() => {
-        if (highlightedIndex >= filteredSlots.length) setHighlightedIndex(-1)
-    }, [filteredSlots.length, highlightedIndex])
+    // readOnly 모드: 타이핑 불가이므로 필터링 없이 전체 슬롯 표시
+    const filteredSlots = TIME_SLOTS
 
     // 드롭다운 열릴 때 선택된 슬롯으로 스크롤
     React.useEffect(() => {
@@ -131,18 +75,11 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
         highlightedRef.current?.scrollIntoView({ block: 'nearest' })
     }, [highlightedIndex])
 
+    // readOnly이므로 파싱 없이 드롭다운만 닫음
     const commitInput = React.useCallback(() => {
-        const parsed = parseInput(inputText)
-        if (parsed && !isSlotDisabled(parsed)) {
-            onChange(parsed)
-            setInputText(formatDisplay(parsed))
-        } else {
-            setInputText(formatDisplay(value)) // 원복
-        }
         setIsOpen(false)
         setHighlightedIndex(-1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [inputText, value, parsedMin, onChange])
+    }, [])
 
     const selectSlot = (slot: string) => {
         onChange(slot)
@@ -161,16 +98,31 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
             case 'ArrowDown':
                 e.preventDefault()
                 if (!isOpen) setIsOpen(true)
-                setHighlightedIndex(prev => Math.min(prev + 1, filteredSlots.length - 1))
+                setHighlightedIndex(prev => {
+                    let next = prev + 1
+                    // disabled 슬롯은 건너뜀
+                    while (next < filteredSlots.length && isSlotDisabled(filteredSlots[next])) next++
+                    return next < filteredSlots.length ? next : prev
+                })
                 break
             case 'ArrowUp':
                 e.preventDefault()
-                setHighlightedIndex(prev => Math.max(prev - 1, 0))
+                setHighlightedIndex(prev => {
+                    let next = prev - 1
+                    // disabled 슬롯은 건너뜀
+                    while (next >= 0 && isSlotDisabled(filteredSlots[next])) next--
+                    return next >= 0 ? next : prev
+                })
                 break
             case 'Enter':
                 e.preventDefault()
                 if (highlightedIndex >= 0 && filteredSlots[highlightedIndex]) {
-                    selectSlot(filteredSlots[highlightedIndex])
+                    // disabled 슬롯은 Enter로도 선택 불가 (클릭 동작과 동일)
+                    if (!isSlotDisabled(filteredSlots[highlightedIndex])) {
+                        selectSlot(filteredSlots[highlightedIndex])
+                    } else {
+                        commitInput()
+                    }
                 } else {
                     commitInput()
                 }
@@ -207,13 +159,12 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
                     disabled={disabled}
                     onFocus={handleFocus}
                     onBlur={commitInput}
-                    onChange={e => {
-                        setInputText(e.target.value)
-                        setHighlightedIndex(-1)
-                        if (!isOpen) setIsOpen(true)
-                    }}
                     readOnly={true} // 사용자가 직접 타이핑할 수 없도록 수정
                     onKeyDown={handleKeyDown}
+                    role="combobox"
+                    aria-expanded={isOpen}
+                    aria-haspopup="listbox"
+                    aria-controls={listboxId}
                     className="w-full bg-transparent outline-none font-medium text-gray-900 dark:text-white placeholder:text-gray-400 cursor-pointer text-center"
                     placeholder="시간 선택"
                     autoComplete="off"
@@ -223,6 +174,8 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
             {/* 드롭다운 슬롯 리스트 */}
             {isOpen && (
                 <div
+                    id={listboxId}
+                    role="listbox"
                     ref={listRef}
                     onMouseDown={e => e.preventDefault()} // 슬롯 클릭 시 input blur 방지
                     className="absolute top-full left-0 mt-1 w-36 max-h-56 overflow-y-auto z-60 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-1"
@@ -242,6 +195,9 @@ export function TimePicker({ value, onChange, disabled, minTime }: TimePickerPro
                                     type="button"
                                     disabled={isDisabled}
                                     onClick={() => !isDisabled && selectSlot(slot)}
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    aria-disabled={isDisabled}
                                     className={cn(
                                         "w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors",
                                         isHighlighted

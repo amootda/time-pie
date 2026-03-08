@@ -178,9 +178,21 @@ export function QuickEventForm({
                   const [h, m] = newStartTime.split(':').map(Number)
                   const totalMin = h * 60 + m + 60
                   const clamped = Math.min(totalMin, 23 * 60 + 59)
-                  const newH = Math.floor(clamped / 60)
-                  const newM = clamped % 60
-                  setEndTime(`${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`)
+                  const newStartMin = h * 60 + m
+                  if (clamped <= newStartMin) {
+                    // clamped 종료 시간이 여전히 시작보다 빠르거나 같으면 날짜를 하루 넘김
+                    const startDateObj = parse(startDate, 'yyyy-MM-dd', new Date())
+                    const nextDay = new Date(startDateObj.getTime() + 24 * 60 * 60 * 1000)
+                    setEndDate(format(nextDay, 'yyyy-MM-dd'))
+                    const rolledMin = Math.min(totalMin - 24 * 60, 23 * 60 + 59)
+                    const rolledH = Math.floor(rolledMin / 60)
+                    const rolledM = rolledMin % 60
+                    setEndTime(`${rolledH.toString().padStart(2, '0')}:${rolledM.toString().padStart(2, '0')}`)
+                  } else {
+                    const newH = Math.floor(clamped / 60)
+                    const newM = clamped % 60
+                    setEndTime(`${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`)
+                  }
                 }
                 if (setError) setError(null)
               }}

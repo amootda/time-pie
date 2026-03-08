@@ -291,7 +291,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           </div>
         </div>
 
-        {/* Error - Hidden since it's displayed in QuickEventForm for task types, but keep for other errors */}
+        {/* Task 오류는 QuickEventForm 내부에서 표시되므로 scheduleType === 'task'일 때 saveError를 여기서 숨김 */}
         {saveError && scheduleType !== 'task' && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
             {saveError}
