@@ -40,6 +40,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
 
   // Shared time fields
   const [startDate, setStartDate] = useState(dateStr)
+  const [endDate, setEndDate] = useState(dateStr)
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
   const [repeatDays, setRepeatDays] = useState<number[]>([])
@@ -75,6 +76,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       // Time fields
       const isRecurring = initialData?.event_type === 'anchor'
       setStartDate(isRecurring ? dateStr : (initialData?.start_at ? dayjs(initialData.start_at).format('YYYY-MM-DD') : dateStr))
+      setEndDate(isRecurring ? dateStr : (initialData?.end_at ? dayjs(initialData.end_at).format('YYYY-MM-DD') : dateStr))
       setStartTime(initialData?.start_at ? dayjs(initialData.start_at).format('HH:mm') : '09:00')
       setEndTime(initialData?.end_at ? dayjs(initialData.end_at).format('HH:mm') : '10:00')
       setRepeatDays(initialData?.repeat_days || [])
@@ -176,8 +178,20 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
         }
       } else {
         // task
-        const startAt = dayjs(`${startDate}T${startTime}`, 'YYYY-MM-DDTHH:mm').format('YYYY-MM-DDTHH:mm:ssZ')
-        const endAt = dayjs(`${startDate}T${endTime}`, 'YYYY-MM-DDTHH:mm').format('YYYY-MM-DDTHH:mm:ssZ')
+        const startAtStr = `${startDate}T${startTime}`
+        const endAtStr = `${endDate}T${endTime}`
+        
+        const startDayjs = dayjs(startAtStr, 'YYYY-MM-DDTHH:mm')
+        const endDayjs = dayjs(endAtStr, 'YYYY-MM-DDTHH:mm')
+
+        if (endDayjs.isBefore(startDayjs) || endDayjs.isSame(startDayjs)) {
+          setSaveError('종료 시간은 시작 시간보다 늦어야 합니다.')
+          setIsSaving(false)
+          return
+        }
+
+        const startAt = startDayjs.format('YYYY-MM-DDTHH:mm:ssZ')
+        const endAt = endDayjs.format('YYYY-MM-DDTHH:mm:ssZ')
 
         eventData = {
           title: title.trim(),
@@ -236,7 +250,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
         <QuickEventForm
           type={scheduleType}
           selectedDate={defaultDate}
-          onExpand={() => setShowAdvanced(true)}
+          onExpand={() => setShowAdvanced((v) => !v)}
           isExpanded={showAdvanced}
           title={title}
           setTitle={setTitle}
@@ -250,27 +264,35 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           setEndTime={scheduleType === 'anchor' ? setAnchorEndTime : setEndTime}
           startDate={startDate}
           setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          error={saveError}
+          setError={setSaveError}
         />
 
-        {/* Detailed Options (collapsible) */}
-        {showAdvanced && (
-          <DetailedEventOptions
-            type={scheduleType}
-            purpose={purpose}
-            setPurpose={setPurpose}
-            description={description}
-            setDescription={setDescription}
-            repeatDays={repeatDays}
-            setRepeatDays={setRepeatDays}
-            bufferMin={bufferMin}
-            setBufferMin={setBufferMin}
-            reminderMin={reminderMin}
-            setReminderMin={setReminderMin}
-          />
-        )}
+        {/* Detailed Options (accordion animation via grid-template-rows) */}
+        <div
+          className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${showAdvanced ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+        >
+          <div className="overflow-hidden">
+            <DetailedEventOptions
+              type={scheduleType}
+              purpose={purpose}
+              setPurpose={setPurpose}
+              description={description}
+              setDescription={setDescription}
+              repeatDays={repeatDays}
+              setRepeatDays={setRepeatDays}
+              bufferMin={bufferMin}
+              setBufferMin={setBufferMin}
+              reminderMin={reminderMin}
+              setReminderMin={setReminderMin}
+            />
+          </div>
+        </div>
 
-        {/* Error */}
-        {saveError && (
+        {/* Task 오류는 QuickEventForm 내부에서 표시되므로 scheduleType === 'task'일 때 saveError를 여기서 숨김 */}
+        {saveError && scheduleType !== 'task' && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
             {saveError}
           </div>

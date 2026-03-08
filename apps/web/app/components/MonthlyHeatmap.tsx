@@ -10,6 +10,8 @@ interface MonthlyHeatmapProps {
   events: (Event | EventMonthMeta)[]
   selectedDate: Date
   onDateSelect: (date: Date) => void
+  weekStartDay?: 0 | 1 // 0=일요일(기본), 1=월요일
+  onWeekStartDayChange?: (day: 0 | 1) => void
 }
 
 interface DayCell {
@@ -26,6 +28,8 @@ export function MonthlyHeatmap({
   events,
   selectedDate,
   onDateSelect,
+  weekStartDay = 0,
+  onWeekStartDayChange,
 }: MonthlyHeatmapProps) {
   // Get month start and end
   const monthStart = useMemo(
@@ -80,8 +84,8 @@ export function MonthlyHeatmap({
     // Get first day of week (0=Sun, 1=Mon, ..., 6=Sat)
     const firstDayOfWeek = monthStart.day()
 
-    // Calculate how many days from previous month to show
-    const daysFromPrevMonth = firstDayOfWeek
+    // Calculate how many days from previous month to show (based on weekStartDay)
+    const daysFromPrevMonth = (firstDayOfWeek - weekStartDay + 7) % 7
 
     // Start from the first day shown (may be from previous month)
     const calendarStart = monthStart.subtract(daysFromPrevMonth, 'day')
@@ -113,7 +117,7 @@ export function MonthlyHeatmap({
     }
 
     return days
-  }, [monthStart, today, getEventsForDate])
+  }, [monthStart, today, getEventsForDate, weekStartDay])
 
   // Format month/year display
   const monthYearText = useMemo(() => {
@@ -145,7 +149,18 @@ export function MonthlyHeatmap({
     <div className="w-full">
       {/* Month Header */}
       <div className="mb-6 flex items-center justify-between px-1">
-        <h2 className="text-foreground text-lg font-bold">{monthYearText}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-foreground text-lg font-bold">{monthYearText}</h2>
+          {onWeekStartDayChange && (
+            <button
+              onClick={() => onWeekStartDayChange(weekStartDay === 0 ? 1 : 0)}
+              className="text-muted-foreground border-border/50 hover:bg-muted rounded-md border px-2 py-1 text-xs transition-colors"
+              title={weekStartDay === 0 ? '월요일부터 시작' : '일요일부터 시작'}
+            >
+              {weekStartDay === 0 ? '일 ~' : '월 ~'}
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevMonth}
@@ -172,14 +187,17 @@ export function MonthlyHeatmap({
 
       {/* Weekday Headers */}
       <div className="mb-2 grid grid-cols-7 gap-1">
-        {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
-          <div
-            key={index}
-            className="text-muted-foreground py-2 text-center text-xs font-medium"
-          >
-            {day}
-          </div>
-        ))}
+        {(['일', '월', '화', '수', '목', '금', '토'] as const)
+          .slice(weekStartDay)
+          .concat((['일', '월', '화', '수', '목', '금', '토'] as const).slice(0, weekStartDay))
+          .map((day, index) => (
+            <div
+              key={index}
+              className="text-muted-foreground py-2 text-center text-xs font-medium"
+            >
+              {day}
+            </div>
+          ))}
       </div>
 
       {/* Calendar Grid */}
