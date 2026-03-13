@@ -208,6 +208,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.0.0
         version: 5.90.21(react@19.2.4)
+      '@time-pie/supabase':
+        specifier: workspace:*
+        version: link:../supabase
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
@@ -221,9 +224,6 @@ importers:
       '@time-pie/eslint-config':
         specifier: workspace:*
         version: link:../config/eslint
-      '@time-pie/supabase':
-        specifier: workspace:*
-        version: link:../supabase
       '@time-pie/typescript-config':
         specifier: workspace:*
         version: link:../config/typescript

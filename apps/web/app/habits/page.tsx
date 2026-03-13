@@ -1,6 +1,6 @@
 'use client'
 
-import { toDateString, useCreateHabitMutation, useHabitLogsQuery, useHabitsQuery, useLogHabitMutation } from '@time-pie/core'
+import { toDateString, useHabitData, useHabitLogsQuery, useHabitsQuery } from '@time-pie/core'
 import type { HabitInsert } from '@time-pie/supabase'
 import { Check, Flame, Sparkles } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -15,8 +15,7 @@ const HabitModal = dynamic(
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const createHabitMutation = useCreateHabitMutation()
-  const logHabitMutation = useLogHabitMutation()
+  const { createHabit, logHabit } = useHabitData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
@@ -99,15 +98,14 @@ export default function HabitsPage() {
 
   const handleAddHabit = useCallback(
     async (habit: Omit<HabitInsert, 'user_id'>) => {
-      if (!user) return
       try {
-        await createHabitMutation.mutateAsync({ ...habit, user_id: user.id })
+        await createHabit(habit)
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create habit:', error)
       }
     },
-    [user, createHabitMutation]
+    [createHabit]
   )
 
   const handleToggleHabit = useCallback(
@@ -115,14 +113,14 @@ export default function HabitsPage() {
       if (togglingId) return
       setTogglingId(habitId)
       try {
-        await logHabitMutation.mutateAsync({ habitId, date: todayStr })
+        await logHabit(habitId, todayStr)
       } catch (error) {
         console.error('Failed to log habit:', error)
       } finally {
         setTogglingId(null)
       }
     },
-    [togglingId, todayStr, logHabitMutation]
+    [togglingId, todayStr, logHabit]
   )
 
   const getHabitLogForDate = (habitId: string, date: string) => {

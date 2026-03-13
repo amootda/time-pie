@@ -1,6 +1,6 @@
 'use client'
 
-import { isSameLocalDate, toDateString, useCreateEventMutation, useDeleteEventMutation, useEventStore, useMonthEvents, useTodoStore, useUIStore, useUpdateEventMutation } from '@time-pie/core'
+import { isSameLocalDate, toDateString, useEventData, useEventStore, useMonthEvents, useTodoStore, useUIStore } from '@time-pie/core'
 import type { Event, EventInsert, EventMonthMeta } from '@time-pie/supabase'
 import { getEventById } from '@time-pie/supabase'
 import { useState } from 'react'
@@ -26,9 +26,7 @@ export default function CalendarPage() {
   const setViewMode = useUIStore((s) => s.setCalendarViewMode)
   const weekStartDay = useUIStore((s) => s.weekStartDay)
   const setWeekStartDay = useUIStore((s) => s.setWeekStartDay)
-  const createEventMutation = useCreateEventMutation()
-  const updateEventMutation = useUpdateEventMutation()
-  const deleteEventMutation = useDeleteEventMutation()
+  const { createEvent, updateEvent, removeEvent } = useEventData(user?.id)
 
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -76,20 +74,17 @@ export default function CalendarPage() {
 
     if (selectedEvent?.id) {
       // Update existing event
-      await updateEventMutation.mutateAsync({
-        id: selectedEvent.id,
-        updates: event,
-      })
+      await updateEvent(selectedEvent.id, event)
     } else {
       // Create new event
-      await createEventMutation.mutateAsync({ ...event, user_id: user.id })
+      await createEvent(event)
     }
 
     setSelectedEvent(null)
   }
 
   const handleDeleteEvent = async (id: string) => {
-    await deleteEventMutation.mutateAsync(id)
+    await removeEvent(id)
     setSelectedEvent(null)
     setEventModalOpen(false)
     setDetailEvent(null)
