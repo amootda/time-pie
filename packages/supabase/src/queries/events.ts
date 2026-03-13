@@ -142,21 +142,28 @@ export async function createEvent(event: EventInsert): Promise<Event> {
 
 export async function updateEvent(
   id: string,
-  updates: EventUpdate
+  updates: EventUpdate,
+  userId?: string
 ): Promise<Event> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('events')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
-    .single()
+
+  if (userId) query = query.eq('user_id', userId)
+
+  const { data, error } = await query.select().single()
 
   if (error) throw error
   return data as Event
 }
 
-export async function deleteEvent(id: string): Promise<void> {
-  const { error } = await supabase.from('events').delete().eq('id', id)
+export async function deleteEvent(id: string, userId?: string): Promise<void> {
+  let query = supabase.from('events').delete().eq('id', id)
+
+  if (userId) query = query.eq('user_id', userId)
+
+  const { error } = await query
 
   if (error) throw error
 }
