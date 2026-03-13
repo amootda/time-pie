@@ -15,7 +15,7 @@ export interface UseTodoDataReturn {
     createTodo: (todo: Omit<TodoInsert, 'user_id'>) => Promise<Todo>
     updateTodo: (id: string, updates: Partial<Todo>) => Promise<Todo>
     removeTodo: (id: string) => Promise<void>
-    toggleTodoComplete: (id: string) => Promise<Todo>
+    toggleTodoComplete: (id: string, currentIsCompleted: boolean) => Promise<Todo>
     loadTodos: (userId: string) => Promise<Todo[]>
 }
 
@@ -74,8 +74,8 @@ export function useTodoData(userId: string | undefined): UseTodoDataReturn {
     )
 
     const toggleTodoComplete = useCallback(
-        async (id: string): Promise<Todo> => {
-            const updated = await toggleTodoApi(id, userId)
+        async (id: string, currentIsCompleted: boolean): Promise<Todo> => {
+            const updated = await toggleTodoApi(id, currentIsCompleted, userId)
             updateTodoStore(id, updated)
             return updated
         },
