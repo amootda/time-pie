@@ -66,15 +66,14 @@ export default function TodosPage() {
 
   const handleAddTodo = useCallback(
     async (todo: Omit<TodoInsert, 'user_id'>) => {
-      if (!user) return
       try {
-        await createTodo({ ...todo, user_id: user.id } as TodoInsert)
+        await createTodo(todo)
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create todo:', error)
       }
     },
-    [user, createTodo]
+    [createTodo]
   )
 
   const handleEditTodo = useCallback(

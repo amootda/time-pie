@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useEventStore } from '../stores/eventStore'
+import { toDateString } from '../utils/date'
 import { useEventData, type UseEventDataReturn } from './useEventData'
 import { useTodoData, type UseTodoDataReturn } from './useTodoData'
 import { useHabitData, type UseHabitDataReturn } from './useHabitData'
@@ -25,22 +26,34 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
 
     const initialLoadDone = useRef(false)
     const prevUserIdRef = useRef<string | undefined>(undefined)
-    const prevDateRef = useRef<Date>(selectedDate)
+    const prevDateStrRef = useRef<string>(toDateString(selectedDate))
+
+    // Extract stable function refs to avoid refreshData re-creation
+    const loadEventsRef = useRef(eventData.loadEvents)
+    const loadTodosRef = useRef(todoData.loadTodos)
+    const loadHabitsRef = useRef(habitData.loadHabits)
+    const loadExecutionsRef = useRef(executionData.loadExecutions)
+    const loadSuggestionsRef = useRef(executionData.loadSuggestions)
+    loadEventsRef.current = eventData.loadEvents
+    loadTodosRef.current = todoData.loadTodos
+    loadHabitsRef.current = habitData.loadHabits
+    loadExecutionsRef.current = executionData.loadExecutions
+    loadSuggestionsRef.current = executionData.loadSuggestions
 
     const refreshData = useCallback(async () => {
         if (!userId) return
 
         await Promise.all([
-            eventData.loadEvents(userId, selectedDate),
-            todoData.loadTodos(userId),
-            habitData.loadHabits(userId),
+            loadEventsRef.current(userId, selectedDate),
+            loadTodosRef.current(userId),
+            loadHabitsRef.current(userId),
         ])
 
         await Promise.all([
-            executionData.loadExecutions(userId, selectedDate),
-            executionData.loadSuggestions(userId),
+            loadExecutionsRef.current(userId, selectedDate),
+            loadSuggestionsRef.current(userId),
         ])
-    }, [userId, selectedDate, eventData, todoData, habitData, executionData])
+    }, [userId, selectedDate])
 
     // Load data on mount, when userId changes, or when selected date changes
     useEffect(() => {
@@ -51,17 +64,18 @@ export function useUserData(userId: string | undefined): UseUserDataReturn {
 
         if (userChanged || !initialLoadDone.current) {
             initialLoadDone.current = true
-            prevDateRef.current = selectedDate
+            prevDateStrRef.current = toDateString(selectedDate)
             refreshData()
             return
         }
 
-        if (prevDateRef.current !== selectedDate) {
-            prevDateRef.current = selectedDate
-            eventData.loadEvents(userId, selectedDate)
-            executionData.loadExecutions(userId, selectedDate)
+        const currentDateStr = toDateString(selectedDate)
+        if (prevDateStrRef.current !== currentDateStr) {
+            prevDateStrRef.current = currentDateStr
+            loadEventsRef.current(userId, selectedDate)
+            loadExecutionsRef.current(userId, selectedDate)
         }
-    }, [userId, selectedDate, refreshData, eventData, executionData])
+    }, [userId, selectedDate, refreshData])
 
     return {
         isLoading,

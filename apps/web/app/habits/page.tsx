@@ -98,15 +98,14 @@ export default function HabitsPage() {
 
   const handleAddHabit = useCallback(
     async (habit: Omit<HabitInsert, 'user_id'>) => {
-      if (!user) return
       try {
-        await createHabit({ ...habit, user_id: user.id } as HabitInsert)
+        await createHabit(habit)
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create habit:', error)
       }
     },
-    [user, createHabit]
+    [createHabit]
   )
 
   const handleToggleHabit = useCallback(
