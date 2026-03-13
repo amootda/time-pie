@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { PUBLIC_PATHS } from '@time-pie/core'
+import { PUBLIC_PATHS } from '@time-pie/core/constants'
 
 // 정적 파일 및 Next.js 내부 경로
 const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/', '/assets/', '/manifest.json', '/sw.js', '/workbox-', '/_vercel/']
