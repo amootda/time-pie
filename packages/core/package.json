@@ -8,7 +8,8 @@
     ".": "./src/index.ts",
     "./stores": "./src/stores/index.ts",
     "./hooks": "./src/hooks/index.ts",
-    "./utils": "./src/utils/index.ts"
+    "./utils": "./src/utils/index.ts",
+    "./constants": "./src/constants/index.ts"
   },
   "scripts": {
     "lint": "eslint src/",

@@ -1,8 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-
-// 공개 경로 - 인증 없이 접근 가능
-const PUBLIC_PATHS = ['/login', '/auth/callback']
+import { PUBLIC_PATHS } from '@time-pie/core/constants'
 
 // 정적 파일 및 Next.js 내부 경로
 const IGNORED_PATHS = ['/_next/', '/favicon.ico', '/api/', '/assets/', '/manifest.json', '/sw.js', '/workbox-', '/_vercel/']
