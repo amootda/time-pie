@@ -1,7 +1,9 @@
 'use client'
 
+import { usePushNotification } from '@time-pie/core'
 import { getUserSettings, upsertUserSettings } from '@time-pie/supabase'
 import {
+  Bell,
   Calendar,
   CheckSquare,
   ChevronRight,
@@ -14,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { BottomNav, Header, LoginButton } from '../components'
+import { BottomNav, Header, InstallPrompt, LoginButton } from '../components'
 import { useAuth, useTheme } from '../providers'
 
 export default function SettingsPage() {
@@ -28,6 +30,7 @@ export default function SettingsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [notifPermission, setNotifPermission] = useState<string>('default')
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, loading: pushLoading } = usePushNotification({ userId: user?.id })
 
   // 브라우저 알림 권한 상태 초기화
   useEffect(() => {
@@ -245,6 +248,43 @@ export default function SettingsPage() {
                 />
               </button>
             </div>
+
+            {/* 푸시 알림 (서버 푸시) */}
+            {pushSupported && user && (
+              <>
+                <div className="border-t border-border/50 my-4" />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-3">
+                      <Bell className="w-4 h-4 text-muted-foreground" />
+                      <p className="font-medium text-foreground">푸시 알림</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-7">
+                      {pushSubscribed
+                        ? '앱을 닫아도 알림을 받습니다'
+                        : '앱이 꺼져있어도 알림 수신'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (pushSubscribed) {
+                        await pushUnsubscribe()
+                      } else {
+                        await pushSubscribe()
+                      }
+                    }}
+                    disabled={pushLoading}
+                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${pushSubscribed ? 'bg-primary' : 'bg-muted'
+                      } ${pushLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div
+                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${pushSubscribed ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
           {!user && (
             <p className="text-xs text-muted-foreground mt-4 bg-muted/50 p-3 rounded-lg text-center">
@@ -349,6 +389,7 @@ export default function SettingsPage() {
         </section>
       </main>
 
+      <InstallPrompt />
       <BottomNav />
     </div>
   )

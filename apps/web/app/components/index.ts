@@ -12,6 +12,7 @@ export { EventCard } from './EventCard'
 export { WeeklyPieView } from './WeeklyPieView'
 export { ViewModeTabs } from './ViewModeTabs'
 export { MonthlyHeatmap } from './MonthlyHeatmap'
+export { InstallPrompt } from './InstallPrompt'
 
 // Calendar components
 export {
