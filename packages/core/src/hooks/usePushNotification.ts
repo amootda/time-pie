@@ -85,16 +85,20 @@ export function usePushNotification({
         applicationServerKey: keyArray.buffer as ArrayBuffer,
       })
 
-      // 서버에 구독 정보 저장 (userId는 서버에서 세션으로 확인)
+      // 서버에 구독 정보 저장 (userId는 서버에서 세션 쿠키로 확인)
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscription: subscription.toJSON(),
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to save subscription')
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(`Failed to save subscription: ${res.status} ${body.error || ''}`)
+      }
 
       setIsSubscribed(true)
       return true
@@ -120,6 +124,7 @@ export function usePushNotification({
         await subscription.unsubscribe()
         await fetch('/api/push/subscribe', {
           method: 'DELETE',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             endpoint: subscription.endpoint,

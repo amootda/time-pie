@@ -33,7 +33,10 @@ async function getAuthUser() {
     }
   )
   const { data: { user }, error } = await supabase.auth.getUser()
-  if (error || !user) return null
+  if (error || !user) {
+    console.error('Push auth failed:', error?.message || 'No user')
+    return null
+  }
   return user
 }
 
