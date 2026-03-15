@@ -10,7 +10,7 @@
  */
 
 const path = require('path')
-const webpush = require(path.resolve(__dirname, '../apps/web/node_modules/web-push'))
+const webpush = require(require.resolve('web-push', { paths: [path.resolve(__dirname, '../apps/web')] }))
 
 const vapidKeys = webpush.generateVAPIDKeys()
 

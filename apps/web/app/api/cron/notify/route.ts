@@ -9,12 +9,22 @@ function getSupabaseAdmin() {
   )
 }
 
+/** endpoint를 마스킹하여 로깅 (개인정보 보호) */
+function maskEndpoint(endpoint: string): string {
+  try {
+    const url = new URL(endpoint)
+    const path = url.pathname
+    return `${url.host}/...${path.slice(-8)}`
+  } catch {
+    return '***'
+  }
+}
+
 /**
  * GET /api/cron/notify
- * Vercel Cron이 매분 호출. 알림 시간이 된 이벤트를 찾아 푸시 발송.
+ * pg_cron이 매분 호출. 알림 시간이 된 이벤트를 찾아 푸시 발송.
  */
 export async function GET(request: Request) {
-  // Vercel Cron 인증
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -27,16 +37,21 @@ export async function GET(request: Request) {
   )
 
   const now = new Date()
-  const todayStr = now.toISOString().split('T')[0]
+  const nowMs = now.getTime()
+
+  // 알림 윈도우: now ~ now+1분 사이에 알림이 울려야 하는 이벤트
+  // 자정 전후 이벤트도 포함하기 위해, 현재 시간 기준 앞뒤 넉넉하게 조회
+  const maxReminderMin = 60 // 최대 리마인더 분
+  const windowStart = new Date(nowMs - maxReminderMin * 60 * 1000)
+  const windowEnd = new Date(nowMs + maxReminderMin * 60 * 1000 + 60000)
 
   try {
-    // 오늘의 이벤트 중 reminder_min이 설정된 것 조회
     const { data: events, error: eventsError } = await getSupabaseAdmin()
       .from('events')
       .select('id, user_id, title, start_at, reminder_min')
       .not('reminder_min', 'is', null)
-      .gte('start_at', `${todayStr}T00:00:00`)
-      .lte('start_at', `${todayStr}T23:59:59`)
+      .gte('start_at', windowStart.toISOString())
+      .lte('start_at', windowEnd.toISOString())
 
     if (eventsError) {
       console.error('Failed to fetch events:', eventsError)
@@ -48,16 +63,10 @@ export async function GET(request: Request) {
     }
 
     // 현재 시간 기준 알림 대상 이벤트 필터링
-    const nowMs = now.getTime()
     const targetEvents = events.filter((event) => {
-      const startAt = new Date(event.start_at)
-      // 오늘 날짜에 이벤트 시간 적용
-      const eventStartMs = new Date(
-        now.getFullYear(), now.getMonth(), now.getDate(),
-        startAt.getHours(), startAt.getMinutes(), 0
-      ).getTime()
+      const eventStartMs = new Date(event.start_at).getTime()
       const alarmTimeMs = eventStartMs - (event.reminder_min * 60 * 1000)
-      // ±30초 윈도우 (크론이 매분 실행되므로 충분)
+      // 현재 분 윈도우 내에 알림 시간이 있는지
       return nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000
     })
 
@@ -92,14 +101,11 @@ export async function GET(request: Request) {
     // 푸시 발송
     let sentCount = 0
     const staleEndpoints: string[] = []
+    const todayStr = now.toISOString().split('T')[0]
 
     for (const event of targetEvents) {
       const userSubs = subsByUser.get(event.user_id) || []
-      const startAt = new Date(event.start_at)
-      const eventStartMs = new Date(
-        now.getFullYear(), now.getMonth(), now.getDate(),
-        startAt.getHours(), startAt.getMinutes(), 0
-      ).getTime()
+      const eventStartMs = new Date(event.start_at).getTime()
       const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
       const body =
         minutesUntil > 0 ? `${minutesUntil}분 후 시작됩니다` : '곧 시작됩니다'
@@ -128,7 +134,7 @@ export async function GET(request: Request) {
           if (statusCode === 410 || statusCode === 404) {
             staleEndpoints.push(sub.endpoint)
           } else {
-            console.error(`Push failed for ${sub.endpoint}:`, err)
+            console.error(`Push failed for ${maskEndpoint(sub.endpoint)}:`, err)
           }
         }
       }

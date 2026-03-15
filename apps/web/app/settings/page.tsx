@@ -266,6 +266,9 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <button
+                    role="switch"
+                    aria-checked={pushSubscribed}
+                    aria-label="푸시 알림"
                     onClick={async () => {
                       if (pushSubscribed) {
                         await pushUnsubscribe()

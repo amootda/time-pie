@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   UNIQUE(user_id, endpoint)
 );
 
+-- user_id 조회 성능 인덱스
+CREATE INDEX idx_push_subscriptions_user_id ON push_subscriptions(user_id);
+
 -- RLS 활성화
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 

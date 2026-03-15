@@ -85,13 +85,12 @@ export function usePushNotification({
         applicationServerKey: keyArray.buffer as ArrayBuffer,
       })
 
-      // 서버에 구독 정보 저장
+      // 서버에 구독 정보 저장 (userId는 서버에서 세션으로 확인)
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscription: subscription.toJSON(),
-          userId,
         }),
       })
 
@@ -124,7 +123,6 @@ export function usePushNotification({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             endpoint: subscription.endpoint,
-            userId,
           }),
         })
       }

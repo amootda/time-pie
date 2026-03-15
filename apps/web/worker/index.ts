@@ -12,7 +12,12 @@ const sw = self as unknown as ServiceWorkerGlobalScope
 
 // 서버에서 보낸 Push 메시지 수신
 sw.addEventListener('push', (event: PushEvent) => {
-  const data: PushData = event.data?.json() ?? {}
+  let data: PushData = {}
+  try {
+    data = event.data?.json() ?? {}
+  } catch {
+    // 잘못된 페이로드 무시
+  }
   const title = data.title || '🔔 Time Pie'
   const options: NotificationOptions = {
     body: data.body || '',

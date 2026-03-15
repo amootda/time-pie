@@ -41,9 +41,14 @@ export function InstallPrompt() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) return
-    await deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
+    try {
+      await deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null)
+      }
+    } catch (error) {
+      console.error('Install prompt failed:', error)
       setDeferredPrompt(null)
     }
   }
