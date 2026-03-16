@@ -73,8 +73,12 @@ export function usePushNotification({
 
     setLoading(true)
     try {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') return false
+      // 일반 브라우저: Notification API로 권한 요청
+      // iOS PWA: Notification 객체가 없으므로 pushManager.subscribe() 시 자동 권한 요청
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') return false
+      }
 
       const registration = await getServiceWorkerRegistration()
       if (!registration) return false
