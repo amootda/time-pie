@@ -4,7 +4,7 @@ import { toDateString, useCreateHabitMutation, useHabitLogsQuery, useHabitsQuery
 import type { HabitInsert } from '@time-pie/supabase'
 import { Check, Flame, Sparkles } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { BottomNav, FloatingAddButton, Header } from '../components'
 import { useAuth } from '../providers'
 
@@ -18,6 +18,8 @@ export default function HabitsPage() {
   const createHabitMutation = useCreateHabitMutation()
   const logHabitMutation = useLogHabitMutation()
   const [modalOpen, setModalOpen] = useState(false)
+  // Per-habit pending tracker: 같은 습관의 중복 토글만 차단하고, 서로 다른 습관은 동시 토글 허용
+  const pendingIdsRef = useRef(new Set<string>())
 
   const todayStr = toDateString()
 
@@ -109,10 +111,20 @@ export default function HabitsPage() {
     [user, createHabitMutation]
   )
 
+  // Per-habit 직렬화: 같은 습관의 중복 토글만 차단, 다른 습관은 동시 토글 허용
+  // mutation의 onMutate 스냅샷/롤백이 동시성을 안전하게 처리함
   const handleToggleHabit = useCallback(
     (habitId: string) => {
-      if (logHabitMutation.isPending) return
-      logHabitMutation.mutate({ habitId, date: todayStr })
+      if (pendingIdsRef.current.has(habitId)) return
+      pendingIdsRef.current.add(habitId)
+      logHabitMutation.mutate(
+        { habitId, date: todayStr },
+        {
+          onSettled: () => {
+            pendingIdsRef.current.delete(habitId)
+          },
+        }
+      )
     },
     [todayStr, logHabitMutation]
   )
@@ -208,11 +220,10 @@ export default function HabitsPage() {
                         {/* Toggle Button */}
                         <button
                           onClick={() => handleToggleHabit(habit.id)}
-                          disabled={logHabitMutation.isPending}
                           className={`cursor-pointer w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${habit.todayCompleted
                             ? 'scale-105 shadow-md'
                             : 'border-2  bg-background'
-                            } ${logHabitMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
+                            }`}
                           style={{
                             backgroundColor: habit.todayCompleted ? habit.color : undefined,
                             borderColor: habit.color,
