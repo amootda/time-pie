@@ -47,11 +47,9 @@ export default function TodosPage() {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
   // React Query hooks
-  const { data: todosData } = useTodosQuery(user?.id)
+  const { data: todos = [] } = useTodosQuery(user?.id)
 
   const todayStr = toDateString()
-
-  const todos = todosData ?? []
 
   // Filter todos based on selected filter
   const displayTodos = useMemo(() => {
