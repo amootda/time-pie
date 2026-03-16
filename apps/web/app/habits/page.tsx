@@ -1,6 +1,6 @@
 'use client'
 
-import { toDateString, useHabitData, useHabitLogsQuery, useHabitsQuery } from '@time-pie/core'
+import { toDateString, useCreateHabitMutation, useHabitLogsQuery, useHabitsQuery, useLogHabitMutation } from '@time-pie/core'
 import type { HabitInsert } from '@time-pie/supabase'
 import { Check, Flame, Sparkles } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -15,7 +15,8 @@ const HabitModal = dynamic(
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const { createHabit, logHabit } = useHabitData(user?.id)
+  const createHabitMutation = useCreateHabitMutation()
+  const logHabitMutation = useLogHabitMutation()
   const [modalOpen, setModalOpen] = useState(false)
   // Per-habit pending tracker: 같은 습관의 중복 토글만 차단하고, 서로 다른 습관은 동시 토글 허용
   const pendingIdsRef = useRef(new Set<string>())
@@ -99,14 +100,15 @@ export default function HabitsPage() {
 
   const handleAddHabit = useCallback(
     async (habit: Omit<HabitInsert, 'user_id'>) => {
+      if (!user?.id) return
       try {
-        await createHabit(habit)
+        await createHabitMutation.mutateAsync({ ...habit, user_id: user.id })
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create habit:', error)
       }
     },
-    [createHabit]
+    [user?.id, createHabitMutation]
   )
 
   // Per-habit 직렬화: 같은 습관의 중복 토글만 차단, 다른 습관은 동시 토글 허용
@@ -116,14 +118,14 @@ export default function HabitsPage() {
       if (pendingIdsRef.current.has(habitId)) return
       pendingIdsRef.current.add(habitId)
       try {
-        await logHabit(habitId, todayStr)
+        await logHabitMutation.mutateAsync({ habitId, date: todayStr })
       } catch (error) {
         console.error('Failed to log habit:', error)
       } finally {
         pendingIdsRef.current.delete(habitId)
       }
     },
-    [todayStr, logHabit]
+    [todayStr, logHabitMutation]
   )
 
   const getHabitLogForDate = (habitId: string, date: string) => {
