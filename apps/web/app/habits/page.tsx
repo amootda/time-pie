@@ -18,7 +18,6 @@ export default function HabitsPage() {
   const createHabitMutation = useCreateHabitMutation()
   const logHabitMutation = useLogHabitMutation()
   const [modalOpen, setModalOpen] = useState(false)
-  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const todayStr = toDateString()
 
@@ -111,18 +110,11 @@ export default function HabitsPage() {
   )
 
   const handleToggleHabit = useCallback(
-    async (habitId: string) => {
-      if (togglingId) return
-      setTogglingId(habitId)
-      try {
-        await logHabitMutation.mutateAsync({ habitId, date: todayStr })
-      } catch (error) {
-        console.error('Failed to log habit:', error)
-      } finally {
-        setTogglingId(null)
-      }
+    (habitId: string) => {
+      if (logHabitMutation.isPending) return
+      logHabitMutation.mutate({ habitId, date: todayStr })
     },
-    [togglingId, todayStr, logHabitMutation]
+    [todayStr, logHabitMutation]
   )
 
   const getHabitLogForDate = (habitId: string, date: string) => {
@@ -216,11 +208,11 @@ export default function HabitsPage() {
                         {/* Toggle Button */}
                         <button
                           onClick={() => handleToggleHabit(habit.id)}
-                          disabled={togglingId === habit.id}
+                          disabled={logHabitMutation.isPending}
                           className={`cursor-pointer w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${habit.todayCompleted
                             ? 'scale-105 shadow-md'
                             : 'border-2  bg-background'
-                            } ${togglingId === habit.id ? 'opacity-50 cursor-wait' : ''}`}
+                            } ${logHabitMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
                           style={{
                             backgroundColor: habit.todayCompleted ? habit.color : undefined,
                             borderColor: habit.color,
