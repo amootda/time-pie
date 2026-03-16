@@ -1,6 +1,6 @@
 'use client'
 
-import { isSameLocalDate, toDateString, useEventData, useEventStore, useMonthEvents, useTodoStore, useUIStore } from '@time-pie/core'
+import { isSameLocalDate, toDateString, useEventData, useEventStore, useMonthEvents, useTodosQuery, useUIStore } from '@time-pie/core'
 import type { Event, EventInsert, EventMonthMeta } from '@time-pie/supabase'
 import { getEventById } from '@time-pie/supabase'
 import { useState } from 'react'
@@ -21,7 +21,7 @@ export default function CalendarPage() {
   const storeEvents = useEventStore((s) => s.events)
   const selectedDate = useEventStore((s) => s.selectedDate)
   const setSelectedDate = useEventStore((s) => s.setSelectedDate)
-  const todos = useTodoStore((s) => s.todos)
+  const { data: todosData } = useTodosQuery(user?.id)
   const viewMode = useUIStore((s) => s.calendarViewMode)
   const setViewMode = useUIStore((s) => s.setCalendarViewMode)
   const weekStartDay = useUIStore((s) => s.weekStartDay)
@@ -66,7 +66,7 @@ export default function CalendarPage() {
 
   const getTodosForDate = (date: Date) => {
     const dateStr = toDateString(date)
-    return todos.filter((t) => t.due_date === dateStr)
+    return (todosData ?? []).filter((t) => t.due_date === dateStr)
   }
 
   const handleSaveEvent = async (event: Omit<EventInsert, 'user_id'>) => {
