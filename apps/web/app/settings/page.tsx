@@ -375,11 +375,11 @@ export default function SettingsPage() {
               <span className="font-medium text-foreground bg-muted px-2 py-1 rounded text-xs">v1.0.0 (MVP)</span>
             </div>
             <div className="space-y-3 pt-2">
-              <a href="#" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
+              <a href="/terms" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
                 <span>이용약관</span>
                 <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <a href="#" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
+              <a href="/privacy" className="flex items-center justify-between text-muted-foreground hover:text-primary transition-colors group">
                 <span>개인정보처리방침</span>
                 <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
