@@ -2,9 +2,12 @@
 
 import {
     toDateString,
-    useTodoData,
+    useCreateTodoMutation,
+    useDeleteTodoMutation,
     useTodoStore,
     useTodosQuery,
+    useToggleTodoMutation,
+    useUpdateTodoMutation,
 } from '@time-pie/core'
 import type { Todo, TodoInsert } from '@time-pie/supabase'
 import { AlertCircle, Calendar, Check, Inbox, Trash2 } from 'lucide-react'
@@ -34,11 +37,12 @@ type FilterType = 'all' | 'today' | 'completed' | 'pending'
 
 export default function TodosPage() {
   const { user } = useAuth()
-  // ✅ Zustand Selector: 필요한 값만 개별 구독
-  const storeTodos = useTodoStore((s) => s.todos)
   const filter = useTodoStore((s) => s.filter)
   const setFilter = useTodoStore((s) => s.setFilter)
-  const { createTodo, updateTodo, toggleTodoComplete, removeTodo } = useTodoData(user?.id)
+  const createMutation = useCreateTodoMutation()
+  const updateMutation = useUpdateTodoMutation()
+  const deleteMutation = useDeleteTodoMutation()
+  const toggleMutation = useToggleTodoMutation()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
 
@@ -47,8 +51,7 @@ export default function TodosPage() {
 
   const todayStr = toDateString()
 
-  // Use API data if available (even if empty array), otherwise fallback to store
-  const todos = todosData ?? storeTodos
+  const todos = todosData ?? []
 
   // Filter todos based on selected filter
   const displayTodos = useMemo(() => {
@@ -67,27 +70,27 @@ export default function TodosPage() {
   const handleAddTodo = useCallback(
     async (todo: Omit<TodoInsert, 'user_id'>) => {
       try {
-        await createTodo(todo)
+        await createMutation.mutateAsync({ ...todo, user_id: user!.id })
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create todo:', error)
       }
     },
-    [createTodo]
+    [createMutation, user]
   )
 
   const handleEditTodo = useCallback(
     async (todo: Omit<TodoInsert, 'user_id'>) => {
       if (!editingTodo) return
       try {
-        await updateTodo(editingTodo.id, todo)
+        await updateMutation.mutateAsync({ id: editingTodo.id, updates: todo })
         setModalOpen(false)
         setEditingTodo(null)
       } catch (error) {
         console.error('Failed to update todo:', error)
       }
     },
-    [editingTodo, updateTodo]
+    [editingTodo, updateMutation]
   )
 
   const openEditModal = useCallback((todo: Todo) => {
@@ -188,7 +191,7 @@ export default function TodosPage() {
                   <div className="flex items-start gap-4">
                     {/* Checkbox */}
                     <button
-                      onClick={() => toggleTodoComplete(todo.id, todo.is_completed)}
+                      onClick={() => toggleMutation.mutate({ id: todo.id, currentIsCompleted: todo.is_completed })}
                       aria-label={todo.is_completed ? '완료 취소' : '완료로 표시'}
                       className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${todo.is_completed
                         ? 'bg-success border-success scale-100'
@@ -240,7 +243,7 @@ export default function TodosPage() {
                       onClick={(e) => {
                         e.stopPropagation()
                         if (confirm('정말 삭제하시겠습니까?')) {
-                          removeTodo(todo.id)
+                          deleteMutation.mutate(todo.id)
                         }
                       }}
                       aria-label={`${todo.title} 삭제`}
