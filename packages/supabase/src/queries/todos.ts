@@ -42,14 +42,17 @@ export async function createTodo(todo: TodoInsert): Promise<Todo> {
 
 export async function updateTodo(
     id: string,
-    updates: TodoUpdate
+    updates: TodoUpdate,
+    userId?: string
 ): Promise<Todo> {
-    const { data, error } = await supabase
+    let query = supabase
         .from('todos')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
-        .single()
+
+    if (userId) query = query.eq('user_id', userId)
+
+    const { data, error } = await query.select().single()
 
     if (error) throw error
     return data as Todo
@@ -59,11 +62,11 @@ export async function updateTodo(
  * Toggle todo completion.
  * Accepts currentIsCompleted from the caller to avoid a SELECT→UPDATE waterfall.
  */
-export async function toggleTodoComplete(id: string, currentIsCompleted: boolean): Promise<Todo> {
+export async function toggleTodoComplete(id: string, currentIsCompleted: boolean, userId?: string): Promise<Todo> {
     const newIsCompleted = !currentIsCompleted
     const now = new Date().toISOString()
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('todos')
         .update({
             is_completed: newIsCompleted,
@@ -71,15 +74,21 @@ export async function toggleTodoComplete(id: string, currentIsCompleted: boolean
             updated_at: now,
         })
         .eq('id', id)
-        .select(TODO_SELECT_FIELDS)
-        .single()
+
+    if (userId) query = query.eq('user_id', userId)
+
+    const { data, error } = await query.select(TODO_SELECT_FIELDS).single()
 
     if (error) throw error
     return data as Todo
 }
 
-export async function deleteTodo(id: string): Promise<void> {
-    const { error } = await supabase.from('todos').delete().eq('id', id)
+export async function deleteTodo(id: string, userId?: string): Promise<void> {
+    let query = supabase.from('todos').delete().eq('id', id)
+
+    if (userId) query = query.eq('user_id', userId)
+
+    const { error } = await query
 
     if (error) throw error
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { toDateString, useCreateHabitMutation, useHabitLogsQuery, useHabitsQuery, useLogHabitMutation } from '@time-pie/core'
+import { toDateString, useHabitData, useHabitLogsQuery, useHabitsQuery } from '@time-pie/core'
 import type { HabitInsert } from '@time-pie/supabase'
 import { Check, Flame, Sparkles } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -15,8 +15,7 @@ const HabitModal = dynamic(
 
 export default function HabitsPage() {
   const { user } = useAuth()
-  const createHabitMutation = useCreateHabitMutation()
-  const logHabitMutation = useLogHabitMutation()
+  const { createHabit, logHabit } = useHabitData(user?.id)
   const [modalOpen, setModalOpen] = useState(false)
   // Per-habit pending tracker: 같은 습관의 중복 토글만 차단하고, 서로 다른 습관은 동시 토글 허용
   const pendingIdsRef = useRef(new Set<string>())
@@ -100,33 +99,31 @@ export default function HabitsPage() {
 
   const handleAddHabit = useCallback(
     async (habit: Omit<HabitInsert, 'user_id'>) => {
-      if (!user) return
       try {
-        await createHabitMutation.mutateAsync({ ...habit, user_id: user.id })
+        await createHabit(habit)
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create habit:', error)
       }
     },
-    [user, createHabitMutation]
+    [createHabit]
   )
 
   // Per-habit 직렬화: 같은 습관의 중복 토글만 차단, 다른 습관은 동시 토글 허용
   // mutation의 onMutate 스냅샷/롤백이 동시성을 안전하게 처리함
   const handleToggleHabit = useCallback(
-    (habitId: string) => {
+    async (habitId: string) => {
       if (pendingIdsRef.current.has(habitId)) return
       pendingIdsRef.current.add(habitId)
-      logHabitMutation.mutate(
-        { habitId, date: todayStr },
-        {
-          onSettled: () => {
-            pendingIdsRef.current.delete(habitId)
-          },
-        }
-      )
+      try {
+        await logHabit(habitId, todayStr)
+      } catch (error) {
+        console.error('Failed to log habit:', error)
+      } finally {
+        pendingIdsRef.current.delete(habitId)
+      }
     },
-    [todayStr, logHabitMutation]
+    [todayStr, logHabit]
   )
 
   const getHabitLogForDate = (habitId: string, date: string) => {
