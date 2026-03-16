@@ -23,22 +23,57 @@ interface UseAlarmReturn {
     isSupported: boolean
 }
 
+/** Notification API 또는 Service Worker 기반 알림이 가능한지 */
+function checkNotificationSupport(): boolean {
+    if (typeof window === 'undefined') return false
+    // 일반 브라우저: Notification API 지원
+    if ('Notification' in window) return true
+    // iOS PWA 등: Service Worker + showNotification 만 지원
+    if ('serviceWorker' in navigator) return true
+    return false
+}
+
+/** 현재 알림 권한 상태를 통합적으로 확인 */
+async function getPermissionState(): Promise<NotificationPermissionState> {
+    // 일반 브라우저: Notification.permission 사용
+    if ('Notification' in window) {
+        return Notification.permission as NotificationPermissionState
+    }
+    // iOS PWA: PushManager의 permissionState로 확인
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.ready
+            if (registration.pushManager) {
+                const state = await registration.pushManager.permissionState({
+                    userVisibleOnly: true,
+                })
+                return state as NotificationPermissionState
+            }
+        } catch {
+            // permissionState 미지원 시 fallback
+        }
+    }
+    return 'default'
+}
+
 /**
  * 이벤트의 알림 시간(reminder_min)에 따라 브라우저 알림을 스케줄링하는 hook.
  * 매 30초마다 현재 시간과 비교하여 알림을 발송합니다.
+ *
+ * iOS PWA에서는 Notification API가 없으므로 Service Worker의
+ * showNotification()을 사용합니다.
  */
 export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): UseAlarmReturn {
     const [permission, setPermission] = useState<NotificationPermissionState>('default')
     const sentAlarmsRef = useRef<Set<string>>(new Set())
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-    const isSupported = typeof window !== 'undefined' && 'Notification' in window
+    const isSupported = typeof window !== 'undefined' && checkNotificationSupport()
 
     // 초기 권한 상태 동기화
     useEffect(() => {
-        if (isSupported) {
-            setPermission(Notification.permission as NotificationPermissionState)
-        }
+        if (!isSupported) return
+        getPermissionState().then(setPermission)
     }, [isSupported])
 
     // 날짜 변경 시 발송 기록 초기화
@@ -50,9 +85,17 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
         if (!isSupported) return 'denied'
 
         try {
-            const result = await Notification.requestPermission()
-            setPermission(result as NotificationPermissionState)
-            return result as NotificationPermissionState
+            // 일반 브라우저
+            if ('Notification' in window) {
+                const result = await Notification.requestPermission()
+                setPermission(result as NotificationPermissionState)
+                return result as NotificationPermissionState
+            }
+            // iOS PWA: push subscribe 시 권한 요청이 함께 발생
+            // 여기서는 현재 상태만 반환
+            const state = await getPermissionState()
+            setPermission(state)
+            return state
         } catch {
             return 'denied'
         }
@@ -66,6 +109,25 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                 intervalRef.current = null
             }
             return
+        }
+
+        const showNotification = (title: string, options: NotificationOptions) => {
+            // Service Worker 우선 (PWA 필수)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready
+                    .then((registration) => {
+                        registration.showNotification(title, options)
+                    })
+                    .catch((e) => {
+                        console.error('SW 알림 발송 실패:', e)
+                    })
+            } else if ('Notification' in window) {
+                try {
+                    new Notification(title, options)
+                } catch (e) {
+                    console.error('알림 발송 실패:', e)
+                }
+            }
         }
 
         const checkAlarms = () => {
@@ -101,8 +163,6 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                 // 30초 간격 체크이므로 ±30초 윈도우 적용
                 const isInAlarmWindow = nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000
 
-                // 이벤트 시작 시간이 이미 지난 경우는 완전히 무시하는 것이 아니라
-                // isInAlarmWindow가 [alarmTimeMs, alarmTimeMs + 60초) 범위를 알아서 필터링하므로
                 // 별도의 nowMs >= eventStartMs 검사(reminder_min=0일 때 무조건 스킵되는 버그 유발)를 제거합니다.
 
                 if (isInAlarmWindow) {
@@ -111,16 +171,12 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                         ? `${minutesUntil}분 후 시작됩니다`
                         : '곧 시작됩니다'
 
-                    try {
-                        new Notification(`🔔 ${event.title}`, {
-                            body,
-                            icon: '/assets/icon-192x192.png',
-                            tag: alarmKey,
-                            requireInteraction: true,
-                        })
-                    } catch (e) {
-                        console.error('알림 발송 실패:', e)
-                    }
+                    showNotification(`🔔 ${event.title}`, {
+                        body,
+                        icon: '/assets/icon-192x192.png',
+                        tag: alarmKey,
+                        requireInteraction: true,
+                    })
 
                     sentAlarmsRef.current.add(alarmKey)
                 }
