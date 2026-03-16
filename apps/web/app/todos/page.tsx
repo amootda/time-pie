@@ -69,8 +69,9 @@ export default function TodosPage() {
 
   const handleAddTodo = useCallback(
     async (todo: Omit<TodoInsert, 'user_id'>) => {
+      if (!user) return
       try {
-        await createMutation.mutateAsync({ ...todo, user_id: user!.id })
+        await createMutation.mutateAsync({ ...todo, user_id: user.id })
         setModalOpen(false)
       } catch (error) {
         console.error('Failed to create todo:', error)
