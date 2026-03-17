@@ -57,7 +57,7 @@ async function getPermissionState(): Promise<NotificationPermissionState> {
 }
 
 /**
- * 이벤트의 알림 시간(reminder_min)에 따라 브라우저 알림을 스케줄링하는 hook.
+ * 이벤트의 알림 시간(reminder_mins)에 따라 브라우저 알림을 스케줄링하는 hook.
  * 매 30초마다 현재 시간과 비교하여 알림을 발송합니다.
  *
  * iOS PWA에서는 Notification API가 없으므로 Service Worker의
@@ -132,6 +132,7 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
 
         const checkAlarms = () => {
             const now = new Date()
+            const nowMs = now.getTime()
             const todayStr = toDateString(selectedDate)
             const nowStr = toDateString(now)
 
@@ -139,46 +140,45 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
             if (todayStr !== nowStr) return
 
             for (const event of events) {
-                // reminder_min이 없으면 스킵
-                if (event.reminder_min == null) continue
-
-                // 이미 발송한 알림은 스킵
-                const alarmKey = `${event.id}-${todayStr}`
-                if (sentAlarmsRef.current.has(alarmKey)) continue
+                // reminder_mins가 없으면 스킵
+                if (!event.reminder_mins || event.reminder_mins.length === 0) continue
 
                 // 이벤트 시작 시간 파싱
                 const eventStart = dayjs(event.start_at)
                 const startHour = eventStart.hour()
                 const startMin = eventStart.minute()
 
-                // 알림 시간 계산 (이벤트 시작 - reminder_min)
                 const eventStartMs = new Date(
                     now.getFullYear(), now.getMonth(), now.getDate(),
                     startHour, startMin, 0
                 ).getTime()
-                const alarmTimeMs = eventStartMs - (event.reminder_min * 60 * 1000)
-                const nowMs = now.getTime()
 
-                // 알림 시간이 이미 지났고, 이벤트 시작 시간 이전인 경우 = 알림 발송 범위
-                // 30초 간격 체크이므로 ±30초 윈도우 적용
-                const isInAlarmWindow = nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000
+                for (const reminderMin of event.reminder_mins) {
+                    // 각 알림 offset별 중복 방지
+                    const alarmKey = `event-${event.id}-${reminderMin}-${todayStr}`
+                    if (sentAlarmsRef.current.has(alarmKey)) continue
 
-                // 별도의 nowMs >= eventStartMs 검사(reminder_min=0일 때 무조건 스킵되는 버그 유발)를 제거합니다.
+                    // 알림 시간 계산 (이벤트 시작 - reminderMin)
+                    const alarmTimeMs = eventStartMs - (reminderMin * 60 * 1000)
 
-                if (isInAlarmWindow) {
-                    const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
-                    const body = minutesUntil > 0
-                        ? `${minutesUntil}분 후 시작됩니다`
-                        : '곧 시작됩니다'
+                    // 30초 간격 체크이므로 ±30초 윈도우 적용
+                    const isInAlarmWindow = nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000
 
-                    showNotification(`🔔 ${event.title}`, {
-                        body,
-                        icon: '/assets/icon-192x192.png',
-                        tag: alarmKey,
-                        requireInteraction: true,
-                    })
+                    if (isInAlarmWindow) {
+                        const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
+                        const body = minutesUntil > 0
+                            ? `${minutesUntil}분 후 시작됩니다`
+                            : '곧 시작됩니다'
 
-                    sentAlarmsRef.current.add(alarmKey)
+                        showNotification(`🔔 ${event.title}`, {
+                            body,
+                            icon: '/assets/icon-192x192.png',
+                            tag: alarmKey,
+                            requireInteraction: true,
+                        })
+
+                        sentAlarmsRef.current.add(alarmKey)
+                    }
                 }
             }
         }

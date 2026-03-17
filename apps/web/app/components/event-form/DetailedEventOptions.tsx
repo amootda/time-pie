@@ -1,6 +1,7 @@
 'use client'
 
 import type { EventType } from '@time-pie/supabase'
+import { EVENT_REMINDER_OPTIONS } from '@time-pie/core'
 import { Bell } from 'lucide-react'
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
@@ -45,42 +46,58 @@ function RepeatDaysSelector({ repeatDays, setRepeatDays }: RepeatDaysSelectorPro
 
 // ─── Reminder selector ─────────────────────────────────────────────────────
 
-const REMINDER_OPTIONS: { value: number | null; label: string }[] = [
-  { value: null, label: '없음' },
-  { value: 0, label: '정시' },
-  { value: 5, label: '5분 전' },
-  { value: 10, label: '10분 전' },
-  { value: 15, label: '15분 전' },
-  { value: 30, label: '30분 전' },
-  { value: 60, label: '1시간 전' },
-]
-
-interface ReminderSelectorProps {
-  reminderMin: number | null
-  setReminderMin: (value: number | null) => void
+// Group labels
+const GROUP_LABELS: Record<string, string> = {
+  minutes: '분',
+  hours: '시간',
+  days: '일',
 }
 
-function ReminderSelector({ reminderMin, setReminderMin }: ReminderSelectorProps) {
+interface ReminderSelectorProps {
+  reminderMins: number[]
+  setReminderMins: (value: number[]) => void
+}
+
+function ReminderSelector({ reminderMins, setReminderMins }: ReminderSelectorProps) {
+  const toggleOption = (value: number) => {
+    if (reminderMins.includes(value)) {
+      setReminderMins(reminderMins.filter((v) => v !== value))
+    } else {
+      setReminderMins([...reminderMins, value].sort((a, b) => a - b))
+    }
+  }
+
+  const groups = ['minutes', 'hours', 'days'] as const
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
         <Bell className="w-4 h-4" />
-        알림
+        알림 {reminderMins.length > 0 && <span className="text-xs text-primary">({reminderMins.length}개)</span>}
       </label>
-      <div className="flex flex-wrap gap-2">
-        {REMINDER_OPTIONS.map((opt) => (
-          <button
-            key={opt.label}
-            type="button"
-            onClick={() => setReminderMin(opt.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2 ${reminderMin === opt.value
-              ? 'border-primary bg-primary/10 text-primary dark:text-primary'
-              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-              }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="space-y-2">
+        {groups.map((group) => {
+          const options = EVENT_REMINDER_OPTIONS.filter((opt) => opt.group === group)
+          return (
+            <div key={group} className="flex flex-wrap gap-1.5">
+              <span className="text-xs text-gray-400 dark:text-gray-500 w-8 py-1.5 shrink-0">{GROUP_LABELS[group]}</span>
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => toggleOption(opt.value)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${
+                    reminderMins.includes(opt.value)
+                      ? 'border-primary bg-primary/10 text-primary dark:text-primary'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -117,15 +134,15 @@ interface AnchorEventOptionsProps {
   setRepeatDays: (value: number[]) => void
   bufferMin: number
   setBufferMin: (value: number) => void
-  reminderMin: number | null
-  setReminderMin: (value: number | null) => void
+  reminderMins: number[]
+  setReminderMins: (value: number[]) => void
 }
 
 function AnchorEventOptions({
   description, setDescription,
   repeatDays, setRepeatDays,
   bufferMin, setBufferMin,
-  reminderMin, setReminderMin,
+  reminderMins, setReminderMins,
 }: AnchorEventOptionsProps) {
   return (
     <div className="space-y-4 border-t border-gray-200 dark:border-gray-700">
@@ -144,7 +161,7 @@ function AnchorEventOptions({
           className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
         />
       </div>
-      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
+      <ReminderSelector reminderMins={reminderMins} setReminderMins={setReminderMins} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
   )
@@ -155,19 +172,19 @@ interface TaskEventOptionsProps {
   setDescription: (value: string) => void
   repeatDays: number[]
   setRepeatDays: (value: number[]) => void
-  reminderMin: number | null
-  setReminderMin: (value: number | null) => void
+  reminderMins: number[]
+  setReminderMins: (value: number[]) => void
 }
 
 function TaskEventOptions({
   description, setDescription,
   repeatDays, setRepeatDays,
-  reminderMin, setReminderMin,
+  reminderMins, setReminderMins,
 }: TaskEventOptionsProps) {
   return (
     <div className="space-y-4 dark:border-gray-700">
       <RepeatDaysSelector repeatDays={repeatDays} setRepeatDays={setRepeatDays} />
-      <ReminderSelector reminderMin={reminderMin} setReminderMin={setReminderMin} />
+      <ReminderSelector reminderMins={reminderMins} setReminderMins={setReminderMins} />
       <DescriptionField description={description} setDescription={setDescription} />
     </div>
   )
@@ -187,8 +204,8 @@ interface DetailedEventOptionsProps {
   bufferMin: number
   setBufferMin: (value: number) => void
   // Alarm
-  reminderMin: number | null
-  setReminderMin: (value: number | null) => void
+  reminderMins: number[]
+  setReminderMins: (value: number[]) => void
 }
 
 /**
@@ -206,8 +223,8 @@ export function DetailedEventOptions(props: DetailedEventOptionsProps) {
         setRepeatDays={props.setRepeatDays}
         bufferMin={props.bufferMin}
         setBufferMin={props.setBufferMin}
-        reminderMin={props.reminderMin}
-        setReminderMin={props.setReminderMin}
+        reminderMins={props.reminderMins}
+        setReminderMins={props.setReminderMins}
       />
     )
   }
@@ -218,8 +235,8 @@ export function DetailedEventOptions(props: DetailedEventOptionsProps) {
       setDescription={props.setDescription}
       repeatDays={props.repeatDays}
       setRepeatDays={props.setRepeatDays}
-      reminderMin={props.reminderMin}
-      setReminderMin={props.setReminderMin}
+      reminderMins={props.reminderMins}
+      setReminderMins={props.setReminderMins}
     />
   )
 }

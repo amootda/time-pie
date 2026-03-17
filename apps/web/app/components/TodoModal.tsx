@@ -2,6 +2,7 @@
 
 import type { Todo } from '@time-pie/supabase'
 import { format, parse } from 'date-fns'
+import { Bell, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AddModal } from './AddModal'
 import { DatePicker } from './ui/date-picker'
@@ -12,6 +13,15 @@ interface TodoModalProps {
   onSave: (todo: Omit<Todo, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void
   initialData?: Partial<Todo>
   mode?: 'create' | 'edit'
+}
+
+function toDateTimeLocal(value: string | null | undefined): string {
+  if (!value) return ''
+  try {
+    return format(new Date(value), "yyyy-MM-dd'T'HH:mm")
+  } catch {
+    return ''
+  }
 }
 
 const PRIORITIES = [
@@ -25,6 +35,7 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
   const [description, setDescription] = useState(initialData?.description || '')
   const [dueDate, setDueDate] = useState(initialData?.due_date || '')
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>(initialData?.priority || 'medium')
+  const [reminderAt, setReminderAt] = useState(toDateTimeLocal(initialData?.reminder_at))
 
   // Reset form when initialData changes (for edit mode)
   useEffect(() => {
@@ -33,11 +44,13 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
       setDescription(initialData.description || '')
       setDueDate(initialData.due_date || '')
       setPriority(initialData.priority || 'medium')
+      setReminderAt(initialData.reminder_at || '')
     } else {
       setTitle('')
       setDescription('')
       setDueDate('')
       setPriority('medium')
+      setReminderAt('')
     }
   }, [initialData])
 
@@ -53,6 +66,7 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
       is_completed: initialData?.is_completed ?? false,
       completed_at: initialData?.completed_at ?? null,
       category_id: initialData?.category_id ?? null,
+      reminder_at: reminderAt || null,
     })
 
     // Reset form only in create mode
@@ -61,6 +75,7 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
       setDescription('')
       setDueDate('')
       setPriority('medium')
+      setReminderAt('')
     }
     onClose()
   }
@@ -108,6 +123,60 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
                 {p.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Reminder */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+            <Bell className="w-4 h-4" />
+            리마인더 (선택)
+          </label>
+          {dueDate && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {[
+                { label: '당일 오전 9시', value: `${dueDate}T09:00` },
+                { label: '당일 오후 6시', value: `${dueDate}T18:00` },
+                { label: '하루 전 오전 9시', getDate: () => {
+                  const d = new Date(dueDate)
+                  d.setDate(d.getDate() - 1)
+                  return `${d.toISOString().split('T')[0]}T09:00`
+                }},
+              ].map((preset) => {
+                const presetValue = 'getDate' in preset ? (preset.getDate as () => string)() : preset.value
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => setReminderAt(presetValue)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${
+                      reminderAt === presetValue
+                        ? 'border-secondary bg-secondary/10 text-secondary'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="datetime-local"
+              value={reminderAt}
+              onChange={(e) => setReminderAt(e.target.value)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm"
+            />
+            {reminderAt && (
+              <button
+                type="button"
+                onClick={() => setReminderAt('')}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
