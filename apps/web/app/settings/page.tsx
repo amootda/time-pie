@@ -81,7 +81,7 @@ export default function SettingsPage() {
   const handleNotificationChange = async (key: 'events' | 'todos' | 'habits') => {
     const newValue = !notifications[key]
 
-    // 토글 ON: push 구독 보장
+    // 토글 ON: 알림 권한 확인 (권한 거부 시만 차단)
     if (newValue && typeof window !== 'undefined') {
       if ('Notification' in window) {
         if (Notification.permission === 'default') {
@@ -95,10 +95,11 @@ export default function SettingsPage() {
         return
       }
 
+      // push 구독은 best-effort (실패해도 settings 저장은 진행)
       if (!pushSubscribed) {
-        const subscribed = await pushSubscribe()
-        if (!subscribed) return
-        setNotifPermission('granted')
+        pushSubscribe().then((subscribed) => {
+          if (subscribed) setNotifPermission('granted')
+        }).catch(() => {})
       }
     }
 
@@ -109,7 +110,7 @@ export default function SettingsPage() {
     if (!newValue) {
       const allOff = !newNotifications.events && !newNotifications.todos && !newNotifications.habits
       if (allOff && pushSubscribed) {
-        await pushUnsubscribe()
+        pushUnsubscribe().catch(() => {})
       }
     }
 
@@ -221,11 +222,11 @@ export default function SettingsPage() {
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">일정 알림</p>
                 </div>
-                <p className="text-xs text-muted-foreground ml-7">
-                  {notifPermission === 'denied'
-                    ? '브라우저 알림이 차단되어 있습니다'
-                    : ''}
-                </p>
+                {notifPermission === 'denied' && (
+                  <p className="text-xs text-muted-foreground ml-7">
+                    브라우저 알림이 차단되어 있습니다
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => handleNotificationChange('events')}
@@ -246,11 +247,11 @@ export default function SettingsPage() {
                   <CheckSquare className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">할 일 알림</p>
                 </div>
-                <p className="text-xs text-muted-foreground ml-7">
-                  {notifPermission === 'denied'
-                    ? '브라우저 알림이 차단되어 있습니다'
-                    : ''}
-                </p>
+                {notifPermission === 'denied' && (
+                  <p className="text-xs text-muted-foreground ml-7">
+                    브라우저 알림이 차단되어 있습니다
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => handleNotificationChange('todos')}
@@ -271,11 +272,11 @@ export default function SettingsPage() {
                   <Trophy className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">습관 리마인더</p>
                 </div>
-                <p className="text-xs text-muted-foreground ml-7">
-                  {notifPermission === 'denied'
-                    ? '브라우저 알림이 차단되어 있습니다'
-                    : ''}
-                </p>
+                {notifPermission === 'denied' && (
+                  <p className="text-xs text-muted-foreground ml-7">
+                    브라우저 알림이 차단되어 있습니다
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => handleNotificationChange('habits')}
