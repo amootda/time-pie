@@ -32,10 +32,26 @@ export default function SettingsPage() {
   const [notifPermission, setNotifPermission] = useState<string>('default')
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, loading: pushLoading } = usePushNotification({ userId: user?.id })
 
-  // 브라우저 알림 권한 상태 초기화
+  // 브라우저 알림 권한 상태 초기화 (iOS PWA 대응: PushManager 폴백)
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (typeof window === 'undefined') return
+
+    if ('Notification' in window) {
       setNotifPermission(Notification.permission)
+      return
+    }
+
+    // iOS PWA: Notification 객체가 없으므로 PushManager.permissionState로 확인
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then((registration) => {
+          if (registration.pushManager) {
+            return registration.pushManager.permissionState({ userVisibleOnly: true })
+          }
+          return 'default'
+        })
+        .then((state) => setNotifPermission(state as string))
+        .catch(() => {})
     }
   }, [])
 
@@ -66,16 +82,31 @@ export default function SettingsPage() {
   const handleNotificationChange = async (key: 'events' | 'todos' | 'habits') => {
     const newValue = !notifications[key]
 
-    // 일정 알림 활성화 시 브라우저 권한 요청
-    if (key === 'events' && newValue && typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        const result = await Notification.requestPermission()
-        setNotifPermission(result)
-        if (result === 'denied') {
-          return // 권한 거부 시 토글하지 않음
+    // 일정 알림 활성화 시 권한 요청
+    if (key === 'events' && newValue && typeof window !== 'undefined') {
+      if ('Notification' in window) {
+        // 일반 브라우저: Notification API로 권한 요청
+        if (Notification.permission === 'default') {
+          const result = await Notification.requestPermission()
+          setNotifPermission(result)
+          if (result === 'denied') {
+            return // 권한 거부 시 토글하지 않음
+          }
+        } else if (Notification.permission === 'denied') {
+          return // 이미 차단된 경우 토글하지 않음
         }
-      } else if (Notification.permission === 'denied') {
-        return // 이미 차단된 경우 토글하지 않음
+      } else {
+        // Notification API가 없으면 push 지원/구독 성공이 전제되어야 함
+        if (!pushSupported) {
+          return
+        }
+        if (!pushSubscribed) {
+          const subscribed = await pushSubscribe()
+          if (!subscribed) {
+            return
+          }
+        }
+        setNotifPermission('granted')
       }
     }
 
