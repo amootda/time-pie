@@ -3,7 +3,6 @@
 import { usePushNotification } from '@time-pie/core'
 import { getUserSettings, upsertUserSettings } from '@time-pie/supabase'
 import {
-  Bell,
   Calendar,
   CheckSquare,
   ChevronRight,
@@ -30,7 +29,7 @@ export default function SettingsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [notifPermission, setNotifPermission] = useState<string>('default')
-  const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, loading: pushLoading } = usePushNotification({ userId: user?.id })
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotification({ userId: user?.id })
 
   // 브라우저 알림 권한 상태 초기화 (iOS PWA 대응: PushManager 폴백)
   useEffect(() => {
@@ -82,35 +81,37 @@ export default function SettingsPage() {
   const handleNotificationChange = async (key: 'events' | 'todos' | 'habits') => {
     const newValue = !notifications[key]
 
-    // 일정 알림 활성화 시 권한 요청
-    if (key === 'events' && newValue && typeof window !== 'undefined') {
+    // 토글 ON: push 구독 보장
+    if (newValue && typeof window !== 'undefined') {
       if ('Notification' in window) {
-        // 일반 브라우저: Notification API로 권한 요청
         if (Notification.permission === 'default') {
           const result = await Notification.requestPermission()
           setNotifPermission(result)
-          if (result === 'denied') {
-            return // 권한 거부 시 토글하지 않음
-          }
+          if (result === 'denied') return
         } else if (Notification.permission === 'denied') {
-          return // 이미 차단된 경우 토글하지 않음
-        }
-      } else {
-        // Notification API가 없으면 push 지원/구독 성공이 전제되어야 함
-        if (!pushSupported) {
           return
         }
-        if (!pushSubscribed) {
-          const subscribed = await pushSubscribe()
-          if (!subscribed) {
-            return
-          }
-        }
+      } else if (!pushSupported) {
+        return
+      }
+
+      if (!pushSubscribed) {
+        const subscribed = await pushSubscribe()
+        if (!subscribed) return
         setNotifPermission('granted')
       }
     }
 
-    setNotifications((prev) => ({ ...prev, [key]: newValue }))
+    const newNotifications = { ...notifications, [key]: newValue }
+    setNotifications(newNotifications)
+
+    // 토글 OFF: 전부 꺼지면 push 구독 해제
+    if (!newValue) {
+      const allOff = !newNotifications.events && !newNotifications.todos && !newNotifications.habits
+      if (allOff && pushSubscribed) {
+        await pushUnsubscribe()
+      }
+    }
 
     if (!user?.id) return
 
@@ -121,7 +122,6 @@ export default function SettingsPage() {
       })
     } catch (error) {
       console.error('Failed to save notification setting:', error)
-      // Revert on error
       setNotifications((prev) => ({ ...prev, [key]: !newValue }))
     } finally {
       setSaving(false)
@@ -246,12 +246,17 @@ export default function SettingsPage() {
                   <CheckSquare className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">할 일 알림</p>
                 </div>
+                <p className="text-xs text-muted-foreground ml-7">
+                  {notifPermission === 'denied'
+                    ? '브라우저 알림이 차단되어 있습니다'
+                    : ''}
+                </p>
               </div>
               <button
                 onClick={() => handleNotificationChange('todos')}
-                disabled={!user}
+                disabled={!user || notifPermission === 'denied'}
                 className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.todos ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.todos ? 'translate-x-5' : 'translate-x-0'
@@ -266,12 +271,17 @@ export default function SettingsPage() {
                   <Trophy className="w-4 h-4 text-muted-foreground" />
                   <p className="font-medium text-foreground">습관 리마인더</p>
                 </div>
+                <p className="text-xs text-muted-foreground ml-7">
+                  {notifPermission === 'denied'
+                    ? '브라우저 알림이 차단되어 있습니다'
+                    : ''}
+                </p>
               </div>
               <button
                 onClick={() => handleNotificationChange('habits')}
-                disabled={!user}
+                disabled={!user || notifPermission === 'denied'}
                 className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.habits ? 'bg-primary' : 'bg-muted'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.habits ? 'translate-x-5' : 'translate-x-0'
@@ -279,46 +289,6 @@ export default function SettingsPage() {
                 />
               </button>
             </div>
-
-            {/* 푸시 알림 (서버 푸시) */}
-            {pushSupported && user && (
-              <>
-                <div className="border-t border-border/50 my-4" />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-3">
-                      <Bell className="w-4 h-4 text-muted-foreground" />
-                      <p className="font-medium text-foreground">푸시 알림</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-7">
-                      {pushSubscribed
-                        ? '앱을 닫아도 알림을 받습니다'
-                        : '앱이 꺼져있어도 알림 수신'}
-                    </p>
-                  </div>
-                  <button
-                    role="switch"
-                    aria-checked={pushSubscribed}
-                    aria-label="푸시 알림"
-                    onClick={async () => {
-                      if (pushSubscribed) {
-                        await pushUnsubscribe()
-                      } else {
-                        await pushSubscribe()
-                      }
-                    }}
-                    disabled={pushLoading}
-                    className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${pushSubscribed ? 'bg-primary' : 'bg-muted'
-                      } ${pushLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <div
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${pushSubscribed ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                    />
-                  </button>
-                </div>
-              </>
-            )}
           </div>
           {!user && (
             <p className="text-xs text-muted-foreground mt-4 bg-muted/50 p-3 rounded-lg text-center">
