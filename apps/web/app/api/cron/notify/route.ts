@@ -76,10 +76,34 @@ export async function GET(request: Request) {
 
     // 대상 유저들의 푸시 구독 조회
     const userIds = [...new Set(targetEvents.map((e) => e.user_id))]
+
+    // 일정 알림이 활성화된 유저만 필터링
+    const { data: settings, error: settingsError } = await getSupabaseAdmin()
+      .from('user_settings')
+      .select('user_id, notifications_events')
+      .in('user_id', userIds)
+
+    if (settingsError) {
+      console.error('Failed to fetch user settings:', settingsError)
+      return NextResponse.json({ error: 'DB error' }, { status: 500 })
+    }
+
+    // notifications_events가 false인 유저 제외 (설정 없는 유저는 기본 true로 간주)
+    const disabledUserIds = new Set(
+      (settings || [])
+        .filter((s) => s.notifications_events === false)
+        .map((s) => s.user_id)
+    )
+    const enabledUserIds = userIds.filter((id) => !disabledUserIds.has(id))
+
+    if (enabledUserIds.length === 0) {
+      return NextResponse.json({ sent: 0 })
+    }
+
     const { data: subscriptions, error: subError } = await getSupabaseAdmin()
       .from('push_subscriptions')
       .select('*')
-      .in('user_id', userIds)
+      .in('user_id', enabledUserIds)
 
     if (subError) {
       console.error('Failed to fetch subscriptions:', subError)
