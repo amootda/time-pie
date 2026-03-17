@@ -91,12 +91,19 @@ export default function SettingsPage() {
         } else if (Notification.permission === 'denied') {
           return
         }
-      } else if (!pushSupported) {
+      } else if (pushSupported) {
+        // iOS PWA: Notification API 없음 → pushSubscribe()가 권한 요청 역할
+        if (!pushSubscribed) {
+          const subscribed = await pushSubscribe()
+          if (!subscribed) return
+          setNotifPermission('granted')
+        }
+      } else {
         return
       }
 
-      // push 구독은 best-effort (실패해도 settings 저장은 진행)
-      if (!pushSubscribed) {
+      // 일반 브라우저: push 구독은 best-effort (실패해도 settings 저장은 진행)
+      if ('Notification' in window && !pushSubscribed) {
         pushSubscribe().then((subscribed) => {
           if (subscribed) setNotifPermission('granted')
         }).catch(() => {})
@@ -230,9 +237,9 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleNotificationChange('events')}
-                disabled={!user || notifPermission === 'denied'}
+                disabled={!user}
                 className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.events ? 'bg-primary' : 'bg-muted'
-                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.events ? 'translate-x-5' : 'translate-x-0'
@@ -255,9 +262,9 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleNotificationChange('todos')}
-                disabled={!user || notifPermission === 'denied'}
+                disabled={!user}
                 className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.todos ? 'bg-primary' : 'bg-muted'
-                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.todos ? 'translate-x-5' : 'translate-x-0'
@@ -280,9 +287,9 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => handleNotificationChange('habits')}
-                disabled={!user || notifPermission === 'denied'}
+                disabled={!user}
                 className={`w-11 h-6 rounded-full transition-colors relative focus:outline-none focus:ring-2 focus:ring-primary/20 ${notifications.habits ? 'bg-primary' : 'bg-muted'
-                  } ${!user || notifPermission === 'denied' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${!user ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div
                   className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${notifications.habits ? 'translate-x-5' : 'translate-x-0'
