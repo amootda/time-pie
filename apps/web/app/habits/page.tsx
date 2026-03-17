@@ -142,7 +142,7 @@ export default function HabitsPage() {
       <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
         <Header title="습관" />
 
-        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar scroll-smooth-touch">
         {isLoading ? (
           /* ✅ 인라인 스켈레톤: Header/BottomNav는 유지, 콘텐츠만 로딩 표시 */
           <div className="animate-pulse space-y-4">

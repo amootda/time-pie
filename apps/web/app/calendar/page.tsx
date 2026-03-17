@@ -4,6 +4,7 @@ import { isSameLocalDate, toDateString, useEventData, useEventStore, useMonthEve
 import type { Event, EventInsert, EventMonthMeta } from '@time-pie/supabase'
 import { getEventById } from '@time-pie/supabase'
 import { useState } from 'react'
+import { Spinner } from '@time-pie/ui'
 import {
     BottomNav,
     CalendarView,
@@ -138,8 +139,14 @@ export default function CalendarPage() {
       <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
         <Header title="캘린더" />
 
-        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar scroll-smooth-touch">
           {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
+
+          {isLoadingMonth && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+              <Spinner size="lg" label="불러오는 중..." />
+            </div>
+          )}
 
           <CalendarView
             viewMode={viewMode}

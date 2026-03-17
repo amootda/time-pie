@@ -263,7 +263,7 @@ export default function HomePage() {
         />
 
         {/* Main content area scrolls internally */}
-        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-6 py-6 pb-24 no-scrollbar scroll-smooth-touch">
           {/* ⚡ PieChart — useCurrentTime은 이 컴포넌트 내부에서만 사용 */}
           <PieChartSection
             pieEvents={pieEvents}
