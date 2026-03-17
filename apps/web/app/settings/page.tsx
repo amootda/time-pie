@@ -95,11 +95,16 @@ export default function SettingsPage() {
         } else if (Notification.permission === 'denied') {
           return // 이미 차단된 경우 토글하지 않음
         }
-      } else if (pushSupported && !pushSubscribed) {
-        // iOS PWA: Notification 객체가 없으므로 푸시 구독으로 권한 획득
-        const subscribed = await pushSubscribe()
-        if (!subscribed) {
-          return // 구독 실패(권한 거부 등) 시 토글하지 않음
+      } else {
+        // Notification API가 없으면 push 지원/구독 성공이 전제되어야 함
+        if (!pushSupported) {
+          return
+        }
+        if (!pushSubscribed) {
+          const subscribed = await pushSubscribe()
+          if (!subscribed) {
+            return
+          }
         }
         setNotifPermission('granted')
       }
