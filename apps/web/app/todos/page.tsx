@@ -131,7 +131,7 @@ export default function TodosPage() {
       <div className="fixed inset-0 bg-background flex flex-col overflow-hidden">
         <Header title="투두" />
 
-        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar">
+        <main className="flex-1 overflow-y-auto w-full max-w-lg mx-auto px-4 py-4 pb-24 no-scrollbar scroll-smooth-touch">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-card p-4 rounded-2xl border border-border shadow-sm text-center">

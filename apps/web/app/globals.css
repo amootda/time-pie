@@ -273,3 +273,9 @@ body {
   scrollbar-width: none;
   /* Firefox */
 }
+
+/* Smooth momentum scrolling for iOS PWA */
+.scroll-smooth-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}

@@ -10,7 +10,7 @@ import { PieChart } from 'lucide-react'
  */
 export default function Loading() {
     return (
-        <div className="min-h-screen bg-background flex flex-col">
+        <div className="fixed inset-0 bg-background flex flex-col">
             {/* Minimal top bar placeholder */}
             <div className="pt-6 pb-4 max-w-lg mx-auto w-full px-6">
                 <div className="animate-pulse space-y-2">
