@@ -143,7 +143,7 @@ export default function CalendarPage() {
           {/* <CalendarViewToggle viewMode={viewMode} onViewModeChange={setViewMode} /> */}
 
           {isLoadingMonth && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/60 backdrop-blur-sm">
               <Spinner size="lg" label="불러오는 중..." />
             </div>
           )}

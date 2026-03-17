@@ -51,7 +51,7 @@ export function Spinner({ size = 'md', label, fullScreen = false }: SpinnerProps
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+      <div className="fixed inset-0 z-[70] bg-background flex items-center justify-center">
         {spinner}
       </div>
     )
