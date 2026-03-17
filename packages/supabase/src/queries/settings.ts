@@ -7,6 +7,7 @@ export interface UserSettings {
   notifications_events: boolean
   notifications_todos: boolean
   notifications_habits: boolean
+  timezone: string
   created_at: string
   updated_at: string
 }
@@ -19,6 +20,7 @@ const DEFAULT_SETTINGS: Omit<UserSettings, 'id' | 'user_id' | 'created_at' | 'up
   notifications_events: true,
   notifications_todos: true,
   notifications_habits: true,
+  timezone: 'Asia/Seoul',
 }
 
 export async function getUserSettings(userId: string): Promise<UserSettings | null> {

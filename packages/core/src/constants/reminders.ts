@@ -1,0 +1,15 @@
+export const EVENT_REMINDER_OPTIONS = [
+  { value: 0, label: '정시', group: 'minutes' },
+  { value: 5, label: '5분 전', group: 'minutes' },
+  { value: 10, label: '10분 전', group: 'minutes' },
+  { value: 15, label: '15분 전', group: 'minutes' },
+  { value: 30, label: '30분 전', group: 'minutes' },
+  { value: 60, label: '1시간 전', group: 'hours' },
+  { value: 120, label: '2시간 전', group: 'hours' },
+  { value: 180, label: '3시간 전', group: 'hours' },
+  { value: 360, label: '6시간 전', group: 'hours' },
+  { value: 720, label: '12시간 전', group: 'hours' },
+  { value: 1440, label: '1일 전', group: 'days' },
+  { value: 2880, label: '2일 전', group: 'days' },
+  { value: 10080, label: '1주 전', group: 'days' },
+]

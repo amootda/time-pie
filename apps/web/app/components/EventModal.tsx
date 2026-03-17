@@ -51,7 +51,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
   const [bufferMin, setBufferMin] = useState(15)
 
   // Alarm
-  const [reminderMin, setReminderMin] = useState<number | null>(null)
+  const [reminderMins, setReminderMins] = useState<number[]>([])
 
   // UI state
   const [isSaving, setIsSaving] = useState(false)
@@ -95,7 +95,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       setBufferMin(initialData?.buffer_min || 15)
 
       // Alarm
-      setReminderMin(initialData?.reminder_min ?? null)
+      setReminderMins(initialData?.reminder_mins ?? [])
 
       setIsSaving(false)
       setSaveError(null)
@@ -170,7 +170,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           color: selectedColor,
           purpose,
           category_id: null,
-          reminder_min: reminderMin,
+          reminder_mins: reminderMins.length > 0 ? reminderMins : null,
           base_time: baseTime,
           target_duration_min: targetDurationMin,
           buffer_min: bufferMin,
@@ -203,7 +203,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
           color: selectedColor,
           purpose,
           category_id: null,
-          reminder_min: reminderMin,
+          reminder_mins: reminderMins.length > 0 ? reminderMins : null,
           base_time: null,
           target_duration_min: null,
           buffer_min: null,
@@ -214,7 +214,7 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
       await onSave(eventData)
 
       // 일정 저장 시 (알림이 켜져있고 브라우저 권한이 아직 default인 경우) 권한 요청
-      if (reminderMin !== null && typeof window !== 'undefined' && 'Notification' in window) {
+      if (reminderMins.length > 0 && typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'default') {
           Notification.requestPermission().catch(console.error)
         }
@@ -285,8 +285,8 @@ export function EventModal({ isOpen, onClose, onSave, onDelete, initialData, sel
               setRepeatDays={setRepeatDays}
               bufferMin={bufferMin}
               setBufferMin={setBufferMin}
-              reminderMin={reminderMin}
-              setReminderMin={setReminderMin}
+              reminderMins={reminderMins}
+              setReminderMins={setReminderMins}
             />
           </div>
         </div>

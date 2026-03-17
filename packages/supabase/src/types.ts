@@ -35,7 +35,7 @@ export interface Event {
   color: string
   purpose: string | null
   category_id: string | null
-  reminder_min: number | null
+  reminder_mins: number[] | null
   // Anchor-specific
   base_time: string | null
   target_duration_min: number | null
@@ -100,6 +100,7 @@ export interface Todo {
   is_completed: boolean
   completed_at: string | null
   category_id: string | null
+  reminder_at: string | null
   created_at: string
   updated_at: string
 }

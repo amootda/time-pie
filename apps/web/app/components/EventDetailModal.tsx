@@ -139,10 +139,10 @@ export function EventDetailModal({
             )}
 
             {/* Reminder */}
-            {event.reminder_min != null && (
+            {event.reminder_mins != null && event.reminder_mins.length > 0 && (
               <div className="flex items-center gap-3">
                 <dt className="text-muted-foreground w-16 shrink-0">알림</dt>
-                <dd className="text-foreground">{event.reminder_min}분 전</dd>
+                <dd className="text-foreground">{event.reminder_mins.join(', ')}분 전</dd>
               </div>
             )}
 
