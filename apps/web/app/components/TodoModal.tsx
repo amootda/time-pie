@@ -15,6 +15,15 @@ interface TodoModalProps {
   mode?: 'create' | 'edit'
 }
 
+function toDateTimeLocal(value: string | null | undefined): string {
+  if (!value) return ''
+  try {
+    return format(new Date(value), "yyyy-MM-dd'T'HH:mm")
+  } catch {
+    return ''
+  }
+}
+
 const PRIORITIES = [
   { label: '높음', value: 'high' as const, color: 'bg-error text-white' },
   { label: '중간', value: 'medium' as const, color: 'bg-warning text-white' },
@@ -26,7 +35,7 @@ export function TodoModal({ isOpen, onClose, onSave, initialData, mode = 'create
   const [description, setDescription] = useState(initialData?.description || '')
   const [dueDate, setDueDate] = useState(initialData?.due_date || '')
   const [priority, setPriority] = useState<'high' | 'medium' | 'low'>(initialData?.priority || 'medium')
-  const [reminderAt, setReminderAt] = useState(initialData?.reminder_at || '')
+  const [reminderAt, setReminderAt] = useState(toDateTimeLocal(initialData?.reminder_at))
 
   // Reset form when initialData changes (for edit mode)
   useEffect(() => {
