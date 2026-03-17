@@ -2,11 +2,12 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import webpush from 'web-push'
 
-// Fix 1: Module-level singleton instead of factory function
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 /** endpoint를 마스킹하여 로깅 (개인정보 보호) */
 function maskEndpoint(endpoint: string): string {
@@ -134,7 +135,7 @@ async function sendEventNotifications(
     const windowEnd = new Date(nowMs + maxReminderMin * 60 * 1000 + 60000)
     const todayStr = now.toISOString().split('T')[0]
 
-    const { data: events, error } = await supabaseAdmin
+    const { data: events, error } = await getSupabaseAdmin()
       .from('events')
       .select('id, user_id, title, start_at, reminder_mins')
       .not('reminder_mins', 'is', null)
@@ -196,7 +197,7 @@ async function sendHabitNotifications(
     const nowMs = now.getTime()
     const todayStr = now.toISOString().split('T')[0]
 
-    const { data: habits, error } = await supabaseAdmin
+    const { data: habits, error } = await getSupabaseAdmin()
       .from('habits')
       .select('id, user_id, title, reminder_time, frequency, frequency_config')
       .not('reminder_time', 'is', null)
@@ -254,7 +255,7 @@ async function sendTodoNotifications(
     const windowStart = new Date(nowMs)
     const windowEnd = new Date(nowMs + 60000)
 
-    const { data: todos, error } = await supabaseAdmin
+    const { data: todos, error } = await getSupabaseAdmin()
       .from('todos')
       .select('id, user_id, title, due_date, reminder_at')
       .not('reminder_at', 'is', null)
@@ -294,7 +295,7 @@ async function sendTodoNotifications(
     }
 
     if (sentTodoIds.length > 0) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('todos')
         .update({ reminder_at: null })
         .in('id', sentTodoIds)
@@ -325,7 +326,7 @@ export async function GET(request: Request) {
 
   try {
     // 모든 푸시 구독 유저 조회
-    const { data: subscriptions, error: subError } = await supabaseAdmin
+    const { data: subscriptions, error: subError } = await getSupabaseAdmin()
       .from('push_subscriptions')
       .select('*')
 
@@ -337,7 +338,7 @@ export async function GET(request: Request) {
     const subsByUser = buildSubsByUser(subscriptions)
 
     // 유저 설정 조회 (알림 on/off + timezone)
-    const { data: settings } = await supabaseAdmin
+    const { data: settings } = await getSupabaseAdmin()
       .from('user_settings')
       .select('user_id, notifications_events, notifications_todos, notifications_habits, timezone')
       .in('user_id', allUserIds)
@@ -388,7 +389,7 @@ export async function GET(request: Request) {
 
     // 만료된 구독 정리
     if (staleEndpoints.length > 0) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('push_subscriptions')
         .delete()
         .in('endpoint', staleEndpoints)
