@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS events (
   color TEXT NOT NULL DEFAULT '#4A90D9',
   purpose TEXT,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-  reminder_min INTEGER,
+  reminder_mins INTEGER[],
   -- Anchor-specific
   base_time TIME,
   target_duration_min INTEGER,
@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS todos (
   priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
   is_completed BOOLEAN NOT NULL DEFAULT false,
   completed_at TIMESTAMPTZ,
+  reminder_at TIMESTAMPTZ,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   notifications_events BOOLEAN NOT NULL DEFAULT true,
   notifications_todos BOOLEAN NOT NULL DEFAULT true,
   notifications_habits BOOLEAN NOT NULL DEFAULT true,
+  timezone TEXT NOT NULL DEFAULT 'Asia/Seoul',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
