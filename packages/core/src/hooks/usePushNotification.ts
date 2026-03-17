@@ -83,11 +83,7 @@ export function usePushNotification({
   }, [])
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    console.log('[Push] subscribe called:', { isSupported, userId: !!userId, vapidPublicKey: !!vapidPublicKey })
-    if (!isSupported || !userId || !vapidPublicKey) {
-      console.warn('[Push] subscribe aborted: missing', { isSupported, userId: !!userId, vapidPublicKey: !!vapidPublicKey })
-      return false
-    }
+    if (!isSupported || !userId || !vapidPublicKey) return false
 
     setLoading(true)
     try {
@@ -108,7 +104,6 @@ export function usePushNotification({
       })
 
       // 서버에 구독 정보 저장 (userId는 서버에서 세션 쿠키로 확인)
-      console.log('[Push] browser subscription obtained, sending to server...')
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         credentials: 'include',
@@ -120,7 +115,6 @@ export function usePushNotification({
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        console.error('[Push] server save failed:', res.status, body)
         throw new Error(`Failed to save subscription: ${res.status} ${body.error || ''}`)
       }
 
