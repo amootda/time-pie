@@ -105,11 +105,8 @@ export default function SettingsPage() {
       // 일반 브라우저: push 구독 시도 (실패해도 settings 저장은 진행)
       if ('Notification' in window && !pushSubscribed) {
         pushSubscribe().then((subscribed) => {
-          console.log('[Settings] pushSubscribe result:', subscribed)
           if (subscribed) setNotifPermission('granted')
-        }).catch((err) => {
-          console.error('[Settings] pushSubscribe failed:', err)
-        })
+        }).catch(() => {})
       }
     }
 
