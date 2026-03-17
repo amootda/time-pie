@@ -4,6 +4,7 @@ import { Outfit, Noto_Sans_KR } from 'next/font/google'
 import { AuthProvider, ThemeProvider, QueryProvider } from './providers'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { RegisterSW } from './register-sw'
 import './globals.css'
 
 const outfit = Outfit({
@@ -76,6 +77,7 @@ export default async function RootLayout({
             <AuthProvider>{children}</AuthProvider>
           </ThemeProvider>
         </QueryProvider>
+        <RegisterSW />
         <Analytics />
         <SpeedInsights />
       </body>
