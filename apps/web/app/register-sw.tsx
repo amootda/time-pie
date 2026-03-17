@@ -2,10 +2,17 @@
 
 import { useEffect } from 'react'
 
+declare global {
+  interface Window {
+    __swRegistration?: Promise<ServiceWorkerRegistration>
+  }
+}
+
 export function RegisterSW() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
+      window.__swRegistration = navigator.serviceWorker.register('/sw.js')
+      window.__swRegistration.catch((err) => {
         console.error('[SW] registration failed:', err)
       })
     }

@@ -11,10 +11,24 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
+declare global {
+  interface Window {
+    __swRegistration?: Promise<ServiceWorkerRegistration>
+  }
+}
+
 /** SW ready를 타임아웃 포함하여 안전하게 가져오기 */
-function getServiceWorkerRegistration(
-  timeoutMs = 3000
+async function getServiceWorkerRegistration(
+  timeoutMs = 5000
 ): Promise<ServiceWorkerRegistration | null> {
+  // RegisterSW 컴포넌트가 저장한 등록 promise가 있으면 먼저 대기
+  if (typeof window !== 'undefined' && window.__swRegistration) {
+    try {
+      await window.__swRegistration
+    } catch {
+      return null
+    }
+  }
   return Promise.race([
     navigator.serviceWorker.ready,
     new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
