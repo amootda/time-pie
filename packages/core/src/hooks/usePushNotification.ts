@@ -100,7 +100,7 @@ export function usePushNotification({
       const keyArray = urlBase64ToUint8Array(vapidPublicKey)
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: keyArray.buffer as ArrayBuffer,
+        applicationServerKey: keyArray.buffer.slice(0) as ArrayBuffer,
       })
 
       // 서버에 구독 정보 저장 (userId는 서버에서 세션 쿠키로 확인)
