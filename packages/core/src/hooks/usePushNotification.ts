@@ -50,6 +50,8 @@ interface UsePushNotificationReturn {
   unsubscribe: () => Promise<void>
   /** 로딩 상태 */
   loading: boolean
+  /** 마지막 에러 메시지 (디버깅용) */
+  lastError: string | null
 }
 
 /**
@@ -62,6 +64,7 @@ export function usePushNotification({
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [lastError, setLastError] = useState<string | null>(null)
 
   const vapidPublicKey =
     typeof window !== 'undefined'
@@ -83,7 +86,20 @@ export function usePushNotification({
   }, [])
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!isSupported || !userId || !vapidPublicKey) return false
+    setLastError(null)
+
+    if (!isSupported) {
+      setLastError('Push API not supported')
+      return false
+    }
+    if (!userId) {
+      setLastError('User not logged in')
+      return false
+    }
+    if (!vapidPublicKey) {
+      setLastError('VAPID key missing')
+      return false
+    }
 
     setLoading(true)
     try {
@@ -91,11 +107,17 @@ export function usePushNotification({
       // iOS PWA: Notification 객체가 없으므로 pushManager.subscribe() 시 자동 권한 요청
       if ('Notification' in window) {
         const permission = await Notification.requestPermission()
-        if (permission !== 'granted') return false
+        if (permission !== 'granted') {
+          setLastError(`Notification permission: ${permission}`)
+          return false
+        }
       }
 
       const registration = await getServiceWorkerRegistration()
-      if (!registration) return false
+      if (!registration) {
+        setLastError('Service Worker registration failed')
+        return false
+      }
 
       const keyArray = urlBase64ToUint8Array(vapidPublicKey)
       const subscription = await registration.pushManager.subscribe({
@@ -115,13 +137,17 @@ export function usePushNotification({
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(`Failed to save subscription: ${res.status} ${body.error || ''}`)
+        const errMsg = `Subscribe API failed: ${res.status} ${body.error || ''}`
+        setLastError(errMsg)
+        throw new Error(errMsg)
       }
 
       setIsSubscribed(true)
       return true
     } catch (error) {
-      console.error('Push subscription failed:', error)
+      const msg = error instanceof Error ? error.message : String(error)
+      console.error('Push subscription failed:', msg)
+      setLastError((prev) => prev || msg)
       return false
     } finally {
       setLoading(false)
@@ -157,5 +183,5 @@ export function usePushNotification({
     }
   }, [isSupported, userId])
 
-  return { isSupported, isSubscribed, subscribe, unsubscribe, loading }
+  return { isSupported, isSubscribed, subscribe, unsubscribe, loading, lastError }
 }

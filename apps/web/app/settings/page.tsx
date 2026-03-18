@@ -29,7 +29,7 @@ export default function SettingsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [notifPermission, setNotifPermission] = useState<string>('default')
-  const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotification({ userId: user?.id })
+  const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe, lastError: pushError } = usePushNotification({ userId: user?.id })
 
   // 브라우저 알림 권한 상태 초기화 (iOS PWA 대응: PushManager 폴백)
   useEffect(() => {
@@ -301,6 +301,16 @@ export default function SettingsPage() {
           {!user && (
             <p className="text-xs text-muted-foreground mt-4 bg-muted/50 p-3 rounded-lg text-center">
               로그인하면 설정이 클라우드에 저장됩니다
+            </p>
+          )}
+          {pushError && (
+            <p className="text-xs text-red-500 mt-4 bg-red-50 dark:bg-red-950/30 p-3 rounded-lg">
+              Push 오류: {pushError}
+            </p>
+          )}
+          {user && (
+            <p className="text-xs text-muted-foreground mt-4 bg-muted/50 p-3 rounded-lg">
+              Push: {pushSupported ? '지원됨' : '미지원'} | 구독: {pushSubscribed ? 'O' : 'X'} | 권한: {notifPermission}
             </p>
           )}
         </section>
