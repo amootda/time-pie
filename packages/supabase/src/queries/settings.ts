@@ -46,9 +46,19 @@ export async function upsertUserSettings(
   userId: string,
   settings: Partial<Omit<UserSettings, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<UserSettings> {
+  // 기존 설정 조회하여 병합 (디폴트값으로 덮어쓰기 방지)
+  const existing = await getUserSettings(userId)
+
   const updates = {
     user_id: userId,
     ...DEFAULT_SETTINGS,
+    ...(existing && {
+      theme: existing.theme,
+      notifications_events: existing.notifications_events,
+      notifications_todos: existing.notifications_todos,
+      notifications_habits: existing.notifications_habits,
+      timezone: existing.timezone,
+    }),
     ...settings,
     updated_at: new Date().toISOString(),
   }

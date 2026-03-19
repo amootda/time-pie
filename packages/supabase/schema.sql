@@ -132,6 +132,17 @@ CREATE TABLE IF NOT EXISTS user_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Push Subscriptions (web push notification subscriptions)
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, endpoint)
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
@@ -142,6 +153,7 @@ ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies: Users can only access their own data
 -- Using DROP IF EXISTS + CREATE pattern for idempotency
@@ -288,6 +300,21 @@ DROP POLICY IF EXISTS "Users can delete own settings" ON user_settings;
 CREATE POLICY "Users can delete own settings" ON user_settings
   FOR DELETE USING (auth.uid() = user_id);
 
+-- Push subscriptions policies
+DROP POLICY IF EXISTS "Users can view own push subscriptions" ON push_subscriptions;
+CREATE POLICY "Users can view own push subscriptions" ON push_subscriptions
+  FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own push subscriptions" ON push_subscriptions;
+CREATE POLICY "Users can insert own push subscriptions" ON push_subscriptions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own push subscriptions" ON push_subscriptions;
+CREATE POLICY "Users can delete own push subscriptions" ON push_subscriptions
+  FOR DELETE USING (auth.uid() = user_id);
+-- Service role full access (for cron notification job)
+DROP POLICY IF EXISTS "Service role full access on push subscriptions" ON push_subscriptions;
+CREATE POLICY "Service role full access on push subscriptions" ON push_subscriptions
+  FOR ALL USING (auth.role() = 'service_role');
+
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_events_user_date ON events(user_id, start_at);
 CREATE INDEX IF NOT EXISTS idx_events_user_type ON events(user_id, event_type);
@@ -299,3 +326,40 @@ CREATE INDEX IF NOT EXISTS idx_todos_user_date ON todos(user_id, due_date);
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id) WHERE is_active = true;
 CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);
 CREATE INDEX IF NOT EXISTS idx_user_settings_user ON user_settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+
+-- Weekly Reports (AI-generated weekly summary)
+CREATE TABLE IF NOT EXISTS weekly_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  week_end DATE NOT NULL,
+  total_events INTEGER NOT NULL DEFAULT 0,
+  total_duration_min INTEGER NOT NULL DEFAULT 0,
+  purpose_distribution JSONB NOT NULL DEFAULT '{}',
+  completion_rate NUMERIC(5,2) NOT NULL DEFAULT 0,
+  daily_completion JSONB NOT NULL DEFAULT '[]',
+  prev_week_comparison JSONB,
+  habit_summary JSONB NOT NULL DEFAULT '{}',
+  todo_summary JSONB NOT NULL DEFAULT '{}',
+  ai_insights JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, week_start)
+);
+
+ALTER TABLE weekly_reports ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own weekly reports" ON weekly_reports;
+CREATE POLICY "Users can view own weekly reports" ON weekly_reports
+  FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own weekly reports" ON weekly_reports;
+CREATE POLICY "Users can insert own weekly reports" ON weekly_reports
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own weekly reports" ON weekly_reports;
+CREATE POLICY "Users can update own weekly reports" ON weekly_reports
+  FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own weekly reports" ON weekly_reports;
+CREATE POLICY "Users can delete own weekly reports" ON weekly_reports
+  FOR DELETE USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_reports_user_week ON weekly_reports(user_id, week_start DESC);
