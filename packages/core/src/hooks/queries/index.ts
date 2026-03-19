@@ -44,3 +44,10 @@ export {
   useSuggestionsQuery,
   useMarkSuggestionReadMutation,
 } from './suggestions'
+
+// Reports
+export {
+  reportKeys,
+  useWeeklyReportsQuery,
+  useLatestWeeklyReportQuery,
+} from './reports'

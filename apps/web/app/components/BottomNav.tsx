@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarDays, ListTodo, PieChart, Settings, Trophy } from 'lucide-react'
+import { BarChart3, CalendarDays, ListTodo, PieChart, Settings, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { memo } from 'react'
@@ -10,6 +10,7 @@ const navItems = [
   { href: '/calendar', label: '캘린더', icon: CalendarDays },
   { href: '/todos', label: '할일', icon: ListTodo },
   { href: '/habits', label: '습관', icon: Trophy },
+  { href: '/reports', label: '리포트', icon: BarChart3 },
   { href: '/settings', label: '설정', icon: Settings },
 ]
 
