@@ -143,22 +143,32 @@ export async function GET(request: Request) {
         }
 
         // 3. 습관 요약
-        const { data: habits } = await supabase
+        const { data: habits, error: habitsError } = await supabase
           .from('habits')
           .select('id, title')
           .eq('user_id', userId)
           .eq('is_active', true)
 
+        if (habitsError) {
+          console.error(`Habits error for ${userId}:`, habitsError)
+          throw habitsError
+        }
+
         const activeHabits = habits || []
-        const habitLogs = activeHabits.length > 0
-          ? (await supabase
-              .from('habit_logs')
-              .select('habit_id, date')
-              .in('habit_id', activeHabits.map((h) => h.id))
-              .gte('date', weekStartStr)
-              .lte('date', weekEndStr)
-            ).data
-          : []
+        let habitLogs: Array<{ habit_id: string; date: string }> = []
+        if (activeHabits.length > 0) {
+          const { data, error: logsError } = await supabase
+            .from('habit_logs')
+            .select('habit_id, date')
+            .in('habit_id', activeHabits.map((h) => h.id))
+            .gte('date', weekStartStr)
+            .lte('date', weekEndStr)
+          if (logsError) {
+            console.error(`Habit logs error for ${userId}:`, logsError)
+            throw logsError
+          }
+          habitLogs = data || []
+        }
 
         const habitSummary = {
           total: habits?.length || 0,
@@ -169,12 +179,17 @@ export async function GET(request: Request) {
         }
 
         // 4. 할일 요약
-        const { data: todos } = await supabase
+        const { data: todos, error: todosError } = await supabase
           .from('todos')
           .select('id, is_completed')
           .eq('user_id', userId)
           .gte('created_at', weekStartISO)
           .lte('created_at', weekEndISO)
+
+        if (todosError) {
+          console.error(`Todos error for ${userId}:`, todosError)
+          throw todosError
+        }
 
         const todoSummary = {
           total: todos?.length || 0,

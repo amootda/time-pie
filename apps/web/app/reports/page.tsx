@@ -13,7 +13,7 @@ import { WeeklySummaryCard } from './components/WeeklySummaryCard'
 
 export default function ReportsPage() {
   const { user } = useAuth()
-  const { data: reports = [], isLoading } = useWeeklyReportsQuery(user?.id)
+  const { data: reports = [], isLoading, isError, refetch } = useWeeklyReportsQuery(user?.id)
   const { selectedWeekStart, setSelectedWeekStart } = useReportStore()
 
   // 첫 로드 시 최신 주 선택
@@ -58,6 +58,17 @@ export default function ReportsPage() {
             </div>
             <div className="bg-card p-5 rounded-2xl border border-border/50 h-48" />
             <div className="bg-card p-5 rounded-2xl border border-border/50 h-36" />
+          </div>
+        ) : isError ? (
+          <div className="text-center py-16 flex flex-col items-center justify-center gap-3">
+            <p className="text-foreground font-semibold">리포트를 불러오지 못했습니다</p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+            >
+              다시 시도
+            </button>
           </div>
         ) : reports.length === 0 ? (
           <div className="text-center py-16 flex flex-col items-center justify-center">
