@@ -128,6 +128,37 @@ export interface HabitLog {
   created_at: string
 }
 
+export interface HabitSummary {
+  total: number
+  logs: number
+  rate: number
+}
+
+export interface TodoSummary {
+  total: number
+  completed: number
+}
+
+export interface WeeklyReport {
+  id: string
+  user_id: string
+  week_start: string
+  week_end: string
+  total_events: number
+  total_duration_min: number
+  purpose_distribution: Record<string, number>
+  completion_rate: number
+  daily_completion: Array<{ date: string; rate: number }>
+  prev_week_comparison: {
+    duration_change: number
+    completion_change: number
+  } | null
+  habit_summary: HabitSummary
+  todo_summary: TodoSummary
+  ai_insights: Array<{ type: string; message: string }>
+  created_at: string
+}
+
 // Insert/Update 타입
 export type EventInsert = Omit<Event, 'id' | 'created_at' | 'updated_at'>
 export type EventUpdate = Partial<Omit<Event, 'id' | 'user_id' | 'created_at'>>
@@ -144,3 +175,5 @@ export type TodoUpdate = Partial<Omit<Todo, 'id' | 'user_id' | 'created_at'>>
 
 export type HabitInsert = Omit<Habit, 'id' | 'created_at' | 'updated_at'>
 export type HabitUpdate = Partial<Omit<Habit, 'id' | 'user_id' | 'created_at'>>
+
+export type WeeklyReportInsert = Omit<WeeklyReport, 'id' | 'created_at'>
