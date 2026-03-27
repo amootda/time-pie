@@ -162,12 +162,14 @@ async function sendEventNotifications(
         const alarmTimeMs = eventStartMs - reminderMin * 60 * 1000
         if (nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000) {
           const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
-          const body = minutesUntil > 0 ? `${minutesUntil}분 후 시작됩니다` : '곧 시작됩니다'
+          const body = minutesUntil > 0
+            ? `${minutesUntil}분 후 시작됩니다`
+            : '곧 시작됩니다'
 
           notifications.push({
             userId: event.user_id,
             payload: JSON.stringify({
-              title: `🔔 ${event.title}`,
+              title: event.title,
               body,
               icon: '/assets/icon-192x192.png',
               tag: `event-${event.id}-${reminderMin}-${todayStr}`,
@@ -226,7 +228,7 @@ async function sendHabitNotifications(
         notifications.push({
           userId: habit.user_id,
           payload: JSON.stringify({
-            title: `🔔 ${habit.title}`,
+            title: habit.title,
             body: '습관을 실천할 시간입니다',
             icon: '/assets/icon-192x192.png',
             tag: `habit-${habit.id}-${todayStr}`,
@@ -280,7 +282,7 @@ async function sendTodoNotifications(
       const result = await sendPushToUsers(subsByUser, [{
         userId: todo.user_id,
         payload: JSON.stringify({
-          title: `📋 ${todo.title}`,
+          title: todo.title,
           body,
           icon: '/assets/icon-192x192.png',
           tag: `todo-${todo.id}`,

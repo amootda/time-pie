@@ -170,7 +170,7 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
                             ? `${minutesUntil}분 후 시작됩니다`
                             : '곧 시작됩니다'
 
-                        showNotification(`🔔 ${event.title}`, {
+                        showNotification(event.title, {
                             body,
                             icon: '/assets/icon-192x192.png',
                             tag: alarmKey,
