@@ -162,7 +162,9 @@ async function sendEventNotifications(
         const alarmTimeMs = eventStartMs - reminderMin * 60 * 1000
         if (nowMs >= alarmTimeMs && nowMs < alarmTimeMs + 60000) {
           const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
-          const body = `${minutesUntil}분 후 시작됩니다`
+          const body = minutesUntil > 0
+            ? `${minutesUntil}분 후 시작됩니다`
+            : '곧 시작됩니다'
 
           notifications.push({
             userId: event.user_id,

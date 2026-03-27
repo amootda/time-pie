@@ -166,7 +166,9 @@ export function useAlarm({ events, enabled, selectedDate }: UseAlarmOptions): Us
 
                     if (isInAlarmWindow) {
                         const minutesUntil = Math.round((eventStartMs - nowMs) / 60000)
-                        const body = `${minutesUntil}분 후 시작됩니다`
+                        const body = minutesUntil > 0
+                            ? `${minutesUntil}분 후 시작됩니다`
+                            : '곧 시작됩니다'
 
                         showNotification(event.title, {
                             body,

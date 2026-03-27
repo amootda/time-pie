@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS weekly_reports (
   todo_summary JSONB NOT NULL DEFAULT '{}',
   ai_insights JSONB NOT NULL DEFAULT '[]',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (week_end = week_start + 6),
+  CHECK (total_events >= 0),
+  CHECK (total_duration_min >= 0),
   UNIQUE(user_id, week_start)
 );
 
